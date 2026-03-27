@@ -1,5 +1,5 @@
 use bevy::{
-    math::bounding::{Aabb2d, BoundingVolume},
+    math::bounding::{Aabb2d, IntersectsVolume},
     prelude::*,
 };
 
@@ -9,27 +9,21 @@ use std::f32::consts::PI;
 
 // Cell parameters
 const CELL_ENERGY: f32 = 10.;
-const CELL_MAX_VELOCITY: f32 = 50.;
+const CELL_MAX_VELOCITY: f32 = 100.;
 const RANDOM_ACCELERATION: f32 = 10.;
 const STARTING_CELL_NUM: u32 = 20;
 const CELL_DIVISION_ENERGY: f32 = 20.;
+const CELL_ENERGY_DECAY: f32 = 1.;
 
 // Dish parameters
-const DISH_SIZE: Vec2 = Vec2::new(800., 800.);
+const DISH_SIZE: Vec2 = Vec2::new(1200., 1200.);
 const DISH_COLOUR: Color = Color::linear_rgb(0.2, 0.2, 0.2);
 
 // Chemical parameters
-const CHEMICAL_SIZE: f32 = 10.;
+const CHEMICAL_SIZE: f32 = 20.;
 const CHEMICAL_ENERGY: f32 = 10.;
-const STARTING_CHEMICAL_NUM: u32 = 50;
-
-fn main() {
-    App::new()
-        .add_plugins(DefaultPlugins)
-        .add_systems(Startup, setup)
-        .add_systems(Update, (move_cells, bound_cells, cells_absorb_chemical, cells_do_meiosis))
-        .run();
-}
+const CHEMICAL_SPAWN_RATE: f32 = 10.;
+const CHEMICAL_MAX_NUM: usize = 400;
 
 // Components
 #[derive(Component, Clone)]
@@ -60,6 +54,27 @@ impl Cell {
 #[derive(Component)]
 struct Chemical {
     energy: f32,
+}
+
+#[derive(Resource)]
+struct ChemicalTimer(Timer);
+
+fn main() {
+    App::new()
+        .add_plugins(DefaultPlugins)
+        .add_systems(Startup, setup)
+        .add_systems(
+            Update,
+            (
+                spawn_chemicals,
+                move_cells,
+                bound_cells,
+                cells_absorb_chemical,
+                cells_do_meiosis,
+            ),
+        )
+        .add_systems(PostUpdate, cell_decay)
+        .run();
 }
 
 // Spawn cells and chemicals
@@ -93,23 +108,10 @@ fn setup(mut commands: Commands) {
         ));
     }
 
-    // Spawn chemicals
-    let chemical_bounds = (DISH_SIZE - CHEMICAL_SIZE) / 2.;
-    for _ in 0..STARTING_CHEMICAL_NUM {
-        commands.spawn((
-            Chemical { energy: CHEMICAL_ENERGY },
-            Sprite {
-                color: Color::linear_rgb(1., 0., 0.),
-                custom_size: Some(Vec2::splat(CHEMICAL_SIZE)),
-                ..Default::default()
-            },
-            Transform::from_xyz(
-                rng.random_range(-chemical_bounds.x..chemical_bounds.x),
-                rng.random_range(-chemical_bounds.y..chemical_bounds.y),
-                0.,
-            ),
-        ));
-    }
+    commands.insert_resource(ChemicalTimer(Timer::from_seconds(
+        1. / CHEMICAL_SPAWN_RATE,
+        TimerMode::Repeating,
+    )))
 }
 
 // Move cells smoothly
@@ -178,7 +180,7 @@ fn cells_absorb_chemical(
                 let chemical_aabb = Aabb2d::new(chemical_transform.translation.xy(), chemical_size / 2.);
 
                 // Collision detected
-                if cell_aabb.contains(&chemical_aabb) {
+                if cell_aabb.intersects(&chemical_aabb) {
                     // Gain energy then resize cell based on new energy
                     cell.energy += chemical.energy;
                     cell_sprite.custom_size = Some(cell.get_size());
@@ -215,6 +217,54 @@ fn cells_do_meiosis(mut commands: Commands, mut query: Query<(&Transform, &mut C
             // Change cell energy and velocity, then resize cell
             cell.energy /= 2.;
             cell.velocity = v1 * magnitude_scale;
+            sprite.custom_size = Some(cell.get_size());
+        }
+    }
+}
+
+fn spawn_chemicals(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut timer: ResMut<ChemicalTimer>,
+    chemicals: Query<(), With<Chemical>>,
+) {
+    timer.0.tick(time.delta());
+
+    if chemicals.count() < CHEMICAL_MAX_NUM {
+        // Spawn a random chemical depending on the spawn rate
+        if timer.0.just_finished() {
+            let mut rng = rand::rng();
+
+            let chemical_bounds = (DISH_SIZE - CHEMICAL_SIZE) / 2.;
+            commands.spawn((
+                Chemical { energy: CHEMICAL_ENERGY },
+                Sprite {
+                    color: Color::linear_rgb(1., 0., 0.),
+                    custom_size: Some(Vec2::splat(CHEMICAL_SIZE)),
+                    ..Default::default()
+                },
+                Transform::from_xyz(
+                    rng.random_range(-chemical_bounds.x..chemical_bounds.x),
+                    rng.random_range(-chemical_bounds.y..chemical_bounds.y),
+                    0.,
+                ),
+            ));
+        }
+    }
+}
+
+fn cell_decay(mut commands: Commands, time: Res<Time>, mut query: Query<(&mut Cell, &mut Sprite, Entity)>) {
+    let dt = time.delta().as_secs_f32();
+
+    for (mut cell, mut sprite, entity) in query.iter_mut() {
+        // Reduce energy
+        cell.energy -= CELL_ENERGY_DECAY * dt;
+
+        // Remove cell if its too small
+        if cell.energy <= 0.0 {
+            commands.entity(entity).despawn();
+        } else {
+            // Resize the cell
             sprite.custom_size = Some(cell.get_size());
         }
     }
