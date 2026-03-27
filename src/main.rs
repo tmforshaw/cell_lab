@@ -5,11 +5,14 @@ use bevy::{
 
 use rand::RngExt;
 
+use std::f32::consts::PI;
+
 // Cell parameters
 const CELL_ENERGY: f32 = 10.;
 const CELL_MAX_VELOCITY: f32 = 50.;
 const RANDOM_ACCELERATION: f32 = 10.;
 const STARTING_CELL_NUM: u32 = 20;
+const CELL_DIVISION_ENERGY: f32 = 20.;
 
 // Dish parameters
 const DISH_SIZE: Vec2 = Vec2::new(800., 800.);
@@ -17,13 +20,14 @@ const DISH_COLOUR: Color = Color::linear_rgb(0.2, 0.2, 0.2);
 
 // Chemical parameters
 const CHEMICAL_SIZE: f32 = 10.;
+const CHEMICAL_ENERGY: f32 = 10.;
 const STARTING_CHEMICAL_NUM: u32 = 50;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_systems(Startup, setup)
-        .add_systems(Update, (move_cells, bound_cells, cells_absorb_chemical))
+        .add_systems(Update, (move_cells, bound_cells, cells_absorb_chemical, cells_do_meiosis))
         .run();
 }
 
@@ -93,7 +97,7 @@ fn setup(mut commands: Commands) {
     let chemical_bounds = (DISH_SIZE - CHEMICAL_SIZE) / 2.;
     for _ in 0..STARTING_CHEMICAL_NUM {
         commands.spawn((
-            Chemical { energy: 10.0 },
+            Chemical { energy: CHEMICAL_ENERGY },
             Sprite {
                 color: Color::linear_rgb(1., 0., 0.),
                 custom_size: Some(Vec2::splat(CHEMICAL_SIZE)),
@@ -183,6 +187,35 @@ fn cells_absorb_chemical(
                     commands.entity(chemical_entity).despawn();
                 }
             }
+        }
+    }
+}
+
+fn cells_do_meiosis(mut commands: Commands, mut query: Query<(&Transform, &mut Cell, &mut Sprite)>) {
+    for (transform, mut cell, mut sprite) in query.iter_mut() {
+        if cell.energy > CELL_DIVISION_ENERGY {
+            // Generate a random angle for the velocity
+            let angle = rand::rng().random::<f32>() * PI;
+
+            // Rotate the velocity to match these angles
+            let v1 = cell.velocity.rotate(Vec2::from_angle(angle / 2.));
+            let v2 = cell.velocity.rotate(Vec2::from_angle(-angle / 2.));
+
+            // Scale the magnitude so it conserves momentum
+            let magnitude_scale = cell.velocity.length() / (v1 + v2).length();
+
+            // Create a new cell
+            commands.spawn(Cell::new_bundle(
+                cell.energy / 2.,
+                v2 * magnitude_scale,
+                transform.translation.xy(),
+                sprite.color,
+            ));
+
+            // Change cell energy and velocity, then resize cell
+            cell.energy /= 2.;
+            cell.velocity = v1 * magnitude_scale;
+            sprite.custom_size = Some(cell.get_size());
         }
     }
 }
