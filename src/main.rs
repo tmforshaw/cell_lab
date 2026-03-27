@@ -1,10 +1,12 @@
-use bevy::prelude::*;
+use bevy::{
+    math::bounding::{Aabb2d, BoundingVolume},
+    prelude::*,
+};
 
 use rand::RngExt;
 
 // Cell parameters
 const CELL_ENERGY: f32 = 10.;
-const CELL_MAX_SIZE: f32 = 20.;
 const CELL_MAX_VELOCITY: f32 = 50.;
 const RANDOM_ACCELERATION: f32 = 10.;
 const STARTING_CELL_NUM: u32 = 20;
@@ -21,28 +23,33 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_systems(Startup, setup)
-        .add_systems(Update, (move_cells, bound_cells))
+        .add_systems(Update, (move_cells, bound_cells, cells_absorb_chemical))
         .run();
 }
 
 // Components
-#[derive(Component)]
+#[derive(Component, Clone)]
 struct Cell {
     energy: f32,
     velocity: Vec2,
 }
 
 impl Cell {
-    fn new_bundle(energy: f32, velocity: Vec2, position: Vec2, colour: Color, radius: f32) -> impl Bundle {
+    fn new_bundle(energy: f32, velocity: Vec2, position: Vec2, colour: Color) -> impl Bundle {
+        let cell = Self { energy, velocity };
         (
-            Self { energy, velocity },
+            cell.clone(),
             Transform::from_translation(position.extend(0.)),
             Sprite {
                 color: colour,
-                custom_size: Some(Vec2::splat(radius)),
+                custom_size: Some(cell.get_size()),
                 ..default()
             },
         )
+    }
+
+    fn get_size(&self) -> Vec2 {
+        Vec2::splat(self.energy * 2.)
     }
 }
 
@@ -79,7 +86,6 @@ fn setup(mut commands: Commands) {
                 rng.random_range((-DISH_SIZE.y / 2.)..(DISH_SIZE.y / 2.)),
             ),
             Color::linear_rgb(0., 1., 0.),
-            CELL_MAX_SIZE,
         ));
     }
 
@@ -150,6 +156,33 @@ fn bound_cells(mut query: Query<(&mut Transform, &mut Cell, &Sprite)>) {
         } else if transform.translation.y >= bounds.y {
             cell.velocity.y *= -1.;
             transform.translation.y = bounds.y;
+        }
+    }
+}
+
+fn cells_absorb_chemical(
+    mut commands: Commands,
+    mut cell_query: Query<(&Transform, &mut Cell, &mut Sprite), Without<Chemical>>,
+    chemical_query: Query<(&Transform, &Chemical, &Sprite, Entity), Without<Cell>>,
+) {
+    for (cell_transform, mut cell, mut cell_sprite) in cell_query.iter_mut() {
+        for (chemical_transform, chemical, chemical_sprite, chemical_entity) in chemical_query.iter() {
+            // They both have sizes defined
+            if let (Some(cell_size), Some(chemical_size)) = (cell_sprite.custom_size, chemical_sprite.custom_size) {
+                // Generate bounding boxes
+                let cell_aabb = Aabb2d::new(cell_transform.translation.xy(), cell_size / 2.);
+                let chemical_aabb = Aabb2d::new(chemical_transform.translation.xy(), chemical_size / 2.);
+
+                // Collision detected
+                if cell_aabb.contains(&chemical_aabb) {
+                    // Gain energy then resize cell based on new energy
+                    cell.energy += chemical.energy;
+                    cell_sprite.custom_size = Some(cell.get_size());
+
+                    // Despawn the chemical
+                    commands.entity(chemical_entity).despawn();
+                }
+            }
         }
     }
 }
