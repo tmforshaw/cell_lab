@@ -6,17 +6,20 @@
 #![allow(clippy::cast_possible_truncation)]
 #![allow(clippy::cast_precision_loss)]
 
-use bevy::prelude::*;
+use bevy::{prelude::*, sprite_render::Material2dPlugin};
 
 use crate::{
     cell::{bound_cells, cell_decay, cells_absorb_chemical, cells_do_meiosis, increment_cell_age, move_cells},
-    chemical::{ChemicalTimer, spawn_chemicals},
+    cell_editor::{exit_cell_editor_mode, init_cell_editor_mode},
+    cell_material::CellMaterial,
+    chemical::{ChemicalMaterial, ChemicalTimer, spawn_chemicals},
     input::{cell_editor_mode_keyboard_event_reader, play_mode_keyboard_event_reader},
-    state::{GameMode, GameState, exit_cell_editor_mode, exit_play_mode, init_cell_editor_mode, init_play_mode},
+    state::{GameMode, GameState, exit_play_mode, init_play_mode},
 };
 
 pub mod cell;
 pub mod cell_editor;
+pub mod cell_material;
 pub mod chemical;
 pub mod dish;
 pub mod genome;
@@ -27,8 +30,10 @@ pub mod state;
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .init_state::<GameMode>()
-        // .insert_state(GameMode::CellEditor)
+        .add_plugins(Material2dPlugin::<CellMaterial>::default())
+        .add_plugins(Material2dPlugin::<ChemicalMaterial>::default())
+        // .init_state::<GameMode>()
+        .insert_state(GameMode::CellEditor)
         .init_resource::<GameState>()
         .init_resource::<ChemicalTimer>()
         .add_systems(Startup, setup)

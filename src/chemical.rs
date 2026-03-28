@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, render::render_resource::AsBindGroup, shader::ShaderRef, sprite_render::Material2d};
 
 use crate::{helpers::random_vec2, state::GameState};
 
@@ -7,6 +7,7 @@ const CHEMICAL_SIZE: f32 = 20.;
 const CHEMICAL_ENERGY: f32 = 10.;
 const CHEMICAL_SPAWN_RATE: f32 = 10.;
 const CHEMICAL_MAX_NUM: usize = 400;
+const CHEMICAL_COLOUR: Color = Color::linear_rgba(0.5, 0.1, 0.1, 0.75);
 
 #[derive(Component)]
 pub struct Chemical {
@@ -25,6 +26,8 @@ impl Default for ChemicalTimer {
 #[allow(clippy::needless_pass_by_value)]
 pub fn spawn_chemicals(
     mut commands: Commands,
+    mut materials: ResMut<Assets<ChemicalMaterial>>,
+    mut meshes: ResMut<Assets<Mesh>>,
     time: Res<Time>,
     state: Res<GameState>,
     mut timer: ResMut<ChemicalTimer>,
@@ -41,13 +44,31 @@ pub fn spawn_chemicals(
 
             commands.spawn((
                 Chemical { energy: CHEMICAL_ENERGY },
-                Sprite {
-                    color: Color::linear_rgb(1., 0., 0.),
-                    custom_size: Some(Vec2::splat(CHEMICAL_SIZE)),
-                    ..Default::default()
-                },
-                Transform::from_xyz(random_pos.x, random_pos.y, 0.),
+                Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
+                MeshMaterial2d(materials.add(ChemicalMaterial::new(CHEMICAL_COLOUR))),
+                Transform::from_xyz(random_pos.x, random_pos.y, 0.5).with_scale(Vec2::splat(CHEMICAL_SIZE).extend(1.)),
             ));
+        }
+    }
+}
+
+#[derive(AsBindGroup, Asset, TypePath, Debug, Clone)]
+pub struct ChemicalMaterial {
+    #[uniform(0)]
+    pub colour: Vec4,
+}
+
+impl Material2d for ChemicalMaterial {
+    fn fragment_shader() -> ShaderRef {
+        "shaders/chemical_material.wgsl".into()
+    }
+}
+
+impl ChemicalMaterial {
+    #[must_use]
+    pub fn new(colour: Color) -> Self {
+        Self {
+            colour: colour.to_linear().to_vec4(),
         }
     }
 }
