@@ -14,7 +14,8 @@ pub struct GameState {
 }
 
 impl GameState {
-    pub fn new(dish: Dish) -> Self {
+    #[must_use]
+    pub const fn new(dish: Dish) -> Self {
         Self { dish }
     }
 }
@@ -27,7 +28,7 @@ pub enum GameMode {
 }
 
 // ---------------------------- Play Mode -----------------------------
-
+#[allow(clippy::needless_pass_by_value)]
 pub fn init_play_mode(mut commands: Commands, state: Res<GameState>) {
     // Show dish
     commands.spawn(state.dish.into_bundle());

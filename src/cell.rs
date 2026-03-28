@@ -24,6 +24,7 @@ pub struct Cell {
 }
 
 impl Cell {
+    #[must_use]
     pub fn new_bundle(energy: f32, velocity: Vec2, position: Vec2, colour: Color) -> impl Bundle {
         let cell = Self { energy, velocity };
         (
@@ -37,17 +38,19 @@ impl Cell {
         )
     }
 
+    #[must_use]
     pub fn get_size(&self) -> Vec2 {
         Vec2::splat(self.energy * 2.)
     }
 }
 
 // Move cells smoothly
+#[allow(clippy::needless_pass_by_value)]
 pub fn move_cells(time: Res<Time>, mut query: Query<(&mut Transform, &mut Cell)>) {
     let dt = time.delta().as_secs_f32();
     let mut rng = rand::rng();
 
-    for (mut transform, mut cell) in query.iter_mut() {
+    for (mut transform, mut cell) in &mut query {
         // Slight random acceleration
         cell.velocity += Vec2::new(
             rng.random_range(-RANDOM_ACCELERATION..RANDOM_ACCELERATION),
@@ -64,13 +67,10 @@ pub fn move_cells(time: Res<Time>, mut query: Query<(&mut Transform, &mut Cell)>
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn bound_cells(state: Res<GameState>, mut query: Query<(&mut Transform, &mut Cell, &Sprite)>) {
-    for (mut transform, mut cell, sprite) in query.iter_mut() {
-        let size = if let Some(size) = sprite.custom_size {
-            size
-        } else {
-            Vec2::splat(0.)
-        };
+    for (mut transform, mut cell, sprite) in &mut query {
+        let size = sprite.custom_size.unwrap_or_else(|| Vec2::splat(0.));
 
         let bounds = (state.dish.size - size) / 2.;
 
@@ -99,7 +99,7 @@ pub fn cells_absorb_chemical(
     mut cell_query: Query<(&Transform, &mut Cell, &mut Sprite), Without<Chemical>>,
     chemical_query: Query<(&Transform, &Chemical, &Sprite, Entity), Without<Cell>>,
 ) {
-    for (cell_transform, mut cell, mut cell_sprite) in cell_query.iter_mut() {
+    for (cell_transform, mut cell, mut cell_sprite) in &mut cell_query {
         for (chemical_transform, chemical, chemical_sprite, chemical_entity) in chemical_query.iter() {
             // They both have sizes defined
             if let (Some(cell_size), Some(chemical_size)) = (cell_sprite.custom_size, chemical_sprite.custom_size) {
@@ -122,7 +122,7 @@ pub fn cells_absorb_chemical(
 }
 
 pub fn cells_do_meiosis(mut commands: Commands, mut query: Query<(&Transform, &mut Cell, &mut Sprite)>) {
-    for (transform, mut cell, mut sprite) in query.iter_mut() {
+    for (transform, mut cell, mut sprite) in &mut query {
         if cell.energy > CELL_DIVISION_ENERGY {
             // Generate a random angle for the velocity
             let angle = rand::rng().random::<f32>() * PI;
@@ -150,10 +150,11 @@ pub fn cells_do_meiosis(mut commands: Commands, mut query: Query<(&Transform, &m
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn cell_decay(mut commands: Commands, time: Res<Time>, mut query: Query<(&mut Cell, &mut Sprite, Entity)>) {
     let dt = time.delta().as_secs_f32();
 
-    for (mut cell, mut sprite, entity) in query.iter_mut() {
+    for (mut cell, mut sprite, entity) in &mut query {
         // Reduce energy
         cell.energy -= CELL_ENERGY_DECAY * dt;
 

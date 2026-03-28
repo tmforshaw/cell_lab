@@ -22,6 +22,7 @@ impl Default for ChemicalTimer {
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn spawn_chemicals(
     mut commands: Commands,
     time: Res<Time>,

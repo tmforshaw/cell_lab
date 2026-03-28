@@ -12,6 +12,7 @@ pub struct Dish {
 pub struct DishMarker;
 
 impl Dish {
+    #[must_use]
     pub fn into_bundle(&self) -> impl Bundle {
         (
             Sprite {

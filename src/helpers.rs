@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use rand::RngExt;
 
+#[must_use]
 pub fn random_vec2(size: Vec2) -> Vec2 {
     let mut rng = rand::rng();
 
