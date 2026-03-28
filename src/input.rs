@@ -2,7 +2,7 @@ use bevy::{input::keyboard::KeyboardInput, prelude::*};
 
 use crate::state::GameMode;
 
-pub fn keyboard_event_system_play_mode(mut events: MessageReader<KeyboardInput>, mut next_mode: ResMut<NextState<GameMode>>) {
+pub fn play_mode_keyboard_event_reader(mut events: MessageReader<KeyboardInput>, mut next_mode: ResMut<NextState<GameMode>>) {
     for ev in events.read() {
         // TODO
         #[allow(clippy::single_match)]
@@ -13,7 +13,7 @@ pub fn keyboard_event_system_play_mode(mut events: MessageReader<KeyboardInput>,
     }
 }
 
-pub fn keyboard_event_system_cell_editor_mode(
+pub fn cell_editor_mode_keyboard_event_reader(
     mut events: MessageReader<KeyboardInput>,
     mut next_mode: ResMut<NextState<GameMode>>,
 ) {

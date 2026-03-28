@@ -9,15 +9,17 @@
 use bevy::prelude::*;
 
 use crate::{
-    cell::{bound_cells, cell_decay, cells_absorb_chemical, cells_do_meiosis, move_cells},
+    cell::{bound_cells, cell_decay, cells_absorb_chemical, cells_do_meiosis, increment_cell_age, move_cells},
     chemical::{ChemicalTimer, spawn_chemicals},
-    input::{keyboard_event_system_cell_editor_mode, keyboard_event_system_play_mode},
+    input::{cell_editor_mode_keyboard_event_reader, play_mode_keyboard_event_reader},
     state::{GameMode, GameState, exit_cell_editor_mode, exit_play_mode, init_cell_editor_mode, init_play_mode},
 };
 
 pub mod cell;
+pub mod cell_editor;
 pub mod chemical;
 pub mod dish;
+pub mod genome;
 pub mod helpers;
 pub mod input;
 pub mod state;
@@ -25,8 +27,8 @@ pub mod state;
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        // .init_state::<GameMode>()
-        .insert_state(GameMode::CellEditor)
+        .init_state::<GameMode>()
+        // .insert_state(GameMode::CellEditor)
         .init_resource::<GameState>()
         .init_resource::<ChemicalTimer>()
         .add_systems(Startup, setup)
@@ -35,7 +37,8 @@ fn main() {
         .add_systems(
             Update,
             (
-                keyboard_event_system_play_mode,
+                play_mode_keyboard_event_reader,
+                increment_cell_age,
                 spawn_chemicals,
                 move_cells,
                 bound_cells,
@@ -50,7 +53,7 @@ fn main() {
         .add_systems(OnEnter(GameMode::CellEditor), init_cell_editor_mode)
         .add_systems(
             Update,
-            (keyboard_event_system_cell_editor_mode,).run_if(in_state(GameMode::CellEditor)),
+            (cell_editor_mode_keyboard_event_reader,).run_if(in_state(GameMode::CellEditor)),
         )
         .add_systems(OnExit(GameMode::CellEditor), exit_cell_editor_mode)
         // ---------------------------------------------------------------------

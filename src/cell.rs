@@ -9,6 +9,9 @@ use std::f32::consts::PI;
 
 use crate::{chemical::Chemical, state::GameState};
 
+#[derive(Component)]
+pub struct Velocity(Vec2);
+
 // Cell parameters
 pub const CELL_ENERGY: f32 = 10.;
 pub const CELL_MAX_VELOCITY: f32 = 100.;
@@ -20,15 +23,16 @@ const CELL_ENERGY_DECAY: f32 = 1.;
 #[derive(Component, Clone)]
 pub struct Cell {
     pub energy: f32,
-    pub velocity: Vec2,
+    pub age: f32,
 }
 
 impl Cell {
     #[must_use]
     pub fn new_bundle(energy: f32, velocity: Vec2, position: Vec2, colour: Color) -> impl Bundle {
-        let cell = Self { energy, velocity };
+        let cell = Self { energy, age: 0. };
         (
             cell.clone(),
+            Velocity(velocity),
             Transform::from_translation(position.extend(0.)),
             Sprite {
                 color: colour,
@@ -44,51 +48,60 @@ impl Cell {
     }
 }
 
+// Make cells age up
+#[allow(clippy::needless_pass_by_value)]
+pub fn increment_cell_age(time: Res<Time>, mut query: Query<&mut Cell>) {
+    let dt = time.delta_secs();
+    for mut cell in &mut query {
+        cell.age += dt;
+    }
+}
+
 // Move cells smoothly
 #[allow(clippy::needless_pass_by_value)]
-pub fn move_cells(time: Res<Time>, mut query: Query<(&mut Transform, &mut Cell)>) {
+pub fn move_cells(time: Res<Time>, mut query: Query<(&mut Transform, &mut Velocity), With<Cell>>) {
     let dt = time.delta().as_secs_f32();
     let mut rng = rand::rng();
 
-    for (mut transform, mut cell) in &mut query {
+    for (mut transform, mut velocity) in &mut query {
         // Slight random acceleration
-        cell.velocity += Vec2::new(
+        velocity.0 += Vec2::new(
             rng.random_range(-RANDOM_ACCELERATION..RANDOM_ACCELERATION),
             rng.random_range(-RANDOM_ACCELERATION..RANDOM_ACCELERATION),
         ) * dt;
 
         // Clamp speed
-        cell.velocity = cell
-            .velocity
+        velocity.0 = velocity
+            .0
             .clamp(Vec2::splat(-CELL_MAX_VELOCITY), Vec2::splat(CELL_MAX_VELOCITY));
 
         // Move
-        transform.translation += (cell.velocity * dt).extend(0.);
+        transform.translation += (velocity.0 * dt).extend(0.);
     }
 }
 
 #[allow(clippy::needless_pass_by_value)]
-pub fn bound_cells(state: Res<GameState>, mut query: Query<(&mut Transform, &mut Cell, &Sprite)>) {
-    for (mut transform, mut cell, sprite) in &mut query {
+pub fn bound_cells(state: Res<GameState>, mut query: Query<(&mut Transform, &mut Velocity, &Sprite), With<Cell>>) {
+    for (mut transform, mut velocity, sprite) in &mut query {
         let size = sprite.custom_size.unwrap_or_else(|| Vec2::splat(0.));
 
         let bounds = (state.dish.size - size) / 2.;
 
         // X Bound Collision Resolution
         if transform.translation.x <= -bounds.x {
-            cell.velocity.x *= -1.;
+            velocity.0.x *= -1.;
             transform.translation.x = -bounds.x;
         } else if transform.translation.x >= bounds.x {
-            cell.velocity.x *= -1.;
+            velocity.0.x *= -1.;
             transform.translation.x = bounds.x;
         }
 
         // Y Bound Collision Resolution
         if transform.translation.y <= -bounds.y {
-            cell.velocity.y *= -1.;
+            velocity.0.y *= -1.;
             transform.translation.y = -bounds.y;
         } else if transform.translation.y >= bounds.y {
-            cell.velocity.y *= -1.;
+            velocity.0.y *= -1.;
             transform.translation.y = bounds.y;
         }
     }
@@ -121,18 +134,18 @@ pub fn cells_absorb_chemical(
     }
 }
 
-pub fn cells_do_meiosis(mut commands: Commands, mut query: Query<(&Transform, &mut Cell, &mut Sprite)>) {
-    for (transform, mut cell, mut sprite) in &mut query {
+pub fn cells_do_meiosis(mut commands: Commands, mut query: Query<(&Transform, &mut Cell, &mut Velocity, &mut Sprite)>) {
+    for (transform, mut cell, mut velocity, mut sprite) in &mut query {
         if cell.energy > CELL_DIVISION_ENERGY {
             // Generate a random angle for the velocity
             let angle = rand::rng().random::<f32>() * PI;
 
             // Rotate the velocity to match these angles
-            let v1 = cell.velocity.rotate(Vec2::from_angle(angle / 2.));
-            let v2 = cell.velocity.rotate(Vec2::from_angle(-angle / 2.));
+            let v1 = velocity.0.rotate(Vec2::from_angle(angle / 2.));
+            let v2 = velocity.0.rotate(Vec2::from_angle(-angle / 2.));
 
             // Scale the magnitude so it conserves momentum
-            let magnitude_scale = cell.velocity.length() / (v1 + v2).length();
+            let magnitude_scale = velocity.0.length() / (v1 + v2).length();
 
             // Create a new cell
             commands.spawn(Cell::new_bundle(
@@ -144,7 +157,7 @@ pub fn cells_do_meiosis(mut commands: Commands, mut query: Query<(&Transform, &m
 
             // Change cell energy and velocity, then resize cell
             cell.energy /= 2.;
-            cell.velocity = v1 * magnitude_scale;
+            velocity.0 = v1 * magnitude_scale;
             sprite.custom_size = Some(cell.get_size());
         }
     }

@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+use crate::cell_editor::CellEditorState;
 use crate::chemical::Chemical;
 use crate::dish::{Dish, DishMarker};
 
@@ -69,10 +70,12 @@ pub fn exit_play_mode(
 // ------------------------- Cell Editor Mode --------------------------
 
 pub fn init_cell_editor_mode(mut commands: Commands) {
+    commands.init_resource::<CellEditorState>();
+
     commands.spawn((
         Sprite {
-            color: Color::linear_rgb(1., 0., 0.),
-            custom_size: Some(Vec2::splat(50.)),
+            color: Color::linear_rgb(0.2, 0.2, 0.2),
+            custom_size: Some(Vec2::splat(1200.)),
             ..default()
         },
         Transform::from_xyz(0., 0., 0.),
@@ -81,6 +84,8 @@ pub fn init_cell_editor_mode(mut commands: Commands) {
 }
 
 pub fn exit_cell_editor_mode(mut commands: Commands, dishes: Query<Entity, With<DishMarker>>) {
+    commands.remove_resource::<CellEditorState>();
+
     for entity in dishes.iter() {
         commands.entity(entity).despawn();
     }
