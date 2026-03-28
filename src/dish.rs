@@ -8,13 +8,19 @@ pub struct Dish {
     pub size: Vec2,
 }
 
+#[derive(Component)]
+pub struct DishMarker;
+
 impl Dish {
-    pub fn into_sprite(&self) -> Sprite {
-        Sprite {
-            color: DISH_COLOUR,
-            custom_size: Some(self.size),
-            ..default()
-        }
+    pub fn into_bundle(&self) -> impl Bundle {
+        (
+            Sprite {
+                color: DISH_COLOUR,
+                custom_size: Some(self.size),
+                ..default()
+            },
+            DishMarker,
+        )
     }
 }
 
