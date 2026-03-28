@@ -7,10 +7,11 @@
 #![allow(clippy::cast_precision_loss)]
 
 use bevy::{prelude::*, sprite_render::Material2dPlugin};
+use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
 
 use crate::{
     cell::{bound_cells, cell_decay, cells_absorb_chemical, cells_do_meiosis, increment_cell_age, move_cells},
-    cell_editor::{exit_cell_editor_mode, init_cell_editor_mode},
+    cell_editor::{CellEditorState, UiCustomStyleApplied, cell_editor_ui_update, exit_cell_editor_mode, init_cell_editor_mode},
     cell_material::CellMaterial,
     chemical::{ChemicalMaterial, ChemicalTimer, spawn_chemicals},
     input::{cell_editor_mode_keyboard_event_reader, play_mode_keyboard_event_reader},
@@ -30,14 +31,19 @@ pub mod state;
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
+        .add_plugins(EguiPlugin::default())
         .add_plugins(Material2dPlugin::<CellMaterial>::default())
         .add_plugins(Material2dPlugin::<ChemicalMaterial>::default())
         // .init_state::<GameMode>()
         .insert_state(GameMode::CellEditor)
         .init_resource::<GameState>()
         .init_resource::<ChemicalTimer>()
+        .init_resource::<UiCustomStyleApplied>()
+        .init_resource::<CellEditorState>()
         .add_systems(Startup, setup)
+        //
         // ---------------------------- Play Mode -----------------------------
+        //
         .add_systems(OnEnter(GameMode::Play), init_play_mode)
         .add_systems(
             Update,
@@ -54,13 +60,20 @@ fn main() {
         )
         .add_systems(PostUpdate, (cell_decay).run_if(in_state(GameMode::Play)))
         .add_systems(OnExit(GameMode::Play), exit_play_mode)
+        //
         // ------------------------- Cell Editor Mode --------------------------
+        //
         .add_systems(OnEnter(GameMode::CellEditor), init_cell_editor_mode)
         .add_systems(
             Update,
             (cell_editor_mode_keyboard_event_reader,).run_if(in_state(GameMode::CellEditor)),
         )
+        .add_systems(
+            EguiPrimaryContextPass,
+            cell_editor_ui_update.run_if(in_state(GameMode::CellEditor)),
+        )
         .add_systems(OnExit(GameMode::CellEditor), exit_cell_editor_mode)
+        //
         // ---------------------------------------------------------------------
         .run();
 }

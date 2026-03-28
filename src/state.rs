@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 
-use crate::cell_editor::CellEditorState;
 use crate::cell_material::CellMaterial;
 use crate::chemical::Chemical;
 use crate::dish::{Dish, DishMarker};
