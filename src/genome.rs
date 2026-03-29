@@ -4,6 +4,7 @@ use bevy::prelude::*;
 pub enum CellType {
     #[default]
     Phagocyte,
+    Photocyte,
 }
 
 impl std::fmt::Display for CellType {
@@ -13,6 +14,7 @@ impl std::fmt::Display for CellType {
             "{}",
             match &self {
                 Self::Phagocyte => "Phagocyte",
+                Self::Photocyte => "Photocyte",
             },
         )
     }
@@ -71,21 +73,37 @@ pub enum GenomeId {
 impl From<GenomeId> for usize {
     fn from(value: GenomeId) -> Self {
         match value {
-            GenomeId::M1 => 1,
-            GenomeId::M2 => 2,
-            GenomeId::M3 => 3,
-            GenomeId::M4 => 4,
-            GenomeId::M5 => 5,
-            GenomeId::M6 => 6,
-            GenomeId::M7 => 7,
-            GenomeId::M8 => 8,
-            GenomeId::M9 => 9,
+            GenomeId::M1 => 0,
+            GenomeId::M2 => 1,
+            GenomeId::M3 => 2,
+            GenomeId::M4 => 3,
+            GenomeId::M5 => 4,
+            GenomeId::M6 => 5,
+            GenomeId::M7 => 6,
+            GenomeId::M8 => 7,
+            GenomeId::M9 => 8,
+        }
+    }
+}
+
+impl From<usize> for GenomeId {
+    fn from(value: usize) -> Self {
+        match value {
+            1 => Self::M2,
+            2 => Self::M3,
+            3 => Self::M4,
+            4 => Self::M5,
+            5 => Self::M6,
+            6 => Self::M7,
+            7 => Self::M8,
+            8 => Self::M9,
+            _ => Self::M1,
         }
     }
 }
 
 impl std::fmt::Display for GenomeId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "M{}", Into::<usize>::into(*self))
+        write!(f, "M{}", Into::<usize>::into(*self) + 1)
     }
 }

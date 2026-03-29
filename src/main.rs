@@ -5,13 +5,18 @@
 #![warn(clippy::expect_used)]
 #![allow(clippy::cast_possible_truncation)]
 #![allow(clippy::cast_precision_loss)]
+#![allow(clippy::cast_sign_loss)]
+#![allow(clippy::cast_lossless)]
 
 use bevy::{prelude::*, sprite_render::Material2dPlugin};
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
 
 use crate::{
     cell::{bound_cells, cell_decay, cells_absorb_chemical, cells_do_meiosis, increment_cell_age, move_cells},
-    cell_editor::{CellEditorState, UiCustomStyleApplied, cell_editor_ui_update, exit_cell_editor_mode, init_cell_editor_mode},
+    cell_editor::{
+        CellEditorState, CellEditorUiStyleApplied, cell_editor_ui_update, exit_cell_editor_mode, init_cell_editor_mode,
+    },
+    cell_editor_events::{CellEditorMessage, add_selection_borders, cell_editor_message_reader, remove_selection_borders},
     cell_material::CellMaterial,
     chemical::{ChemicalMaterial, ChemicalTimer, spawn_chemicals},
     input::{cell_editor_mode_keyboard_event_reader, play_mode_keyboard_event_reader},
@@ -20,6 +25,7 @@ use crate::{
 
 pub mod cell;
 pub mod cell_editor;
+pub mod cell_editor_events;
 pub mod cell_material;
 pub mod chemical;
 pub mod dish;
@@ -27,6 +33,7 @@ pub mod genome;
 pub mod helpers;
 pub mod input;
 pub mod state;
+pub mod ui;
 
 fn main() {
     App::new()
@@ -38,9 +45,10 @@ fn main() {
         .insert_state(GameMode::CellEditor)
         .init_resource::<GameState>()
         .init_resource::<ChemicalTimer>()
-        .init_resource::<UiCustomStyleApplied>()
+        .init_resource::<CellEditorUiStyleApplied>()
         .init_resource::<CellEditorState>()
         .add_systems(Startup, setup)
+        .add_message::<CellEditorMessage>()
         //
         // ---------------------------- Play Mode -----------------------------
         //
@@ -66,7 +74,13 @@ fn main() {
         .add_systems(OnEnter(GameMode::CellEditor), init_cell_editor_mode)
         .add_systems(
             Update,
-            (cell_editor_mode_keyboard_event_reader,).run_if(in_state(GameMode::CellEditor)),
+            (
+                cell_editor_mode_keyboard_event_reader,
+                cell_editor_message_reader,
+                remove_selection_borders,
+                add_selection_borders,
+            )
+                .run_if(in_state(GameMode::CellEditor)),
         )
         .add_systems(
             EguiPrimaryContextPass,

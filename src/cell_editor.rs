@@ -1,25 +1,38 @@
 use bevy::prelude::*;
 use bevy_egui::{
     EguiContexts,
-    egui::{self, Ui, containers::ComboBox},
+    egui::{self, containers::ComboBox},
 };
 
 use crate::{
     cell::Cell,
+    cell_editor_events::{CellEditorMessage, CellEditorParameter},
     cell_material::CellMaterial,
     dish::DishMarker,
     genome::{CellType, GENOME_MAX_NUM, Genome, GenomeId},
+    ui::{
+        SEPARATOR_SPACING, SUBSECTION_SPACING, create_colour_edit_ui, create_daughter_subsection, create_mode_combo_box,
+        set_cell_editor_ui_style,
+    },
 };
 
 const CELL_EDITOR_WIDTH: f32 = 600.;
-const SEPARATOR_SPACING: f32 = 8.;
-const SUBSECTION_SPACING: f32 = 4.;
 
-#[derive(Resource, Default)]
+#[derive(Resource)]
 pub struct CellEditorState {
     selected_genome: GenomeId,
     age: f32,
     genomes: [Genome; GENOME_MAX_NUM],
+}
+
+impl Default for CellEditorState {
+    fn default() -> Self {
+        Self {
+            genomes: std::array::from_fn(|i| Genome::new(i.into())),
+            selected_genome: GenomeId::default(),
+            age: 0.,
+        }
+    }
 }
 
 impl CellEditorState {
@@ -35,27 +48,7 @@ impl CellEditorState {
 }
 
 #[derive(Resource, Default)]
-pub struct UiCustomStyleApplied(bool);
-
-pub fn create_mode_combo_box(
-    selected_genome: &mut GenomeId,
-    ui: &mut Ui,
-    id: impl std::hash::Hash,
-) -> bevy_egui::egui::InnerResponse<std::option::Option<()>> {
-    ComboBox::from_id_salt(id)
-        .selected_text(format!("{selected_genome}"))
-        .show_ui(ui, |ui| {
-            ui.selectable_value(selected_genome, GenomeId::M1, GenomeId::M1.to_string());
-            ui.selectable_value(selected_genome, GenomeId::M2, GenomeId::M2.to_string());
-            ui.selectable_value(selected_genome, GenomeId::M3, GenomeId::M3.to_string());
-            ui.selectable_value(selected_genome, GenomeId::M4, GenomeId::M4.to_string());
-            ui.selectable_value(selected_genome, GenomeId::M5, GenomeId::M5.to_string());
-            ui.selectable_value(selected_genome, GenomeId::M6, GenomeId::M6.to_string());
-            ui.selectable_value(selected_genome, GenomeId::M7, GenomeId::M7.to_string());
-            ui.selectable_value(selected_genome, GenomeId::M8, GenomeId::M8.to_string());
-            ui.selectable_value(selected_genome, GenomeId::M9, GenomeId::M9.to_string());
-        })
-}
+pub struct CellEditorUiStyleApplied(bool);
 
 // TODO
 #[allow(clippy::too_many_lines)]
@@ -64,7 +57,8 @@ pub fn create_mode_combo_box(
 pub fn cell_editor_ui_update(
     mut egui_ctx: EguiContexts,
     mut editor_state: ResMut<CellEditorState>,
-    mut ui_style_applied: ResMut<UiCustomStyleApplied>,
+    mut cell_editor_style_applied: ResMut<CellEditorUiStyleApplied>,
+    mut cell_editor_message_writer: MessageWriter<CellEditorMessage>,
 ) -> Result {
     let ctx = match egui_ctx.ctx_mut() {
         Ok(ctx) => ctx,
@@ -73,34 +67,8 @@ pub fn cell_editor_ui_update(
         }
     };
 
-    // Set the styles
-    if !ui_style_applied.0 {
-        let mut style = (*ctx.style()).clone();
-        for font_id in style.text_styles.values_mut() {
-            font_id.size *= 1.5; // Scale all fonts
-        }
-        style.spacing.slider_width = 400.;
-
-        // Colors for sliders
-        style.visuals.widgets.inactive.bg_fill = egui::Color32::from_rgb(0, 180, 10);
-        style.visuals.widgets.hovered.bg_fill = egui::Color32::from_rgb(255, 180, 0);
-        style.visuals.widgets.active.bg_fill = egui::Color32::from_rgb(255, 180, 0);
-
-        // Stroke styles
-        style.visuals.widgets.active.fg_stroke = egui::Stroke::new(2.0, egui::Color32::from_rgb(255, 180, 0));
-        style.visuals.widgets.hovered.fg_stroke = egui::Stroke::new(2.0, egui::Color32::from_rgb(255, 180, 0));
-
-        // Set the radius of the knob
-        style.visuals.widgets.active.corner_radius = egui::CornerRadius::same(12);
-        style.visuals.widgets.hovered.corner_radius = egui::CornerRadius::same(12);
-        style.visuals.widgets.inactive.corner_radius = egui::CornerRadius::same(12);
-
-        ctx.set_style(style);
-
-        ui_style_applied.0 = true;
-
-        println!("Set the global ui style");
-    }
+    // Set the cell editor UI style
+    set_cell_editor_ui_style(ctx, &mut cell_editor_style_applied.0);
 
     // Right panel
     egui::SidePanel::right("cell_editor_panel")
@@ -114,8 +82,13 @@ pub fn cell_editor_ui_update(
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     ui.label("Mode: ");
 
-                    create_mode_combo_box(&mut editor_state.selected_genome, ui, "selected_mode");
-                });
+                    if create_mode_combo_box(&mut editor_state.selected_genome, ui, "selected_mode") {
+                        // Selected genome was changed
+                        cell_editor_message_writer.write(CellEditorMessage {
+                            param: CellEditorParameter::SelectedGenome,
+                        });
+                    }
+                })
             });
 
             ui.add_space(SEPARATOR_SPACING);
@@ -128,11 +101,26 @@ pub fn cell_editor_ui_update(
                 ComboBox::from_id_salt("cell_type")
                     .selected_text(format!("{}", editor_state.get_selected_genome().cell_type))
                     .show_ui(ui, |ui| {
-                        ui.selectable_value(
-                            &mut editor_state.get_selected_genome_mut().cell_type,
-                            CellType::Phagocyte,
-                            CellType::Phagocyte.to_string(),
-                        );
+                        if ui
+                            .selectable_value(
+                                &mut editor_state.get_selected_genome_mut().cell_type,
+                                CellType::Phagocyte,
+                                CellType::Phagocyte.to_string(),
+                            )
+                            .changed()
+                            || ui
+                                .selectable_value(
+                                    &mut editor_state.get_selected_genome_mut().cell_type,
+                                    CellType::Photocyte,
+                                    CellType::Photocyte.to_string(),
+                                )
+                                .changed()
+                        {
+                            // Cell type was changed
+                            cell_editor_message_writer.write(CellEditorMessage {
+                                param: CellEditorParameter::CellType,
+                            });
+                        }
                     });
             });
 
@@ -141,53 +129,70 @@ pub fn cell_editor_ui_update(
             ui.add_space(SEPARATOR_SPACING);
 
             // Daughter 1 parameters
-            ui.label("Daughter 1: ");
-            ui.add_space(SUBSECTION_SPACING);
-            ui.horizontal(|ui| {
-                ui.label("Mode: ");
-                create_mode_combo_box(
-                    &mut editor_state.get_selected_genome_mut().daughter_genomes.0,
-                    ui,
-                    "daughter_0_mode",
-                );
-            });
-
-            ui.add_space(SEPARATOR_SPACING);
-            ui.separator();
-            ui.add_space(SEPARATOR_SPACING);
+            if create_daughter_subsection(ui, &mut editor_state.get_selected_genome_mut().daughter_genomes.0, 0) {
+                // Daughter 1 was changed
+                cell_editor_message_writer.write(CellEditorMessage {
+                    param: CellEditorParameter::Daughter1Mode,
+                });
+            }
 
             // Daughter 2 parameters
-            ui.label("Daughter 2: ");
-            ui.add_space(SUBSECTION_SPACING);
+            if create_daughter_subsection(ui, &mut editor_state.get_selected_genome_mut().daughter_genomes.1, 1) {
+                // Daughter 2 was changed
+                cell_editor_message_writer.write(CellEditorMessage {
+                    param: CellEditorParameter::Daughter2Mode,
+                });
+            }
+
+            // Colour selection
             ui.horizontal(|ui| {
-                ui.label("Mode: ");
-                create_mode_combo_box(
-                    &mut editor_state.get_selected_genome_mut().daughter_genomes.1,
-                    ui,
-                    "daughter_1_mode",
-                );
+                ui.label("Colour: ");
+
+                // Create a colour picker
+                if create_colour_edit_ui(ui, &mut editor_state.get_selected_genome_mut().colour) {
+                    // Colour was changed
+                    cell_editor_message_writer.write(CellEditorMessage {
+                        param: CellEditorParameter::Colour,
+                    });
+                }
             });
 
-            ui.add_space(SEPARATOR_SPACING);
-            ui.separator();
-            ui.add_space(SEPARATOR_SPACING);
+            ui.add_space(SUBSECTION_SPACING);
 
             // Split fraction parameter
             ui.horizontal(|ui| {
                 ui.label("Split Fraction: ");
-                ui.add(egui::Slider::new(
-                    &mut editor_state.get_selected_genome_mut().split_fraction,
-                    0.0..=1.0,
-                ));
+                if ui
+                    .add(egui::Slider::new(
+                        &mut editor_state.get_selected_genome_mut().split_fraction,
+                        0.0..=1.0,
+                    ))
+                    .changed()
+                {
+                    // Split fraction was changed
+                    cell_editor_message_writer.write(CellEditorMessage {
+                        param: CellEditorParameter::SplitFraction,
+                    });
+                }
             });
+
+            ui.add_space(SUBSECTION_SPACING);
 
             // Split threshold parameter
             ui.horizontal(|ui| {
                 ui.label("Split Threshold: ");
-                ui.add(egui::Slider::new(
-                    &mut editor_state.get_selected_genome_mut().split_threshold,
-                    0.0..=1.0,
-                ));
+                if ui
+                    .add(egui::Slider::new(
+                        &mut editor_state.get_selected_genome_mut().split_threshold,
+                        0.0..=1.0,
+                    ))
+                    .changed()
+                {
+                    // Split threshold was changed
+                    cell_editor_message_writer.write(CellEditorMessage {
+                        param: CellEditorParameter::SplitThreshold,
+                    });
+                }
             });
         });
 
@@ -200,7 +205,15 @@ pub fn cell_editor_ui_update(
 
             ui.horizontal_centered(|ui| {
                 ui.label("Age:");
-                ui.add(egui::Slider::new(&mut editor_state.age, 0.0..=100.0).show_value(true));
+                if ui
+                    .add(egui::Slider::new(&mut editor_state.age, 0.0..=100.0).show_value(true))
+                    .changed()
+                {
+                    // Age was changed
+                    cell_editor_message_writer.write(CellEditorMessage {
+                        param: CellEditorParameter::Age,
+                    });
+                }
             });
         });
 
