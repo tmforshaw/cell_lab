@@ -22,7 +22,7 @@ const CELL_ENERGY_DECAY: f32 = 1.;
 pub const MAX_CELL_AGE: f32 = 100.;
 pub const MAX_CELL_ENERGY: f32 = 100.;
 
-#[derive(Component, Clone)]
+#[derive(Component, Debug, Clone)]
 pub struct Cell {
     pub energy: f32,
     pub age: f32,
@@ -77,6 +77,8 @@ impl Cell {
         )
     }
 
+    //TODO
+    #[allow(clippy::too_many_arguments)]
     #[must_use]
     pub fn new_bundle_with_genome_and_age(
         energy: f32,

@@ -7,7 +7,7 @@ use bevy::prelude::*;
 
 use crate::cell::Cell;
 
-#[derive(Component, Default, Clone, Copy, PartialEq, PartialOrd, Ord, Eq)]
+#[derive(Component, Debug, Default, Clone, Copy, PartialEq, PartialOrd, Ord, Eq)]
 pub enum CellType {
     #[default]
     Phagocyte,
@@ -27,7 +27,7 @@ impl std::fmt::Display for CellType {
     }
 }
 
-#[derive(Component, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Component, Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum CellSplitType {
     Energy,
     #[default]
@@ -35,7 +35,7 @@ pub enum CellSplitType {
     Never,
 }
 
-#[derive(Component, Clone)]
+#[derive(Component, Debug, Clone)]
 pub struct Genome {
     pub id: GenomeId,
     pub cell_type: CellType,
@@ -79,7 +79,7 @@ impl Default for Genome {
 
 pub const GENOME_MAX_NUM: usize = 9;
 
-#[derive(Component, Default, PartialEq, PartialOrd, Ord, Eq, Clone, Copy)]
+#[derive(Component, Debug, Default, PartialEq, PartialOrd, Ord, Eq, Clone, Copy)]
 pub enum GenomeId {
     #[default]
     M1,

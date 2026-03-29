@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     cell::Cell,
-    cell_editor::events::SelectedCell,
+    cell_editor::{events::SelectedCell, history::SplitHistory},
     cell_material::CellMaterial,
     dish::DishMarker,
     genome::{Genome, GenomeBank, GenomeId},
@@ -13,6 +13,7 @@ pub struct CellEditorState {
     pub selected_genome: GenomeId,
     pub age: f32,
     pub genomes: GenomeBank,
+    pub history: SplitHistory,
 }
 
 impl CellEditorState {
@@ -30,10 +31,13 @@ impl CellEditorState {
 #[allow(clippy::needless_pass_by_value)]
 pub fn init_cell_editor_mode(
     mut commands: Commands,
-    state: Res<CellEditorState>,
+    mut state: ResMut<CellEditorState>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<CellMaterial>>,
 ) {
+    // Reset the simulation age
+    state.age = 0.;
+
     // Spawn bacground
     commands.spawn((
         Sprite {
