@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use bevy::prelude::*;
 
 use crate::{
@@ -109,7 +111,6 @@ pub fn split_cells(
 pub fn reverse_splits(
     mut commands: Commands,
     mut state: ResMut<CellEditorState>,
-    cells: Query<(Entity, &CellTimeOfBirth)>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<CellMaterial>>,
 ) {
@@ -118,15 +119,6 @@ pub fn reverse_splits(
         if state.age >= current.simulation_age {
             break;
         }
-
-        // Despawn any daughters which have age that is too low
-        for (entity, CellTimeOfBirth(birth)) in cells {
-            if *birth >= current.simulation_age {
-                commands.entity(entity).despawn();
-            }
-        }
-
-        println!("{:?}", current);
 
         // Restore the parent
         let bundle = Cell::new_bundle_with_genome_and_age(
@@ -150,5 +142,19 @@ pub fn reverse_splits(
 
         // Move the history back
         state.history.decrement_current();
+    }
+}
+
+#[allow(clippy::needless_pass_by_value)]
+pub fn remove_negative_aged_cells(
+    mut commands: Commands,
+    state: ResMut<CellEditorState>,
+    cells: Query<(Entity, &CellTimeOfBirth)>,
+) {
+    // Despawn any daughters which have age that is below the current simulation age
+    for (entity, CellTimeOfBirth(birth)) in cells {
+        if *birth > state.age {
+            commands.entity(entity).despawn();
+        }
     }
 }

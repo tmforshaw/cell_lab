@@ -279,8 +279,6 @@ pub fn set_cell_editor_ui_style(ctx: &mut Context, cell_editor_style_applied: &m
         ctx.set_style(style);
 
         *cell_editor_style_applied = true;
-
-        println!("Set cell editor UI style globally");
     }
 }
 

@@ -20,7 +20,7 @@ use crate::{
             cell_editor_initial_genome_message_reader, cell_editor_selected_genome_message_reader, remove_selection_borders,
         },
         state::{CellEditorState, exit_cell_editor_mode, init_cell_editor_mode},
-        systems::{reverse_splits, split_cells},
+        systems::{remove_negative_aged_cells, reverse_splits, split_cells},
         ui::{CellEditorUiStyleApplied, cell_editor_ui_update},
     },
     cell_material::CellMaterial,
@@ -94,6 +94,7 @@ fn main() {
                 remove_selection_borders,
                 add_selection_borders,
                 split_cells,
+                remove_negative_aged_cells,
                 reverse_splits,
             )
                 .run_if(in_state(GameMode::CellEditor)),
