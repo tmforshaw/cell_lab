@@ -1,3 +1,5 @@
+use std::ops::{Index, IndexMut};
+
 use bevy::prelude::*;
 
 #[derive(Component, Default, Clone, Copy, PartialEq, PartialOrd, Ord, Eq)]
@@ -105,5 +107,31 @@ impl From<usize> for GenomeId {
 impl std::fmt::Display for GenomeId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "M{}", Into::<usize>::into(*self) + 1)
+    }
+}
+
+pub struct GenomeBank {
+    bank: [Genome; GENOME_MAX_NUM],
+}
+
+impl Default for GenomeBank {
+    fn default() -> Self {
+        Self {
+            bank: std::array::from_fn(|i| Genome::new(i.into())),
+        }
+    }
+}
+
+impl Index<GenomeId> for GenomeBank {
+    type Output = Genome;
+
+    fn index(&self, index: GenomeId) -> &Self::Output {
+        &self.bank[Into::<usize>::into(index)]
+    }
+}
+
+impl IndexMut<GenomeId> for GenomeBank {
+    fn index_mut(&mut self, index: GenomeId) -> &mut Self::Output {
+        &mut self.bank[Into::<usize>::into(index)]
     }
 }

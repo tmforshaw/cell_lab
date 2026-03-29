@@ -9,7 +9,7 @@ use crate::{
     cell_editor_events::{CellEditorMessage, CellEditorParameter, SelectedCell},
     cell_material::CellMaterial,
     dish::DishMarker,
-    genome::{CellType, GENOME_MAX_NUM, Genome, GenomeId},
+    genome::{CellType, Genome, GenomeBank, GenomeId},
     ui::{
         SEPARATOR_SPACING, SUBSECTION_SPACING, create_colour_edit_ui, create_daughter_subsection, create_mode_combo_box,
         set_cell_editor_ui_style,
@@ -18,32 +18,22 @@ use crate::{
 
 const CELL_EDITOR_WIDTH: f32 = 600.;
 
-#[derive(Resource)]
+#[derive(Resource, Default)]
 pub struct CellEditorState {
-    selected_genome: GenomeId,
-    age: f32,
-    genomes: [Genome; GENOME_MAX_NUM],
-}
-
-impl Default for CellEditorState {
-    fn default() -> Self {
-        Self {
-            genomes: std::array::from_fn(|i| Genome::new(i.into())),
-            selected_genome: GenomeId::default(),
-            age: 0.,
-        }
-    }
+    pub selected_genome: GenomeId,
+    pub age: f32,
+    pub genomes: GenomeBank,
 }
 
 impl CellEditorState {
     #[must_use]
     pub fn get_selected_genome(&self) -> &Genome {
-        &self.genomes[Into::<usize>::into(self.selected_genome)]
+        &self.genomes[self.selected_genome]
     }
 
     #[must_use]
     pub fn get_selected_genome_mut(&mut self) -> &mut Genome {
-        &mut self.genomes[Into::<usize>::into(self.selected_genome)]
+        &mut self.genomes[self.selected_genome]
     }
 }
 

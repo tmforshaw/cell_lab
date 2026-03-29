@@ -7,7 +7,7 @@ use rand::RngExt;
 
 use std::f32::consts::PI;
 
-use crate::{cell_material::CellMaterial, chemical::Chemical, genome::Genome, state::PlayModeState};
+use crate::{cell_material::CellMaterial, chemical::Chemical, genome::GenomeId, state::PlayModeState};
 
 #[derive(Component)]
 pub struct Velocity(Vec2);
@@ -24,7 +24,7 @@ const CELL_ENERGY_DECAY: f32 = 1.;
 pub struct Cell {
     pub energy: f32,
     pub age: f32,
-    pub genome: Genome,
+    pub genome_id: GenomeId,
 }
 
 impl Cell {
@@ -40,7 +40,7 @@ impl Cell {
         let cell = Self {
             energy,
             age: 0.,
-            genome: Genome::default(),
+            genome_id: GenomeId::default(),
         };
         (
             cell.clone(),

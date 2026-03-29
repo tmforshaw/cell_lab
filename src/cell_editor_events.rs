@@ -28,33 +28,38 @@ pub struct CellEditorMessage {
     pub param: CellEditorParameter,
 }
 
+// TODO
 #[allow(clippy::needless_pass_by_value)]
+#[allow(clippy::too_many_arguments)]
 pub fn cell_editor_message_reader(
     mut events: MessageReader<CellEditorMessage>,
     mut commands: Commands,
     selected_entities: Query<Entity, With<SelectedCell>>,
     mut selected_materials: Query<&mut MeshMaterial2d<CellMaterial>, With<SelectedCell>>,
     state: Res<CellEditorState>,
-    cells: Query<(Entity, &Cell)>,
+    cells_with_entity: Query<(Entity, &Cell)>,
+    mut cells: Query<&mut Cell>,
     mut materials: ResMut<Assets<CellMaterial>>,
 ) {
     for ev in events.read() {
         match ev.param {
-            CellEditorParameter::Age => todo!(),
+            CellEditorParameter::Age => {
+                // Need to do something different for children, calculate age - time_of_birth
+                for mut cell in &mut cells {
+                    cell.age = state.age;
+                }
+            }
             CellEditorParameter::SelectedGenome => {
                 for entity in selected_entities {
                     commands.entity(entity).remove::<SelectedCell>();
                 }
 
-                for (entity, cell) in cells {
-                    if cell.genome.id == state.get_selected_genome().id {
+                for (entity, cell) in cells_with_entity {
+                    if cell.genome_id == state.get_selected_genome().id {
                         commands.entity(entity).insert(SelectedCell);
                     }
                 }
             }
-            CellEditorParameter::CellType => todo!(),
-            CellEditorParameter::Daughter1Mode => todo!(),
-            CellEditorParameter::Daughter2Mode => todo!(),
             CellEditorParameter::Colour => {
                 for material in &mut selected_materials {
                     if let Some(mat) = materials.get_mut(&material.0) {
@@ -62,8 +67,9 @@ pub fn cell_editor_message_reader(
                     }
                 }
             }
-            CellEditorParameter::SplitFraction => todo!(),
-            CellEditorParameter::SplitThreshold => todo!(),
+            _ => {
+                // All other events don't require anything since they modify the gene bank directly
+            }
         }
     }
 }
