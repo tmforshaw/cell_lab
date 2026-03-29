@@ -16,7 +16,11 @@ use crate::{
     cell_editor::{
         CellEditorState, CellEditorUiStyleApplied, cell_editor_ui_update, exit_cell_editor_mode, init_cell_editor_mode,
     },
-    cell_editor_events::{CellEditorMessage, add_selection_borders, cell_editor_message_reader, remove_selection_borders},
+    cell_editor_events::{
+        CellEditorAgeMessage, CellEditorColourMessage, CellEditorSelectedGenomeMessage, add_selection_borders,
+        cell_editor_age_message_reader, cell_editor_colour_message_reader, cell_editor_selected_genome_message_reader,
+        remove_selection_borders,
+    },
     cell_material::CellMaterial,
     chemical::{ChemicalMaterial, ChemicalTimer, spawn_chemicals},
     input::{cell_editor_mode_keyboard_event_reader, play_mode_keyboard_event_reader},
@@ -48,7 +52,9 @@ fn main() {
         .init_resource::<CellEditorUiStyleApplied>()
         .init_resource::<CellEditorState>()
         .add_systems(Startup, setup)
-        .add_message::<CellEditorMessage>()
+        .add_message::<CellEditorAgeMessage>()
+        .add_message::<CellEditorSelectedGenomeMessage>()
+        .add_message::<CellEditorColourMessage>()
         //
         // ---------------------------- Play Mode -----------------------------
         //
@@ -76,7 +82,9 @@ fn main() {
             Update,
             (
                 cell_editor_mode_keyboard_event_reader,
-                cell_editor_message_reader,
+                cell_editor_age_message_reader,
+                cell_editor_selected_genome_message_reader,
+                cell_editor_colour_message_reader,
                 remove_selection_borders,
                 add_selection_borders,
             )

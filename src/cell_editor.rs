@@ -6,7 +6,7 @@ use bevy_egui::{
 
 use crate::{
     cell::Cell,
-    cell_editor_events::{CellEditorMessage, CellEditorParameter, SelectedCell},
+    cell_editor_events::{CellEditorAgeMessage, CellEditorColourMessage, CellEditorSelectedGenomeMessage, SelectedCell},
     cell_material::CellMaterial,
     dish::DishMarker,
     genome::{CellType, Genome, GenomeBank, GenomeId},
@@ -48,7 +48,9 @@ pub fn cell_editor_ui_update(
     mut egui_ctx: EguiContexts,
     mut state: ResMut<CellEditorState>,
     mut cell_editor_style_applied: ResMut<CellEditorUiStyleApplied>,
-    mut cell_editor_message_writer: MessageWriter<CellEditorMessage>,
+    mut age_message_writer: MessageWriter<CellEditorAgeMessage>,
+    mut selected_genome_message_writer: MessageWriter<CellEditorSelectedGenomeMessage>,
+    mut colour_message_writer: MessageWriter<CellEditorColourMessage>,
 ) -> Result {
     let ctx = match egui_ctx.ctx_mut() {
         Ok(ctx) => ctx,
@@ -74,9 +76,7 @@ pub fn cell_editor_ui_update(
 
                     if create_mode_combo_box(&mut state.selected_genome, ui, "selected_mode") {
                         // Selected genome was changed
-                        cell_editor_message_writer.write(CellEditorMessage {
-                            param: CellEditorParameter::SelectedGenome,
-                        });
+                        selected_genome_message_writer.write(CellEditorSelectedGenomeMessage);
                     }
                 })
             });
@@ -107,9 +107,6 @@ pub fn cell_editor_ui_update(
                                 .changed()
                         {
                             // Cell type was changed
-                            cell_editor_message_writer.write(CellEditorMessage {
-                                param: CellEditorParameter::CellType,
-                            });
                         }
                     });
             });
@@ -121,17 +118,11 @@ pub fn cell_editor_ui_update(
             // Daughter 1 parameters
             if create_daughter_subsection(ui, &mut state.get_selected_genome_mut().daughter_genomes.0, 0) {
                 // Daughter 1 was changed
-                cell_editor_message_writer.write(CellEditorMessage {
-                    param: CellEditorParameter::Daughter1Mode,
-                });
             }
 
             // Daughter 2 parameters
             if create_daughter_subsection(ui, &mut state.get_selected_genome_mut().daughter_genomes.1, 1) {
                 // Daughter 2 was changed
-                cell_editor_message_writer.write(CellEditorMessage {
-                    param: CellEditorParameter::Daughter2Mode,
-                });
             }
 
             // Colour selection
@@ -141,9 +132,7 @@ pub fn cell_editor_ui_update(
                 // Create a colour picker
                 if create_colour_edit_ui(ui, &mut state.get_selected_genome_mut().colour) {
                     // Colour was changed
-                    cell_editor_message_writer.write(CellEditorMessage {
-                        param: CellEditorParameter::Colour,
-                    });
+                    colour_message_writer.write(CellEditorColourMessage);
                 }
             });
 
@@ -160,9 +149,6 @@ pub fn cell_editor_ui_update(
                     .changed()
                 {
                     // Split fraction was changed
-                    cell_editor_message_writer.write(CellEditorMessage {
-                        param: CellEditorParameter::SplitFraction,
-                    });
                 }
             });
 
@@ -179,9 +165,6 @@ pub fn cell_editor_ui_update(
                     .changed()
                 {
                     // Split threshold was changed
-                    cell_editor_message_writer.write(CellEditorMessage {
-                        param: CellEditorParameter::SplitThreshold,
-                    });
                 }
             });
         });
@@ -200,9 +183,7 @@ pub fn cell_editor_ui_update(
                     .changed()
                 {
                     // Age was changed
-                    cell_editor_message_writer.write(CellEditorMessage {
-                        param: CellEditorParameter::Age,
-                    });
+                    age_message_writer.write(CellEditorAgeMessage);
                 }
             });
         });

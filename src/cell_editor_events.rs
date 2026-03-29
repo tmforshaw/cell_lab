@@ -11,69 +11,67 @@ pub struct SelectedCell;
 #[derive(Component)]
 pub struct SelectionBorder;
 
-#[derive(Debug, Copy, Clone)]
-pub enum CellEditorParameter {
-    Age,
-    SelectedGenome,
-    CellType,
-    Daughter1Mode,
-    Daughter2Mode,
-    Colour,
-    SplitFraction,
-    SplitThreshold,
-}
+#[derive(Message, Debug, Clone)]
+pub struct CellEditorAgeMessage;
 
 #[derive(Message, Debug, Clone)]
-pub struct CellEditorMessage {
-    pub param: CellEditorParameter,
+pub struct CellEditorSelectedGenomeMessage;
+
+#[derive(Message, Debug, Clone)]
+pub struct CellEditorColourMessage;
+
+// TODO
+#[allow(clippy::needless_pass_by_value)]
+pub fn cell_editor_age_message_reader(
+    events: MessageReader<CellEditorAgeMessage>,
+    state: Res<CellEditorState>,
+    mut cells: Query<&mut Cell>,
+) {
+    if !events.is_empty() {
+        // Need to do something different for children, calculate age - time_of_birth
+        for mut cell in &mut cells {
+            cell.age = state.age;
+        }
+    }
 }
 
 // TODO
 #[allow(clippy::needless_pass_by_value)]
-#[allow(clippy::too_many_arguments)]
-pub fn cell_editor_message_reader(
-    mut events: MessageReader<CellEditorMessage>,
+pub fn cell_editor_selected_genome_message_reader(
+    events: MessageReader<CellEditorSelectedGenomeMessage>,
     mut commands: Commands,
     selected_entities: Query<Entity, With<SelectedCell>>,
-    mut selected_materials: Query<&mut MeshMaterial2d<CellMaterial>, With<SelectedCell>>,
     state: Res<CellEditorState>,
     cells_with_entity: Query<(Entity, &Cell)>,
-    mut cells: Query<&mut Cell>,
-    mut materials: ResMut<Assets<CellMaterial>>,
 ) {
-    for ev in events.read() {
-        match ev.param {
-            CellEditorParameter::Age => {
-                // Need to do something different for children, calculate age - time_of_birth
-                for mut cell in &mut cells {
-                    cell.age = state.age;
-                }
-            }
-            CellEditorParameter::SelectedGenome => {
-                for entity in selected_entities {
-                    commands.entity(entity).remove::<SelectedCell>();
-                }
+    if !events.is_empty() {
+        for entity in selected_entities {
+            commands.entity(entity).remove::<SelectedCell>();
+        }
 
-                for (entity, cell) in cells_with_entity {
-                    if cell.genome_id == state.get_selected_genome().id {
-                        commands.entity(entity).insert(SelectedCell);
-                    }
-                }
-            }
-            CellEditorParameter::Colour => {
-                for material in &mut selected_materials {
-                    if let Some(mat) = materials.get_mut(&material.0) {
-                        mat.colour = state.get_selected_genome().colour.to_linear().to_vec4();
-                    }
-                }
-            }
-            _ => {
-                // All other events don't require anything since they modify the gene bank directly
+        for (entity, cell) in cells_with_entity {
+            if cell.genome_id == state.get_selected_genome().id {
+                commands.entity(entity).insert(SelectedCell);
             }
         }
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
+pub fn cell_editor_colour_message_reader(
+    events: MessageReader<CellEditorColourMessage>,
+    mut selected_materials: Query<&mut MeshMaterial2d<CellMaterial>, With<SelectedCell>>,
+    state: Res<CellEditorState>,
+    mut materials: ResMut<Assets<CellMaterial>>,
+) {
+    if !events.is_empty() {
+        for material in &mut selected_materials {
+            if let Some(mat) = materials.get_mut(&material.0) {
+                mat.colour = state.get_selected_genome().colour.to_linear().to_vec4();
+            }
+        }
+    }
+}
 pub fn add_selection_borders(
     mut commands: Commands,
     mut materials: ResMut<Assets<CellMaterial>>,
