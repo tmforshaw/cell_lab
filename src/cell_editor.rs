@@ -125,22 +125,19 @@ pub fn init_cell_editor_mode(
         DishMarker,
     ));
 
-    // Spawn a default cell
-    let cell_bundle = Cell::new_bundle(
-        100.,
-        Vec2::ZERO,
-        Vec2::ZERO,
-        state.genomes[GenomeId::M1].colour,
-        &mut meshes,
-        &mut materials,
-    );
-
-    // Make the cell selected if M1 is the selected genome
-    if state.selected_genome == GenomeId::M1 {
-        commands.spawn((cell_bundle, SelectedCell));
-    } else {
-        commands.spawn(cell_bundle);
-    }
+    // Spawn the genome bank's initial cell, and make it selected
+    commands.spawn((
+        Cell::new_bundle_with_genome(
+            100.,
+            state.genomes.initial,
+            Vec2::ZERO,
+            Vec2::ZERO,
+            state.genomes[state.genomes.initial].colour,
+            &mut meshes,
+            &mut materials,
+        ),
+        SelectedCell,
+    ));
 }
 
 pub fn exit_cell_editor_mode(mut commands: Commands, dishes: Query<Entity, With<DishMarker>>, cells: Query<Entity, With<Cell>>) {

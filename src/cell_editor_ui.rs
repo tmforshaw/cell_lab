@@ -65,8 +65,21 @@ pub fn cell_editor_ui_update(
             ui.separator();
             ui.add_space(SEPARATOR_SPACING);
 
-            // Cell type selection
             ui.horizontal(|ui| {
+                let mut checked = state.selected_genome == state.genomes.initial;
+                if ui.checkbox(&mut checked, "Initial Genome").changed() {
+                    // Initial genome checkbox was clicked
+                    if state.genomes.initial != state.selected_genome {
+                        // Initial genome has actually changed
+                        state.genomes.initial = state.selected_genome;
+
+                        // Do an event
+                    }
+                }
+
+                ui.add_space(SUBSECTION_SPACING);
+
+                // Cell type selection
                 ui.label("Cell Type:");
                 ComboBox::from_id_salt("cell_type")
                     .selected_text(format!("{}", state.get_selected_genome().cell_type))
