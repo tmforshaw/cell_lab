@@ -19,6 +19,8 @@ const RANDOM_ACCELERATION: f32 = 10.;
 pub const STARTING_CELL_NUM: u32 = 20;
 const CELL_DIVISION_ENERGY: f32 = 60.;
 const CELL_ENERGY_DECAY: f32 = 1.;
+pub const MAX_CELL_AGE: f32 = 100.;
+pub const MAX_CELL_ENERGY: f32 = 100.;
 
 #[derive(Component, Clone)]
 pub struct Cell {

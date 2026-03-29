@@ -5,11 +5,11 @@ use bevy_egui::{
 };
 
 use crate::{
-    cell::Cell,
+    cell::{Cell, MAX_CELL_AGE, MAX_CELL_ENERGY},
     cell_editor_events::{CellEditorAgeMessage, CellEditorColourMessage, CellEditorSelectedGenomeMessage, SelectedCell},
     cell_material::CellMaterial,
     dish::DishMarker,
-    genome::{CellType, Genome, GenomeBank, GenomeId},
+    genome::{CellSplitType, CellType, Genome, GenomeBank, GenomeId},
     ui::{
         SEPARATOR_SPACING, SUBSECTION_SPACING, create_colour_edit_ui, create_daughter_subsection, create_mode_combo_box,
         set_cell_editor_ui_style,
@@ -136,7 +136,63 @@ pub fn cell_editor_ui_update(
                 }
             });
 
-            ui.add_space(SUBSECTION_SPACING);
+            ui.add_space(SEPARATOR_SPACING);
+            ui.separator();
+            ui.add_space(SEPARATOR_SPACING);
+
+            // Select "use split age" or "use split energy"
+            ui.horizontal(|ui| {
+                ui.radio_value(
+                    &mut state.get_selected_genome_mut().split_type,
+                    CellSplitType::Energy,
+                    "Use Split Energy",
+                );
+                ui.radio_value(
+                    &mut state.get_selected_genome_mut().split_type,
+                    CellSplitType::Age,
+                    "Use Split Age",
+                );
+                ui.radio_value(
+                    &mut state.get_selected_genome_mut().split_type,
+                    CellSplitType::Never,
+                    "Never Split",
+                );
+            });
+
+            // Show different UI depending on use_split_age
+            match state.get_selected_genome().split_type {
+                CellSplitType::Energy => {
+                    // Split energy parameter
+                    ui.horizontal(|ui| {
+                        ui.label("Split Energy: ");
+                        if ui
+                            .add(egui::Slider::new(
+                                &mut state.get_selected_genome_mut().split_energy,
+                                0.0..=MAX_CELL_ENERGY,
+                            ))
+                            .changed()
+                        {
+                            // Split energy was changed
+                        }
+                    });
+                }
+                CellSplitType::Age => {
+                    // Split age parameter
+                    ui.horizontal(|ui| {
+                        ui.label("Split Age: ");
+                        if ui
+                            .add(egui::Slider::new(
+                                &mut state.get_selected_genome_mut().split_age,
+                                0.0..=MAX_CELL_AGE,
+                            ))
+                            .changed()
+                        {
+                            // Split age was changed
+                        }
+                    });
+                }
+                CellSplitType::Never => {}
+            }
 
             // Split fraction parameter
             ui.horizontal(|ui| {
@@ -193,8 +249,10 @@ pub fn cell_editor_ui_update(
 
 // ------------------------- Cell Editor Mode --------------------------
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn init_cell_editor_mode(
     mut commands: Commands,
+    state: Res<CellEditorState>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<CellMaterial>>,
 ) {
@@ -210,17 +268,21 @@ pub fn init_cell_editor_mode(
     ));
 
     // Spawn a default cell
-    commands.spawn((
-        Cell::new_bundle(
-            100.,
-            Vec2::ZERO,
-            Vec2::ZERO,
-            Color::linear_rgb(0.5, 1.0, 0.5),
-            &mut meshes,
-            &mut materials,
-        ),
-        SelectedCell,
-    ));
+    let cell_bundle = Cell::new_bundle(
+        100.,
+        Vec2::ZERO,
+        Vec2::ZERO,
+        Color::linear_rgb(0.5, 1.0, 0.5),
+        &mut meshes,
+        &mut materials,
+    );
+
+    // Make the cell selected if M1 is the selected genome
+    if state.selected_genome == GenomeId::M1 {
+        commands.spawn((cell_bundle, SelectedCell));
+    } else {
+        commands.spawn(cell_bundle);
+    }
 }
 
 pub fn exit_cell_editor_mode(mut commands: Commands, dishes: Query<Entity, With<DishMarker>>, cells: Query<Entity, With<Cell>>) {

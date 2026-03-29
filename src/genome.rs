@@ -22,11 +22,22 @@ impl std::fmt::Display for CellType {
     }
 }
 
+#[derive(Component, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum CellSplitType {
+    #[default]
+    Energy,
+    Age,
+    Never,
+}
+
 #[derive(Component, Clone)]
 pub struct Genome {
     pub id: GenomeId,
     pub cell_type: CellType,
     pub colour: Color,
+    pub split_type: CellSplitType,
+    pub split_age: f32,
+    pub split_energy: f32,
     pub split_fraction: f32,
     pub split_threshold: f32,
     pub daughter_genomes: (GenomeId, GenomeId),
@@ -49,6 +60,9 @@ impl Default for Genome {
             id: GenomeId::default(),
             cell_type: CellType::default(),
             colour: Color::default(),
+            split_type: CellSplitType::default(),
+            split_age: 2.0,
+            split_energy: 20.,
             split_fraction: 0.5,
             split_threshold: 0.5,
             daughter_genomes: Default::default(),
