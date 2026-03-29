@@ -1,6 +1,11 @@
-use std::ops::{Index, IndexMut};
+use std::{
+    f32::consts::PI,
+    ops::{Index, IndexMut},
+};
 
 use bevy::prelude::*;
+
+use crate::cell::Cell;
 
 #[derive(Component, Default, Clone, Copy, PartialEq, PartialOrd, Ord, Eq)]
 pub enum CellType {
@@ -155,4 +160,61 @@ impl IndexMut<GenomeId> for GenomeBank {
     fn index_mut(&mut self, index: GenomeId) -> &mut Self::Output {
         &mut self.bank[Into::<usize>::into(index)]
     }
+}
+
+pub struct DaughterData {
+    pub energy: f32,
+    pub genome_id: GenomeId,
+    pub colour: Color,
+    pub velocity: Vec2,
+    pub position: Vec2,
+}
+
+#[must_use]
+pub fn get_daughter_data(
+    parent_cell: &Cell,
+    parent_genome_id: GenomeId,
+    parent_position: Vec2,
+    parent_scale: Vec2,
+    genome_bank: &GenomeBank,
+) -> (DaughterData, DaughterData) {
+    // Split energy depending on split fraction
+    let d1_energy = parent_cell.energy * genome_bank[parent_genome_id].split_fraction;
+    let d2_energy = parent_cell.energy - d1_energy;
+
+    // Set genome_id according to genome bank
+    let d1_genome_id = genome_bank[parent_genome_id].daughter_genomes.0;
+    let d2_genome_id = genome_bank[parent_genome_id].daughter_genomes.1;
+
+    // Set colour according to genome bank
+    let d1_colour = genome_bank[d1_genome_id].colour;
+    let d2_colour = genome_bank[d2_genome_id].colour;
+
+    // Give velocity depending on split angle
+    let velocity_mag = genome_bank[parent_genome_id].split_force * 0.1;
+    let d1_velocity = velocity_mag * Vec2::Y.rotate(Vec2::from_angle(genome_bank[parent_genome_id].split_angle - PI / 2.));
+    let d2_velocity = velocity_mag * Vec2::Y.rotate(Vec2::from_angle(genome_bank[parent_genome_id].split_angle + PI / 2.));
+
+    // Offset the daughters
+    let d1_position = parent_position + (parent_scale * genome_bank[parent_genome_id].split_fraction) / 2. * d1_velocity;
+    let d2_position = parent_position + (parent_scale * (1. - genome_bank[parent_genome_id].split_fraction)) / 2. * d2_velocity;
+
+    (
+        // Set the first daughter's parameters
+        DaughterData {
+            energy: d1_energy,
+            genome_id: d1_genome_id,
+            colour: d1_colour,
+            velocity: d1_velocity,
+            position: d1_position,
+        },
+        // Set the second daughter's parameters
+        DaughterData {
+            energy: d2_energy,
+            genome_id: d2_genome_id,
+            colour: d2_colour,
+            velocity: d2_velocity,
+            position: d2_position,
+        },
+    )
 }

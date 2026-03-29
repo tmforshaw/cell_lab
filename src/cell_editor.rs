@@ -1,5 +1,3 @@
-use std::f32::consts::PI;
-
 use bevy::prelude::*;
 
 use crate::{
@@ -7,7 +5,7 @@ use crate::{
     cell_editor_events::SelectedCell,
     cell_material::CellMaterial,
     dish::DishMarker,
-    genome::{CellSplitType, Genome, GenomeBank, GenomeId},
+    genome::{CellSplitType, Genome, GenomeBank, GenomeId, get_daughter_data},
 };
 
 #[derive(Resource, Default)]
@@ -47,59 +45,54 @@ pub fn split_cells(
 
                 // Cell is ready to split
                 if cell.age >= cell_genome.split_age {
-                    // Split energy depending on split fraction
-                    let d1_energy = cell.energy * cell_genome.split_fraction;
-                    let d2_energy = cell.energy - d1_energy;
-
-                    let d1_genome_id = cell_genome.daughter_genomes.0;
-                    let d2_genome_id = cell_genome.daughter_genomes.1;
-
-                    let d1_colour = state.genomes[d1_genome_id].colour;
-                    let d2_colour = state.genomes[d2_genome_id].colour;
-
-                    // Give velocity depending on split angle
-                    let velocity_mag = cell_genome.split_force * 0.1;
-                    let d1_velocity = velocity_mag * Vec2::Y.rotate(Vec2::from_angle(cell_genome.split_angle - PI / 2.));
-                    let d2_velocity = velocity_mag * Vec2::Y.rotate(Vec2::from_angle(cell_genome.split_angle + PI / 2.));
-
-                    // Offset the daughters
-                    let d1_position = ((transform.scale.xy() * cell_genome.split_fraction) / 2. * d1_velocity).extend(0.);
-                    let d2_position = ((transform.scale.xy() * (1. - cell_genome.split_fraction)) / 2. * d2_velocity).extend(0.);
+                    let (d1, d2) = get_daughter_data(
+                        cell,
+                        cell.genome_id,
+                        transform.translation.xy(),
+                        transform.scale.xy(),
+                        &state.genomes,
+                    );
 
                     // Set the first daughter's parameters, and get its bundle
-                    let d1_bundle = Cell::new_bundle_with_genome(
-                        d1_energy,
-                        d1_genome_id,
-                        d1_velocity,
-                        transform.translation.xy() + d1_position.xy(),
-                        d1_colour,
-                        &mut meshes,
-                        &mut materials,
+                    let d1_bundle = (
+                        Cell::new_bundle_with_genome(
+                            d1.energy,
+                            d1.genome_id,
+                            d1.velocity,
+                            d1.position,
+                            d1.colour,
+                            &mut meshes,
+                            &mut materials,
+                        ),
+                        CellTimeOfBirth(state.age),
                     );
 
                     // Spawn the daughter with the selected cell marker, if necessary
-                    if state.selected_genome == d1_genome_id {
-                        commands.spawn((d1_bundle, CellTimeOfBirth(state.age), SelectedCell));
+                    if state.selected_genome == d1.genome_id {
+                        commands.spawn((d1_bundle, SelectedCell));
                     } else {
-                        commands.spawn((d1_bundle, CellTimeOfBirth(state.age)));
+                        commands.spawn(d1_bundle);
                     }
 
                     // Set the second daughter's parameters, and get its bundle
-                    let d2_bundle = Cell::new_bundle_with_genome(
-                        d2_energy,
-                        d2_genome_id,
-                        d2_velocity,
-                        transform.translation.xy() + d2_position.xy(),
-                        d2_colour,
-                        &mut meshes,
-                        &mut materials,
+                    let d2_bundle = (
+                        Cell::new_bundle_with_genome(
+                            d2.energy,
+                            d2.genome_id,
+                            d2.velocity,
+                            d2.position,
+                            d2.colour,
+                            &mut meshes,
+                            &mut materials,
+                        ),
+                        CellTimeOfBirth(state.age),
                     );
 
                     // Spawn the daughter with the selected cell marker, if necessary
-                    if state.selected_genome == d2_genome_id {
-                        commands.spawn((d2_bundle, CellTimeOfBirth(state.age), SelectedCell));
+                    if state.selected_genome == d2.genome_id {
+                        commands.spawn((d2_bundle, SelectedCell));
                     } else {
-                        commands.spawn((d2_bundle, CellTimeOfBirth(state.age)));
+                        commands.spawn(d2_bundle);
                     }
 
                     // Despawn the parent cell
