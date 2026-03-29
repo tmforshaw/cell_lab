@@ -32,17 +32,17 @@ pub struct CellEditorMessage {
 pub fn cell_editor_message_reader(
     mut events: MessageReader<CellEditorMessage>,
     mut commands: Commands,
-    selected_cells: Query<Entity, With<SelectedCell>>,
+    selected_entities: Query<Entity, With<SelectedCell>>,
+    mut selected_materials: Query<&mut MeshMaterial2d<CellMaterial>, With<SelectedCell>>,
     state: Res<CellEditorState>,
     cells: Query<(Entity, &Cell)>,
+    mut materials: ResMut<Assets<CellMaterial>>,
 ) {
     for ev in events.read() {
-        println!("Event: {ev:?}");
-
         match ev.param {
             CellEditorParameter::Age => todo!(),
             CellEditorParameter::SelectedGenome => {
-                for entity in selected_cells {
+                for entity in selected_entities {
                     commands.entity(entity).remove::<SelectedCell>();
                 }
 
@@ -55,7 +55,13 @@ pub fn cell_editor_message_reader(
             CellEditorParameter::CellType => todo!(),
             CellEditorParameter::Daughter1Mode => todo!(),
             CellEditorParameter::Daughter2Mode => todo!(),
-            CellEditorParameter::Colour => todo!(),
+            CellEditorParameter::Colour => {
+                for material in &mut selected_materials {
+                    if let Some(mat) = materials.get_mut(&material.0) {
+                        mat.colour = state.get_selected_genome().colour.to_linear().to_vec4();
+                    }
+                }
+            }
             CellEditorParameter::SplitFraction => todo!(),
             CellEditorParameter::SplitThreshold => todo!(),
         }

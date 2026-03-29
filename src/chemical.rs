@@ -1,6 +1,6 @@
 use bevy::{prelude::*, render::render_resource::AsBindGroup, shader::ShaderRef, sprite_render::Material2d};
 
-use crate::{helpers::random_vec2, state::GameState};
+use crate::{helpers::random_vec2, state::PlayModeState};
 
 // Chemical parameters
 const CHEMICAL_SIZE: f32 = 20.;
@@ -29,7 +29,7 @@ pub fn spawn_chemicals(
     mut materials: ResMut<Assets<ChemicalMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
     time: Res<Time>,
-    state: Res<GameState>,
+    state: Res<PlayModeState>,
     mut timer: ResMut<ChemicalTimer>,
     chemicals: Query<(), With<Chemical>>,
 ) {

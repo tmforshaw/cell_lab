@@ -6,7 +6,7 @@ use bevy_egui::{
 
 use crate::{
     cell::Cell,
-    cell_editor_events::{CellEditorMessage, CellEditorParameter},
+    cell_editor_events::{CellEditorMessage, CellEditorParameter, SelectedCell},
     cell_material::CellMaterial,
     dish::DishMarker,
     genome::{CellType, GENOME_MAX_NUM, Genome, GenomeId},
@@ -56,7 +56,7 @@ pub struct CellEditorUiStyleApplied(bool);
 /// Returns an error if egui ui context cannot be found
 pub fn cell_editor_ui_update(
     mut egui_ctx: EguiContexts,
-    mut editor_state: ResMut<CellEditorState>,
+    mut state: ResMut<CellEditorState>,
     mut cell_editor_style_applied: ResMut<CellEditorUiStyleApplied>,
     mut cell_editor_message_writer: MessageWriter<CellEditorMessage>,
 ) -> Result {
@@ -82,7 +82,7 @@ pub fn cell_editor_ui_update(
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     ui.label("Mode: ");
 
-                    if create_mode_combo_box(&mut editor_state.selected_genome, ui, "selected_mode") {
+                    if create_mode_combo_box(&mut state.selected_genome, ui, "selected_mode") {
                         // Selected genome was changed
                         cell_editor_message_writer.write(CellEditorMessage {
                             param: CellEditorParameter::SelectedGenome,
@@ -99,18 +99,18 @@ pub fn cell_editor_ui_update(
             ui.horizontal(|ui| {
                 ui.label("Cell Type:");
                 ComboBox::from_id_salt("cell_type")
-                    .selected_text(format!("{}", editor_state.get_selected_genome().cell_type))
+                    .selected_text(format!("{}", state.get_selected_genome().cell_type))
                     .show_ui(ui, |ui| {
                         if ui
                             .selectable_value(
-                                &mut editor_state.get_selected_genome_mut().cell_type,
+                                &mut state.get_selected_genome_mut().cell_type,
                                 CellType::Phagocyte,
                                 CellType::Phagocyte.to_string(),
                             )
                             .changed()
                             || ui
                                 .selectable_value(
-                                    &mut editor_state.get_selected_genome_mut().cell_type,
+                                    &mut state.get_selected_genome_mut().cell_type,
                                     CellType::Photocyte,
                                     CellType::Photocyte.to_string(),
                                 )
@@ -129,7 +129,7 @@ pub fn cell_editor_ui_update(
             ui.add_space(SEPARATOR_SPACING);
 
             // Daughter 1 parameters
-            if create_daughter_subsection(ui, &mut editor_state.get_selected_genome_mut().daughter_genomes.0, 0) {
+            if create_daughter_subsection(ui, &mut state.get_selected_genome_mut().daughter_genomes.0, 0) {
                 // Daughter 1 was changed
                 cell_editor_message_writer.write(CellEditorMessage {
                     param: CellEditorParameter::Daughter1Mode,
@@ -137,7 +137,7 @@ pub fn cell_editor_ui_update(
             }
 
             // Daughter 2 parameters
-            if create_daughter_subsection(ui, &mut editor_state.get_selected_genome_mut().daughter_genomes.1, 1) {
+            if create_daughter_subsection(ui, &mut state.get_selected_genome_mut().daughter_genomes.1, 1) {
                 // Daughter 2 was changed
                 cell_editor_message_writer.write(CellEditorMessage {
                     param: CellEditorParameter::Daughter2Mode,
@@ -149,7 +149,7 @@ pub fn cell_editor_ui_update(
                 ui.label("Colour: ");
 
                 // Create a colour picker
-                if create_colour_edit_ui(ui, &mut editor_state.get_selected_genome_mut().colour) {
+                if create_colour_edit_ui(ui, &mut state.get_selected_genome_mut().colour) {
                     // Colour was changed
                     cell_editor_message_writer.write(CellEditorMessage {
                         param: CellEditorParameter::Colour,
@@ -164,7 +164,7 @@ pub fn cell_editor_ui_update(
                 ui.label("Split Fraction: ");
                 if ui
                     .add(egui::Slider::new(
-                        &mut editor_state.get_selected_genome_mut().split_fraction,
+                        &mut state.get_selected_genome_mut().split_fraction,
                         0.0..=1.0,
                     ))
                     .changed()
@@ -183,7 +183,7 @@ pub fn cell_editor_ui_update(
                 ui.label("Split Threshold: ");
                 if ui
                     .add(egui::Slider::new(
-                        &mut editor_state.get_selected_genome_mut().split_threshold,
+                        &mut state.get_selected_genome_mut().split_threshold,
                         0.0..=1.0,
                     ))
                     .changed()
@@ -206,7 +206,7 @@ pub fn cell_editor_ui_update(
             ui.horizontal_centered(|ui| {
                 ui.label("Age:");
                 if ui
-                    .add(egui::Slider::new(&mut editor_state.age, 0.0..=100.0).show_value(true))
+                    .add(egui::Slider::new(&mut state.age, 0.0..=100.0).show_value(true))
                     .changed()
                 {
                     // Age was changed
@@ -239,13 +239,16 @@ pub fn init_cell_editor_mode(
     ));
 
     // Spawn a default cell
-    commands.spawn(Cell::new_bundle(
-        100.,
-        Vec2::ZERO,
-        Vec2::ZERO,
-        Color::linear_rgb(0.5, 1.0, 0.5),
-        &mut meshes,
-        &mut materials,
+    commands.spawn((
+        Cell::new_bundle(
+            100.,
+            Vec2::ZERO,
+            Vec2::ZERO,
+            Color::linear_rgb(0.5, 1.0, 0.5),
+            &mut meshes,
+            &mut materials,
+        ),
+        SelectedCell,
     ));
 }
 

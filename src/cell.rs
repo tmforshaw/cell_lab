@@ -7,7 +7,7 @@ use rand::RngExt;
 
 use std::f32::consts::PI;
 
-use crate::{cell_material::CellMaterial, chemical::Chemical, genome::Genome, state::GameState};
+use crate::{cell_material::CellMaterial, chemical::Chemical, genome::Genome, state::PlayModeState};
 
 #[derive(Component)]
 pub struct Velocity(Vec2);
@@ -90,7 +90,7 @@ pub fn move_cells(time: Res<Time>, mut query: Query<(&mut Transform, &mut Veloci
 }
 
 #[allow(clippy::needless_pass_by_value)]
-pub fn bound_cells(state: Res<GameState>, mut query: Query<(&mut Transform, &mut Velocity), With<Cell>>) {
+pub fn bound_cells(state: Res<PlayModeState>, mut query: Query<(&mut Transform, &mut Velocity), With<Cell>>) {
     for (mut transform, mut velocity) in &mut query {
         let size = transform.scale.xy();
 

@@ -10,11 +10,11 @@ use crate::{
 };
 
 #[derive(Resource, Default)]
-pub struct GameState {
+pub struct PlayModeState {
     pub dish: Dish,
 }
 
-impl GameState {
+impl PlayModeState {
     #[must_use]
     pub const fn new(dish: Dish) -> Self {
         Self { dish }
@@ -34,7 +34,7 @@ pub fn init_play_mode(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<CellMaterial>>,
-    state: Res<GameState>,
+    state: Res<PlayModeState>,
 ) {
     // Show dish
     commands.spawn(state.dish.into_bundle());

@@ -20,7 +20,7 @@ use crate::{
     cell_material::CellMaterial,
     chemical::{ChemicalMaterial, ChemicalTimer, spawn_chemicals},
     input::{cell_editor_mode_keyboard_event_reader, play_mode_keyboard_event_reader},
-    state::{GameMode, GameState, exit_play_mode, init_play_mode},
+    state::{GameMode, PlayModeState, exit_play_mode, init_play_mode},
 };
 
 pub mod cell;
@@ -43,7 +43,7 @@ fn main() {
         .add_plugins(Material2dPlugin::<ChemicalMaterial>::default())
         // .init_state::<GameMode>()
         .insert_state(GameMode::CellEditor)
-        .init_resource::<GameState>()
+        .init_resource::<PlayModeState>()
         .init_resource::<ChemicalTimer>()
         .init_resource::<CellEditorUiStyleApplied>()
         .init_resource::<CellEditorState>()
