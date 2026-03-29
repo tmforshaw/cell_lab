@@ -161,7 +161,7 @@ pub fn init_cell_editor_mode(
         100.,
         Vec2::ZERO,
         Vec2::ZERO,
-        Color::linear_rgb(0.5, 1.0, 0.5),
+        state.genomes[GenomeId::M1].colour,
         &mut meshes,
         &mut materials,
     );

@@ -39,7 +39,6 @@ pub struct Genome {
     pub split_age: f32,
     pub split_energy: f32,
     pub split_fraction: f32,
-    pub split_threshold: f32,
     pub split_angle: f32,
     pub split_force: f32,
     pub daughter_genomes: (GenomeId, GenomeId),
@@ -66,7 +65,6 @@ impl Default for Genome {
             split_age: 2.0,
             split_energy: 20.,
             split_fraction: 0.5,
-            split_threshold: 0.5,
             split_angle: 0.,
             split_force: 10.,
             daughter_genomes: Default::default(),
@@ -135,7 +133,12 @@ pub struct GenomeBank {
 impl Default for GenomeBank {
     fn default() -> Self {
         Self {
-            bank: std::array::from_fn(|i| Genome::new(i.into())),
+            bank: std::array::from_fn(|i| {
+                let mut genome = Genome::new(i.into());
+                genome.colour = Color::hsv((i as f32 / GENOME_MAX_NUM as f32) * 360.0, 0.8, 0.9); // Select a visually distinct colour for each genome
+
+                genome
+            }),
         }
     }
 }

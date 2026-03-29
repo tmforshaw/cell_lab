@@ -190,22 +190,6 @@ pub fn cell_editor_ui_update(
 
             ui.add_space(SUBSECTION_SPACING);
 
-            // Split threshold parameter
-            ui.horizontal(|ui| {
-                ui.label("Split Threshold: ");
-                if ui
-                    .add(egui::Slider::new(
-                        &mut state.get_selected_genome_mut().split_threshold,
-                        0.0..=1.0,
-                    ))
-                    .changed()
-                {
-                    // Split threshold was changed
-                }
-            });
-
-            ui.add_space(SUBSECTION_SPACING);
-
             // Split angle parameter
             let mut angle_degrees = state.get_selected_genome().split_angle.to_degrees();
             ui.horizontal(|ui| {
