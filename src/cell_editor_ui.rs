@@ -203,6 +203,34 @@ pub fn cell_editor_ui_update(
                     // Split threshold was changed
                 }
             });
+
+            ui.add_space(SUBSECTION_SPACING);
+
+            // Split angle parameter
+            let mut angle_degrees = state.get_selected_genome().split_angle.to_degrees();
+            ui.horizontal(|ui| {
+                ui.label("Split Angle: ");
+                if ui.add(egui::Slider::new(&mut angle_degrees, (0.)..=360.)).changed() {
+                    // Split angle was changed
+                    state.get_selected_genome_mut().split_angle = angle_degrees.to_radians();
+                }
+            });
+
+            ui.add_space(SUBSECTION_SPACING);
+
+            // Split force parameter
+            ui.horizontal(|ui| {
+                ui.label("Split Force: ");
+                if ui
+                    .add(egui::Slider::new(
+                        &mut state.get_selected_genome_mut().split_force,
+                        (0.)..=50.,
+                    ))
+                    .changed()
+                {
+                    // Split force was changed
+                }
+            });
         });
 
     // Age slider parameter

@@ -13,7 +13,7 @@ use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
 
 use crate::{
     cell::{bound_cells, cell_decay, cells_absorb_chemical, cells_do_meiosis, increment_cell_age, move_cells},
-    cell_editor::{CellEditorState, exit_cell_editor_mode, init_cell_editor_mode},
+    cell_editor::{CellEditorState, exit_cell_editor_mode, init_cell_editor_mode, split_cells},
     cell_editor_events::{
         CellEditorAgeMessage, CellEditorColourMessage, CellEditorSelectedGenomeMessage, add_selection_borders,
         cell_editor_age_message_reader, cell_editor_colour_message_reader, cell_editor_selected_genome_message_reader,
@@ -25,6 +25,8 @@ use crate::{
     input::{cell_editor_mode_keyboard_event_reader, play_mode_keyboard_event_reader},
     state::{GameMode, PlayModeState, exit_play_mode, init_play_mode},
 };
+
+// TODO use genomes when setting material colour
 
 pub mod cell;
 pub mod cell_editor;
@@ -87,6 +89,7 @@ fn main() {
                 cell_editor_colour_message_reader,
                 remove_selection_borders,
                 add_selection_borders,
+                split_cells,
             )
                 .run_if(in_state(GameMode::CellEditor)),
         )

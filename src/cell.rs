@@ -10,7 +10,7 @@ use std::f32::consts::PI;
 use crate::{cell_material::CellMaterial, chemical::Chemical, genome::GenomeId, state::PlayModeState};
 
 #[derive(Component)]
-pub struct Velocity(Vec2);
+pub struct Velocity(pub Vec2);
 
 // Cell parameters
 pub const CELL_ENERGY: f32 = 40.;
@@ -43,6 +43,30 @@ impl Cell {
             energy,
             age: 0.,
             genome_id: GenomeId::default(),
+        };
+        (
+            cell.clone(),
+            Velocity(velocity),
+            Transform::from_translation(position.extend(1.)).with_scale(cell.get_size().extend(1.)),
+            Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
+            MeshMaterial2d(materials.add(CellMaterial::new(colour))),
+        )
+    }
+
+    #[must_use]
+    pub fn new_bundle_with_genome(
+        energy: f32,
+        genome_id: GenomeId,
+        velocity: Vec2,
+        position: Vec2,
+        colour: Color,
+        meshes: &mut ResMut<Assets<Mesh>>,
+        materials: &mut ResMut<Assets<CellMaterial>>,
+    ) -> impl Bundle {
+        let cell = Self {
+            energy,
+            age: 0.,
+            genome_id,
         };
         (
             cell.clone(),

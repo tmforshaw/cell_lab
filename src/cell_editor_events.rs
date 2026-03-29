@@ -1,6 +1,10 @@
 use bevy::prelude::*;
 
-use crate::{cell::Cell, cell_editor::CellEditorState, cell_material::CellMaterial};
+use crate::{
+    cell::Cell,
+    cell_editor::{CellEditorState, CellTimeOfBirth},
+    cell_material::CellMaterial,
+};
 
 pub const SELECTION_COLOUR: Color = Color::linear_rgb(1.0, 1.0, 0.0);
 pub const SELECTION_SCALE: f32 = 1.2;
@@ -25,12 +29,15 @@ pub struct CellEditorColourMessage;
 pub fn cell_editor_age_message_reader(
     events: MessageReader<CellEditorAgeMessage>,
     state: Res<CellEditorState>,
-    mut cells: Query<&mut Cell>,
+    mut cells: Query<(&mut Cell, Option<&CellTimeOfBirth>)>,
 ) {
     if !events.is_empty() {
-        // Need to do something different for children, calculate age - time_of_birth
-        for mut cell in &mut cells {
-            cell.age = state.age;
+        for (mut cell, time_of_birth) in &mut cells {
+            if let Some(time_of_birth) = time_of_birth {
+                cell.age = state.age - time_of_birth.0;
+            } else {
+                cell.age = state.age;
+            }
         }
     }
 }
