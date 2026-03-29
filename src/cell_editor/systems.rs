@@ -7,36 +7,45 @@ use crate::{
     genome::{CellSplitType, get_daughter_data},
 };
 
-#[derive(Component)]
+#[derive(Component, Clone)]
 pub struct CellTimeOfBirth(pub f32);
 
 #[allow(clippy::needless_pass_by_value)]
 pub fn split_cells(
     mut commands: Commands,
     state: Res<CellEditorState>,
-    cells: Query<(Entity, &Cell, &Transform)>,
+    cells: Query<(Entity, &Cell, &Transform, Option<&CellTimeOfBirth>)>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<CellMaterial>>,
 ) {
-    for (entity, cell, transform) in cells {
-        match state.genomes[cell.genome_id].split_type {
+    for (entity, parent, transform, parent_time_of_birth) in cells {
+        match state.genomes[parent.genome_id].split_type {
             CellSplitType::Age => {
-                let cell_genome = &state.genomes[cell.genome_id];
+                let parent_genome = &state.genomes[parent.genome_id];
 
-                // Cell is ready to split
-                if cell.age >= cell_genome.split_age {
+                // Parent is ready to split
+                if parent.age >= parent_genome.split_age {
                     let (d1, d2) = get_daughter_data(
-                        cell,
-                        cell.genome_id,
+                        parent,
+                        parent.genome_id,
                         transform.translation.xy(),
                         transform.scale.xy(),
                         &state.genomes,
                     );
 
+                    let time_of_birth = if let Some(&CellTimeOfBirth(parent_time_of_birth)) = parent_time_of_birth {
+                        CellTimeOfBirth(parent_time_of_birth + state.genomes[parent.genome_id].split_age)
+                    } else {
+                        CellTimeOfBirth(state.genomes[parent.genome_id].split_age)
+                    };
+
+                    let daughter_age = (state.age - time_of_birth.0).max(0.);
+
                     // Set the first daughter's parameters, and get its bundle
                     let d1_bundle = (
-                        Cell::new_bundle_with_genome(
+                        Cell::new_bundle_with_genome_and_age(
                             d1.energy,
+                            daughter_age,
                             d1.genome_id,
                             d1.velocity,
                             d1.position,
@@ -44,7 +53,22 @@ pub fn split_cells(
                             &mut meshes,
                             &mut materials,
                         ),
-                        CellTimeOfBirth(state.age),
+                        time_of_birth.clone(),
+                    );
+
+                    // Set the second daughter's parameters, and get its bundle
+                    let d2_bundle = (
+                        Cell::new_bundle_with_genome_and_age(
+                            d2.energy,
+                            daughter_age,
+                            d2.genome_id,
+                            d2.velocity,
+                            d2.position,
+                            d2.colour,
+                            &mut meshes,
+                            &mut materials,
+                        ),
+                        time_of_birth,
                     );
 
                     // Spawn the daughter with the selected cell marker, if necessary
@@ -53,20 +77,6 @@ pub fn split_cells(
                     } else {
                         commands.spawn(d1_bundle);
                     }
-
-                    // Set the second daughter's parameters, and get its bundle
-                    let d2_bundle = (
-                        Cell::new_bundle_with_genome(
-                            d2.energy,
-                            d2.genome_id,
-                            d2.velocity,
-                            d2.position,
-                            d2.colour,
-                            &mut meshes,
-                            &mut materials,
-                        ),
-                        CellTimeOfBirth(state.age),
-                    );
 
                     // Spawn the daughter with the selected cell marker, if necessary
                     if state.selected_genome == d2.genome_id {

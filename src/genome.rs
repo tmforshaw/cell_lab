@@ -67,7 +67,7 @@ impl Default for Genome {
             cell_type: CellType::default(),
             colour: Color::default(),
             split_type: CellSplitType::default(),
-            split_age: 2.0,
+            split_age: 10.0,
             split_energy: 20.,
             split_fraction: 0.5,
             split_angle: 0.,

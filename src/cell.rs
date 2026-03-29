@@ -78,6 +78,27 @@ impl Cell {
     }
 
     #[must_use]
+    pub fn new_bundle_with_genome_and_age(
+        energy: f32,
+        age: f32,
+        genome_id: GenomeId,
+        velocity: Vec2,
+        position: Vec2,
+        colour: Color,
+        meshes: &mut ResMut<Assets<Mesh>>,
+        materials: &mut ResMut<Assets<CellMaterial>>,
+    ) -> impl Bundle {
+        let cell = Self { energy, age, genome_id };
+        (
+            cell.clone(),
+            Velocity(velocity),
+            Transform::from_translation(position.extend(1.)).with_scale(cell.get_size().extend(1.)),
+            Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
+            MeshMaterial2d(materials.add(CellMaterial::new(colour))),
+        )
+    }
+
+    #[must_use]
     pub fn get_size(&self) -> Vec2 {
         Vec2::splat(self.energy * 2.)
     }
