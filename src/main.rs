@@ -13,26 +13,27 @@ use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
 
 use crate::{
     cell::{bound_cells, cell_decay, cells_absorb_chemical, cells_do_meiosis, increment_cell_age, move_cells},
-    cell_editor::{CellEditorState, exit_cell_editor_mode, init_cell_editor_mode, split_cells},
-    cell_editor_events::{
-        CellEditorAgeMessage, CellEditorColourMessage, CellEditorInitialGenomeMessage, CellEditorSelectedGenomeMessage,
-        add_selection_borders, cell_editor_age_message_reader, cell_editor_colour_message_reader,
-        cell_editor_initial_genome_message_reader, cell_editor_selected_genome_message_reader, remove_selection_borders,
+    cell_editor::{
+        events::{
+            CellEditorAgeMessage, CellEditorColourMessage, CellEditorInitialGenomeMessage, CellEditorSelectedGenomeMessage,
+            add_selection_borders, cell_editor_age_message_reader, cell_editor_colour_message_reader,
+            cell_editor_initial_genome_message_reader, cell_editor_selected_genome_message_reader, remove_selection_borders,
+        },
+        state::{CellEditorState, exit_cell_editor_mode, init_cell_editor_mode},
+        systems::split_cells,
+        ui::{CellEditorUiStyleApplied, cell_editor_ui_update},
     },
-    cell_editor_ui::{CellEditorUiStyleApplied, cell_editor_ui_update},
     cell_material::CellMaterial,
     chemical::{ChemicalMaterial, ChemicalTimer, spawn_chemicals},
     input::{cell_editor_mode_keyboard_event_reader, play_mode_keyboard_event_reader},
     state::{GameMode, PlayModeState, exit_play_mode, init_play_mode},
 };
 
-// TODO use genomes when setting material colour
+// TODO use genome bank when setting material colour
 // TODO set timeofbirth to parent's split age, not the state.age
 
 pub mod cell;
 pub mod cell_editor;
-pub mod cell_editor_events;
-pub mod cell_editor_ui;
 pub mod cell_material;
 pub mod chemical;
 pub mod dish;

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     cell::Cell,
-    cell_editor::{CellEditorState, CellTimeOfBirth},
+    cell_editor::{state::CellEditorState, systems::CellTimeOfBirth},
     cell_material::CellMaterial,
 };
 

@@ -6,8 +6,10 @@ use bevy_egui::{
 
 use crate::{
     cell::{MAX_CELL_AGE, MAX_CELL_ENERGY},
-    cell_editor::CellEditorState,
-    cell_editor_events::{CellEditorAgeMessage, CellEditorColourMessage, CellEditorSelectedGenomeMessage},
+    cell_editor::{
+        events::{CellEditorAgeMessage, CellEditorColourMessage, CellEditorSelectedGenomeMessage},
+        state::CellEditorState,
+    },
     genome::{CellSplitType, CellType},
     ui::{
         SEPARATOR_SPACING, SUBSECTION_SPACING, create_colour_edit_ui, create_daughter_subsection, create_mode_combo_box,
