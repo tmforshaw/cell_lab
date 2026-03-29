@@ -45,14 +45,14 @@ pub fn init_cell_editor_mode(
         DishMarker,
     ));
 
-    // Spawn the genome bank's initial cell, and make it selected
+    // Create a bundle for the selected genome, make it selected, then spawn it
     commands.spawn((
         Cell::new_bundle_with_genome(
             100.,
-            state.genomes.initial,
+            state.selected_genome,
             Vec2::ZERO,
             Vec2::ZERO,
-            state.genomes[state.genomes.initial].colour,
+            state.genomes[state.selected_genome].colour,
             &mut meshes,
             &mut materials,
         ),
