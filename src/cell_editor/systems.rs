@@ -39,7 +39,7 @@ pub fn split_cells(
                         CellTimeOfBirth(state.genomes[parent.genome_id].split_age)
                     };
 
-                    let daughter_age = (state.age - time_of_birth.0).max(0.);
+                    let daughter_age = (state.age - time_of_birth.0).min(0.);
 
                     // Set the first daughter's parameters, and get its bundle
                     let d1_bundle = (
