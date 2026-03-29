@@ -13,14 +13,13 @@ use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
 
 use crate::{
     cell::{bound_cells, cell_decay, cells_absorb_chemical, cells_do_meiosis, increment_cell_age, move_cells},
-    cell_editor::{
-        CellEditorState, CellEditorUiStyleApplied, cell_editor_ui_update, exit_cell_editor_mode, init_cell_editor_mode,
-    },
+    cell_editor::{CellEditorState, exit_cell_editor_mode, init_cell_editor_mode},
     cell_editor_events::{
         CellEditorAgeMessage, CellEditorColourMessage, CellEditorSelectedGenomeMessage, add_selection_borders,
         cell_editor_age_message_reader, cell_editor_colour_message_reader, cell_editor_selected_genome_message_reader,
         remove_selection_borders,
     },
+    cell_editor_ui::{CellEditorUiStyleApplied, cell_editor_ui_update},
     cell_material::CellMaterial,
     chemical::{ChemicalMaterial, ChemicalTimer, spawn_chemicals},
     input::{cell_editor_mode_keyboard_event_reader, play_mode_keyboard_event_reader},
@@ -30,6 +29,7 @@ use crate::{
 pub mod cell;
 pub mod cell_editor;
 pub mod cell_editor_events;
+pub mod cell_editor_ui;
 pub mod cell_material;
 pub mod chemical;
 pub mod dish;
