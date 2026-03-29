@@ -66,7 +66,7 @@ impl Default for Genome {
             split_energy: 20.,
             split_fraction: 0.5,
             split_angle: 0.,
-            split_force: 10.,
+            split_force: 15.,
             daughter_genomes: Default::default(),
         }
     }
