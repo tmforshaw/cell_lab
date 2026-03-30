@@ -7,7 +7,7 @@ use rand::RngExt;
 
 use std::f32::consts::PI;
 
-use crate::{cell_material::CellMaterial, chemical::Chemical, genome::GenomeId, state::PlayModeState};
+use crate::{cell_material::CellMaterial, chemical::Chemical, genome::GenomeId, genome_bank::GenomeBank, state::PlayModeState};
 
 #[derive(Component)]
 pub struct Velocity(pub Vec2);
@@ -21,6 +21,7 @@ const CELL_DIVISION_ENERGY: f32 = 60.;
 const CELL_ENERGY_DECAY: f32 = 1.;
 pub const MAX_CELL_AGE: f32 = 100.;
 pub const MAX_CELL_ENERGY: f32 = 100.;
+pub const MIN_CELL_ENERGY: f32 = 1.;
 
 #[derive(Component, Debug, Clone)]
 pub struct Cell {
@@ -32,6 +33,7 @@ pub struct Cell {
 impl Cell {
     #[must_use]
     pub fn new_bundle(
+        // genome_bank: GenomeBank,
         energy: f32,
         velocity: Vec2,
         position: Vec2,
@@ -49,6 +51,7 @@ impl Cell {
             Velocity(velocity),
             Transform::from_translation(position.extend(1.)).with_scale(cell.get_size().extend(1.)),
             Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
+            // MeshMaterial2d(materials.add(CellMaterial::new(genome_bank[cell.genome_id].colour))),
             MeshMaterial2d(materials.add(CellMaterial::new(colour))),
         )
     }
@@ -57,6 +60,7 @@ impl Cell {
     pub fn new_bundle_with_genome(
         energy: f32,
         genome_id: GenomeId,
+        // genome_bank: GenomeBank,
         velocity: Vec2,
         position: Vec2,
         colour: Color,
@@ -73,6 +77,7 @@ impl Cell {
             Velocity(velocity),
             Transform::from_translation(position.extend(1.)).with_scale(cell.get_size().extend(1.)),
             Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
+            // MeshMaterial2d(materials.add(CellMaterial::new(genome_bank[genome_id].colour))),
             MeshMaterial2d(materials.add(CellMaterial::new(colour))),
         )
     }
@@ -84,6 +89,7 @@ impl Cell {
         energy: f32,
         age: f32,
         genome_id: GenomeId,
+        // genome_bank: GenomeBank,
         velocity: Vec2,
         position: Vec2,
         colour: Color,
@@ -96,6 +102,7 @@ impl Cell {
             Velocity(velocity),
             Transform::from_translation(position.extend(1.)).with_scale(cell.get_size().extend(1.)),
             Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
+            // MeshMaterial2d(materials.add(CellMaterial::new(genome_bank[genome_id].colour))),
             MeshMaterial2d(materials.add(CellMaterial::new(colour))),
         )
     }
@@ -241,7 +248,7 @@ pub fn cell_decay(mut commands: Commands, time: Res<Time>, mut query: Query<(&mu
         cell.energy -= CELL_ENERGY_DECAY * dt;
 
         // Remove cell if its too small
-        if cell.energy <= 0. {
+        if cell.energy <= MIN_CELL_ENERGY {
             commands.entity(entity).despawn();
         } else {
             // Resize the cell

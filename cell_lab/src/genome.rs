@@ -1,11 +1,9 @@
-use std::{
-    f32::consts::PI,
-    ops::{Index, IndexMut},
-};
+use std::f32::consts::PI;
 
 use bevy::prelude::*;
+use cell_lab_macros::generate_enum;
 
-use crate::cell::Cell;
+use crate::{cell::Cell, genome_bank::GenomeBank};
 
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq, PartialOrd, Ord, Eq)]
 pub enum CellType {
@@ -79,92 +77,7 @@ impl Default for Genome {
     }
 }
 
-pub const GENOME_MAX_NUM: usize = 9;
-
-#[derive(Component, Debug, Default, PartialEq, PartialOrd, Ord, Eq, Clone, Copy)]
-pub enum GenomeId {
-    #[default]
-    M1,
-    M2,
-    M3,
-    M4,
-    M5,
-    M6,
-    M7,
-    M8,
-    M9,
-}
-
-impl From<GenomeId> for usize {
-    fn from(value: GenomeId) -> Self {
-        match value {
-            GenomeId::M1 => 0,
-            GenomeId::M2 => 1,
-            GenomeId::M3 => 2,
-            GenomeId::M4 => 3,
-            GenomeId::M5 => 4,
-            GenomeId::M6 => 5,
-            GenomeId::M7 => 6,
-            GenomeId::M8 => 7,
-            GenomeId::M9 => 8,
-        }
-    }
-}
-
-impl From<usize> for GenomeId {
-    fn from(value: usize) -> Self {
-        match value {
-            1 => Self::M2,
-            2 => Self::M3,
-            3 => Self::M4,
-            4 => Self::M5,
-            5 => Self::M6,
-            6 => Self::M7,
-            7 => Self::M8,
-            8 => Self::M9,
-            _ => Self::M1,
-        }
-    }
-}
-
-impl std::fmt::Display for GenomeId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "M{}", Into::<usize>::into(*self) + 1)
-    }
-}
-
-pub struct GenomeBank {
-    pub initial: GenomeId,
-    bank: [Genome; GENOME_MAX_NUM],
-}
-
-impl Default for GenomeBank {
-    fn default() -> Self {
-        Self {
-            initial: GenomeId::default(),
-            bank: std::array::from_fn(|i| {
-                let mut genome = Genome::new(i.into());
-                genome.colour = Color::hsv((i as f32 / GENOME_MAX_NUM as f32) * 360.0, 0.8, 0.9); // Select a visually distinct colour for each genome
-
-                genome
-            }),
-        }
-    }
-}
-
-impl Index<GenomeId> for GenomeBank {
-    type Output = Genome;
-
-    fn index(&self, index: GenomeId) -> &Self::Output {
-        &self.bank[Into::<usize>::into(index)]
-    }
-}
-
-impl IndexMut<GenomeId> for GenomeBank {
-    fn index_mut(&mut self, index: GenomeId) -> &mut Self::Output {
-        &mut self.bank[Into::<usize>::into(index)]
-    }
-}
+generate_enum!(GenomeId, M, 9);
 
 pub struct DaughterData {
     pub energy: f32,

@@ -1,13 +1,9 @@
-[package]
-name = "cell_lab"
-version = "0.1.0"
-edition = "2024"
-
-[dependencies]
-bevy = {version = "0.18.1", features = ["dynamic_linking"]}
-bevy_egui = "0.39.1"
-bevy_prototype_lyon = "0.16.0"
-rand = "0.10.0"
+[workspace]
+resolver = "3"
+members = [
+    "cell_lab",
+    "cell_lab_macros",
+]
 
 [profile.dev]
 opt-level = 1

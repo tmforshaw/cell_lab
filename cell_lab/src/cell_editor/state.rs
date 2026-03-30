@@ -5,11 +5,13 @@ use crate::{
     cell_editor::{events::SelectedCell, history::SplitHistory},
     cell_material::CellMaterial,
     dish::DishMarker,
-    genome::{Genome, GenomeBank, GenomeId},
+    genome::{Genome, GenomeId},
+    genome_bank::{GenomeBank, GenomeCollection},
 };
 
 #[derive(Resource, Default)]
 pub struct CellEditorState {
+    pub selected_genome_bank: usize,
     pub selected_genome: GenomeId,
     pub age: f32,
     pub genomes: GenomeBank,
@@ -26,6 +28,16 @@ impl CellEditorState {
     pub fn get_selected_genome_mut(&mut self) -> &mut Genome {
         &mut self.genomes[self.selected_genome]
     }
+
+    // #[must_use]
+    // pub fn get_selected_genome<'a>(&self, genome_collection: &'a GenomeCollection) -> &'a Genome {
+    //     &genome_collection[(self.selected_genome_bank, self.selected_genome)]
+    // }
+
+    // #[must_use]
+    // pub fn get_selected_genome_mut<'a>(&mut self, genome_collection: &'a mut GenomeCollection) -> &'a mut Genome {
+    //     &mut genome_collection[(self.selected_genome_bank, self.selected_genome)]
+    // }
 }
 
 #[allow(clippy::needless_pass_by_value)]

@@ -28,12 +28,12 @@ use crate::{
     },
     cell_material::CellMaterial,
     chemical::{ChemicalMaterial, ChemicalTimer, spawn_chemicals},
+    genome_bank::GenomeCollection,
     input::{cell_editor_mode_keyboard_event_reader, play_mode_keyboard_event_reader},
     state::{GameMode, PlayModeState, exit_play_mode, init_play_mode},
 };
 
 // TODO use genome bank when setting material colour
-// TODO set timeofbirth to parent's split age, not the state.age
 
 pub mod cell;
 pub mod cell_editor;
@@ -41,8 +41,10 @@ pub mod cell_material;
 pub mod chemical;
 pub mod dish;
 pub mod genome;
+pub mod genome_bank;
 pub mod helpers;
 pub mod input;
+pub mod macros;
 pub mod state;
 pub mod ui;
 
@@ -55,6 +57,7 @@ fn main() {
         .add_plugins(Material2dPlugin::<ChemicalMaterial>::default())
         // .init_state::<GameMode>()
         .insert_state(GameMode::CellEditor)
+        .init_resource::<GenomeCollection>()
         .init_resource::<PlayModeState>()
         .init_resource::<ChemicalTimer>()
         .init_resource::<CellEditorUiStyleApplied>()
