@@ -47,6 +47,7 @@ pub struct Genome {
     pub split_angle: f32,
     pub split_force: f32,
     pub daughter_genomes: (GenomeId, GenomeId),
+    // pub daughter_angles: (f32, f32),
 }
 
 impl Genome {
@@ -73,6 +74,7 @@ impl Default for Genome {
             split_angle: 0.,
             split_force: 15.,
             daughter_genomes: Default::default(),
+            // daughter_angles: (0., 0.),
         }
     }
 }

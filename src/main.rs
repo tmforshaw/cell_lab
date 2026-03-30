@@ -10,14 +10,17 @@
 
 use bevy::{prelude::*, sprite_render::Material2dPlugin};
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
+use bevy_prototype_lyon::plugin::ShapePlugin;
 
 use crate::{
     cell::{bound_cells, cell_decay, cells_absorb_chemical, cells_do_meiosis, increment_cell_age, move_cells},
     cell_editor::{
+        drawing::draw_cell_info,
         events::{
             CellEditorAgeMessage, CellEditorColourMessage, CellEditorInitialGenomeMessage, CellEditorSelectedGenomeMessage,
-            add_selection_borders, cell_editor_age_message_reader, cell_editor_colour_message_reader,
-            cell_editor_initial_genome_message_reader, cell_editor_selected_genome_message_reader, remove_selection_borders,
+            CellEditorSplitAngleMessage, add_selection_borders, cell_editor_age_message_reader,
+            cell_editor_colour_message_reader, cell_editor_initial_genome_message_reader,
+            cell_editor_selected_genome_message_reader, cell_editor_split_angle_message_reader, remove_selection_borders,
         },
         state::{CellEditorState, exit_cell_editor_mode, init_cell_editor_mode},
         systems::{remove_negative_aged_cells, reverse_splits, split_cells},
@@ -47,6 +50,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(EguiPlugin::default())
+        .add_plugins(ShapePlugin)
         .add_plugins(Material2dPlugin::<CellMaterial>::default())
         .add_plugins(Material2dPlugin::<ChemicalMaterial>::default())
         // .init_state::<GameMode>()
@@ -60,6 +64,7 @@ fn main() {
         .add_message::<CellEditorAgeMessage>()
         .add_message::<CellEditorSelectedGenomeMessage>()
         .add_message::<CellEditorColourMessage>()
+        .add_message::<CellEditorSplitAngleMessage>()
         //
         // ---------------------------- Play Mode -----------------------------
         //
@@ -91,8 +96,10 @@ fn main() {
                 cell_editor_age_message_reader,
                 cell_editor_selected_genome_message_reader,
                 cell_editor_colour_message_reader,
+                cell_editor_split_angle_message_reader,
                 remove_selection_borders,
                 add_selection_borders,
+                draw_cell_info,
                 split_cells,
                 remove_negative_aged_cells,
                 reverse_splits,

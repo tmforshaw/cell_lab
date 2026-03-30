@@ -2,7 +2,11 @@ use bevy::prelude::*;
 
 use crate::{
     cell::Cell,
-    cell_editor::{state::CellEditorState, systems::CellTimeOfBirth},
+    cell_editor::{
+        drawing::{SplitAngleArrow, draw_split_angle_arrow_as_child},
+        state::CellEditorState,
+        systems::CellTimeOfBirth,
+    },
     cell_material::CellMaterial,
 };
 
@@ -26,6 +30,9 @@ pub struct CellEditorSelectedGenomeMessage;
 
 #[derive(Message, Debug, Clone)]
 pub struct CellEditorColourMessage;
+
+#[derive(Message, Debug, Clone)]
+pub struct CellEditorSplitAngleMessage;
 
 // TODO
 #[allow(clippy::needless_pass_by_value)]
@@ -93,6 +100,31 @@ pub fn cell_editor_colour_message_reader(
         }
     }
 }
+
+#[allow(clippy::needless_pass_by_value)]
+pub fn cell_editor_split_angle_message_reader(
+    mut commands: Commands,
+    events: MessageReader<CellEditorSplitAngleMessage>,
+    state: Res<CellEditorState>,
+    arrows: Query<(Entity, &ChildOf), With<SplitAngleArrow>>,
+    selected_entities: Query<Entity, With<SelectedCell>>,
+    selected_cells: Query<(Entity, &Cell), With<SelectedCell>>,
+) {
+    if !events.is_empty() {
+        // Despawn the previous arrows
+        for (arrow_entity, child_of) in arrows {
+            if selected_entities.get(child_of.parent()).is_ok() {
+                commands.entity(arrow_entity).despawn();
+            }
+        }
+
+        // Spawn the arrows back in with their new angles
+        for (entity, cell) in selected_cells {
+            draw_split_angle_arrow_as_child(&mut commands, &state, entity, cell);
+        }
+    }
+}
+
 pub fn add_selection_borders(
     mut commands: Commands,
     mut materials: ResMut<Assets<CellMaterial>>,

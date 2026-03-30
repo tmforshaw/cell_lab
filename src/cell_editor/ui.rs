@@ -4,7 +4,7 @@ use bevy_egui::{
     egui::{self, Color32, Context, CornerRadius, Stroke, Ui, containers::ComboBox},
 };
 
-use crate::genome::GenomeId;
+use crate::{cell_editor::events::CellEditorSplitAngleMessage, genome::GenomeId};
 
 use crate::{
     cell::{MAX_CELL_AGE, MAX_CELL_ENERGY},
@@ -32,6 +32,7 @@ pub fn cell_editor_ui_update(
     mut age_message_writer: MessageWriter<CellEditorAgeMessage>,
     mut selected_genome_message_writer: MessageWriter<CellEditorSelectedGenomeMessage>,
     mut colour_message_writer: MessageWriter<CellEditorColourMessage>,
+    mut split_angle_message_writer: MessageWriter<CellEditorSplitAngleMessage>,
 ) -> Result {
     let ctx = match egui_ctx.ctx_mut() {
         Ok(ctx) => ctx,
@@ -205,12 +206,14 @@ pub fn cell_editor_ui_update(
             ui.add_space(SUBSECTION_SPACING);
 
             // Split angle parameter
-            let mut angle_degrees = state.get_selected_genome().split_angle.to_degrees();
+            let mut angle_degrees = -state.get_selected_genome().split_angle.to_degrees();
             ui.horizontal(|ui| {
                 ui.label("Split Angle: ");
                 if ui.add(egui::Slider::new(&mut angle_degrees, (0.)..=360.)).changed() {
                     // Split angle was changed
-                    state.get_selected_genome_mut().split_angle = angle_degrees.to_radians();
+                    state.get_selected_genome_mut().split_angle = -angle_degrees.to_radians();
+
+                    split_angle_message_writer.write(CellEditorSplitAngleMessage);
                 }
             });
 
