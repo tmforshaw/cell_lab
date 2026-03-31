@@ -26,6 +26,7 @@ use crate::{
         ui::{CellEditorUiStyleApplied, cell_editor_ui_update},
     },
     cells::cell_material::CellMaterial,
+    collision::collider::collision_system,
     genomes::genome_bank::GenomeCollection,
     input::{cell_editor_mode_keyboard_event_reader, play_mode_keyboard_event_reader},
     simulation::{
@@ -39,10 +40,12 @@ use crate::{
 
 pub mod cell_editor;
 pub mod cells;
+pub mod collision;
 pub mod genomes;
 pub mod helpers;
 pub mod input;
 pub mod simulation;
+pub mod spatial_partitioning;
 pub mod state;
 pub mod ui;
 
@@ -78,6 +81,7 @@ fn main() {
                 spawn_chemicals,
                 move_cells,
                 bound_cells,
+                collision_system,
                 cells_absorb_chemical,
                 cells_do_meiosis,
             )

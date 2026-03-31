@@ -182,9 +182,15 @@ impl Cell {
     }
 
     #[must_use]
+    pub fn get_mass(&self) -> f32 {
+        // Scale energy to get mass
+        self.energy.powf(CELL_SIZE_SCALE_FACTOR)
+    }
+
+    #[must_use]
     pub fn get_size(&self) -> Vec2 {
-        // Scale energy, and then multiply that value to get the size
-        Vec2::splat(self.energy.powf(CELL_SIZE_SCALE_FACTOR) * CELL_SIZE_MULTIPLIER)
+        // Get masss then multiply that value to get the size
+        Vec2::splat(self.get_mass() * CELL_SIZE_MULTIPLIER)
     }
 
     pub fn split_into_daughter_bundles(
