@@ -113,18 +113,22 @@ pub fn cell_editor_ui_update(
             ui.add_space(SEPARATOR_SPACING);
 
             // Daughter 1 parameters
+            let genome_collection_mut = state.get_selected_genome_mut(&mut genome_collection);
             if create_daughter_subsection(
                 ui,
-                &mut state.get_selected_genome_mut(&mut genome_collection).daughter_genomes.0,
+                &mut genome_collection_mut.daughter_genomes.0,
+                &mut genome_collection_mut.daughter_angles.0,
                 0,
             ) {
                 // Daughter 1 was changed
             }
 
             // Daughter 2 parameters
+            let genome_collection_mut = state.get_selected_genome_mut(&mut genome_collection);
             if create_daughter_subsection(
                 ui,
-                &mut state.get_selected_genome_mut(&mut genome_collection).daughter_genomes.1,
+                &mut genome_collection_mut.daughter_genomes.1,
+                &mut genome_collection_mut.daughter_angles.1,
                 1,
             ) {
                 // Daughter 2 was changed
@@ -335,15 +339,31 @@ pub fn create_mode_combo_box(selected_genome: &mut GenomeId, ui: &mut Ui, id: im
 }
 
 #[must_use]
-pub fn create_daughter_subsection(ui: &mut Ui, daughter_genome: &mut GenomeId, daughter_index: usize) -> bool {
+pub fn create_daughter_subsection(
+    ui: &mut Ui,
+    daughter_genome: &mut GenomeId,
+    daughter_angle: &mut f32,
+    daughter_index: usize,
+) -> bool {
     let mut changed = false;
 
-    // Daughter 1 parameters
+    // Daughter parameters
     ui.label(format!("Daughter {}: ", daughter_index + 1));
     ui.add_space(SUBSECTION_SPACING);
     ui.horizontal(|ui| {
         ui.label("Mode: ");
         changed = create_mode_combo_box(daughter_genome, ui, format!("daughter_{daughter_index}_mode"));
+    });
+
+    let mut angle_degrees = -daughter_angle.to_degrees();
+    ui.horizontal(|ui| {
+        ui.label("Angle: ");
+        if ui.add(egui::Slider::new(&mut angle_degrees, (0.)..=360.)).changed() {
+            // Daughter angle was changed
+            *daughter_angle = -angle_degrees.to_radians();
+
+            changed = true;
+        }
     });
 
     // Add Separator

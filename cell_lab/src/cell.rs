@@ -93,6 +93,36 @@ impl Cell {
         )
     }
 
+    #[allow(clippy::too_many_arguments)]
+    #[must_use]
+    pub fn new_bundle_with_rotation(
+        energy: f32,
+        genome_id: GenomeId,
+        genome_bank_id: GenomeBankId,
+        velocity: Vec2,
+        position: Vec2,
+        rotation: f32,
+        genome_collection: &GenomeCollection,
+        meshes: &mut Assets<Mesh>,
+        materials: &mut Assets<CellMaterial>,
+    ) -> CellBundle {
+        let cell = Self {
+            energy,
+            age: 0.,
+            genome_id,
+            genome_bank_id,
+        };
+        CellBundle::new(
+            cell.clone(),
+            Velocity(velocity),
+            Transform::from_translation(position.extend(1.))
+                .with_scale(cell.get_size().extend(1.))
+                .with_rotation(Quat::from_rotation_z(rotation)),
+            Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
+            MeshMaterial2d(materials.add(CellMaterial::new(cell.get_genome(genome_collection).colour))),
+        )
+    }
+
     //TODO
     #[allow(clippy::too_many_arguments)]
     #[must_use]
@@ -117,6 +147,38 @@ impl Cell {
             cell.clone(),
             Velocity(velocity),
             Transform::from_translation(position.extend(1.)).with_scale(cell.get_size().extend(1.)),
+            Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
+            MeshMaterial2d(materials.add(CellMaterial::new(cell.get_genome(genome_collection).colour))),
+        )
+    }
+
+    //TODO
+    #[allow(clippy::too_many_arguments)]
+    #[must_use]
+    pub fn new_bundle_with_rotation_and_age(
+        energy: f32,
+        age: f32,
+        genome_id: GenomeId,
+        genome_bank_id: GenomeBankId,
+        velocity: Vec2,
+        position: Vec2,
+        rotation: f32,
+        genome_collection: &GenomeCollection,
+        meshes: &mut Assets<Mesh>,
+        materials: &mut Assets<CellMaterial>,
+    ) -> CellBundle {
+        let cell = Self {
+            energy,
+            age,
+            genome_id,
+            genome_bank_id,
+        };
+        CellBundle::new(
+            cell.clone(),
+            Velocity(velocity),
+            Transform::from_translation(position.extend(1.))
+                .with_scale(cell.get_size().extend(1.))
+                .with_rotation(Quat::from_rotation_z(rotation)),
             Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
             MeshMaterial2d(materials.add(CellMaterial::new(cell.get_genome(genome_collection).colour))),
         )
@@ -163,35 +225,31 @@ impl Cell {
                     || (genome.split_type == CellSplitType::Energy && self.energy >= genome.split_energy)
                 {
                     // Get the data for both daughters
-                    let (d1, d2) = get_daughter_data(
-                        self,
-                        transform.translation.xy(),
-                        velocity.0,
-                        transform.scale.xy(),
-                        genome_collection,
-                    );
+                    let (d1, d2) = get_daughter_data(self, velocity, transform, genome_collection);
 
                     return Some((
                         // Set the first daughter's parameters, and get its bundle
-                        Self::new_bundle_with_age(
+                        Self::new_bundle_with_rotation_and_age(
                             d1.energy,
                             age,
                             d1.genome_id,
                             self.genome_bank_id,
                             d1.velocity,
                             d1.position,
+                            d1.rotation + transform.rotation.to_euler(EulerRot::XYZ).2,
                             genome_collection,
                             meshes,
                             materials,
                         ),
                         // Set the second daughter's parameters, and get its bundle
-                        Self::new_bundle_with_age(
+                        Self::new_bundle_with_rotation_and_age(
                             d2.energy,
                             age,
                             d2.genome_id,
                             self.genome_bank_id,
                             d2.velocity,
                             d2.position,
+                            d2.rotation + transform.rotation.to_euler(EulerRot::XYZ).2,
                             genome_collection,
                             meshes,
                             materials,
