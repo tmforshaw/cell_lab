@@ -27,13 +27,8 @@ pub fn split_cells(
 
                 // Parent is ready to split
                 if parent.age >= parent_genome.split_age {
-                    let (d1, d2) = get_daughter_data(
-                        parent,
-                        parent.genome_id,
-                        transform.translation.xy(),
-                        transform.scale.xy(),
-                        state.get_selected_genome_bank(&genome_collection),
-                    );
+                    let (d1, d2) =
+                        get_daughter_data(parent, transform.translation.xy(), transform.scale.xy(), &genome_collection);
 
                     let time_of_birth = if let Some(&CellTimeOfBirth(parent_time_of_birth)) = parent_time_of_birth {
                         CellTimeOfBirth(parent_time_of_birth + parent_genome.split_age)

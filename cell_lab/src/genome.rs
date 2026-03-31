@@ -3,7 +3,7 @@ use std::f32::consts::PI;
 use bevy::prelude::*;
 use cell_lab_macros::generate_enum;
 
-use crate::{cell::Cell, genome_bank::GenomeBank};
+use crate::{cell::Cell, genome_bank::GenomeCollection};
 
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq, PartialOrd, Ord, Eq)]
 pub enum CellType {
@@ -89,27 +89,28 @@ pub struct DaughterData {
 #[must_use]
 pub fn get_daughter_data(
     parent_cell: &Cell,
-    parent_genome_id: GenomeId,
     parent_position: Vec2,
     parent_scale: Vec2,
-    genome_bank: &GenomeBank,
+    genome_collection: &GenomeCollection,
 ) -> (DaughterData, DaughterData) {
+    let parent_genome = &genome_collection[parent_cell.genome_bank_id][parent_cell.genome_id];
+
     // Split energy depending on split fraction
-    let d1_energy = parent_cell.energy * genome_bank[parent_genome_id].split_fraction;
+    let d1_energy = parent_cell.energy * parent_genome.split_fraction;
     let d2_energy = parent_cell.energy - d1_energy;
 
     // Set genome_id according to genome bank
-    let d1_genome_id = genome_bank[parent_genome_id].daughter_genomes.0;
-    let d2_genome_id = genome_bank[parent_genome_id].daughter_genomes.1;
+    let d1_genome_id = parent_genome.daughter_genomes.0;
+    let d2_genome_id = parent_genome.daughter_genomes.1;
 
     // Give velocity depending on split angle
-    let velocity_mag = genome_bank[parent_genome_id].split_force * 0.1;
-    let d1_velocity = velocity_mag * Vec2::Y.rotate(Vec2::from_angle(genome_bank[parent_genome_id].split_angle - PI / 2.));
-    let d2_velocity = velocity_mag * Vec2::Y.rotate(Vec2::from_angle(genome_bank[parent_genome_id].split_angle + PI / 2.));
+    let velocity_mag = parent_genome.split_force * 0.1;
+    let d1_velocity = velocity_mag * Vec2::Y.rotate(Vec2::from_angle(parent_genome.split_angle - PI / 2.));
+    let d2_velocity = velocity_mag * Vec2::Y.rotate(Vec2::from_angle(parent_genome.split_angle + PI / 2.));
 
     // Offset the daughters
-    let d1_position = parent_position + (parent_scale * genome_bank[parent_genome_id].split_fraction) / 2. * d1_velocity;
-    let d2_position = parent_position + (parent_scale * (1. - genome_bank[parent_genome_id].split_fraction)) / 2. * d2_velocity;
+    let d1_position = parent_position + (parent_scale * parent_genome.split_fraction) / 2. * d1_velocity;
+    let d2_position = parent_position + (parent_scale * (1. - parent_genome.split_fraction)) / 2. * d2_velocity;
 
     (
         // Set the first daughter's parameters
