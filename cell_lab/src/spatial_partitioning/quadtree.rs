@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use bevy::{
     math::bounding::{Aabb2d, BoundingVolume, IntersectsVolume},
     prelude::*,
@@ -5,9 +7,9 @@ use bevy::{
 
 use crate::collision::collider::aabb_contains_point;
 
-const QUAD_TREE_SIZE: f32 = 1500.;
-const QUAD_TREE_MAX_DEPTH: usize = 16;
-const QUAD_TREE_CAPACITY: usize = 16;
+// Marker for quadtree debug sprites
+#[derive(Component)]
+pub struct QuadtreeDebug;
 
 pub struct QuadTreeNode {
     bounds: Aabb2d,
@@ -39,12 +41,12 @@ impl QuadTreeNode {
         ]));
     }
 
-    pub fn insert(&mut self, entity: Entity, position: Vec2) -> bool {
+    pub fn insert(&mut self, entity: Entity, position: Vec2, node_capacity: usize, max_depth: usize) -> bool {
         if !aabb_contains_point(&self.bounds, position) {
             return false;
         }
 
-        if self.points.len() < QUAD_TREE_CAPACITY || self.depth >= QUAD_TREE_MAX_DEPTH {
+        if self.points.len() < node_capacity || self.depth >= max_depth {
             self.points.push((entity, position));
 
             return true;
@@ -56,7 +58,7 @@ impl QuadTreeNode {
 
         if let Some(children) = &mut self.children {
             for child in children.iter_mut() {
-                if child.insert(entity, position) {
+                if child.insert(entity, position, node_capacity, max_depth) {
                     return true;
                 }
             }
@@ -82,17 +84,74 @@ impl QuadTreeNode {
             }
         }
     }
+}
+
+pub struct QuadTree {
+    pub root: QuadTreeNode,
+    pub max_depth: usize,
+    pub node_capacity: usize,
+}
+
+impl QuadTree {
+    #[must_use]
+    pub fn new(centre: Vec2, size: Vec2, max_depth: usize, max_capacity_per_node: usize) -> Self {
+        Self {
+            root: QuadTreeNode::new(Aabb2d::new(centre, size * 0.5), 0),
+            max_depth,
+            node_capacity: max_capacity_per_node,
+        }
+    }
+
+    pub fn build(&mut self, entities_and_transforms: &Vec<(Entity, Transform)>) {
+        for (entity, transform) in entities_and_transforms {
+            self.root
+                .insert(*entity, transform.translation.xy(), self.node_capacity, self.max_depth);
+        }
+    }
 
     #[must_use]
-    pub fn build_tree(entities_and_transforms: Vec<(Entity, Transform)>) -> Self {
-        let bounds = Aabb2d::new(Vec2::ZERO, Vec2::splat(QUAD_TREE_SIZE));
+    pub fn build_new(
+        centre: Vec2,
+        size: Vec2,
+        max_depth: usize,
+        max_capacity_per_node: usize,
+        entities_and_transforms: &Vec<(Entity, Transform)>,
+    ) -> Self {
+        let mut new = Self::new(centre, size, max_depth, max_capacity_per_node);
 
-        let mut root = Self::new(bounds, 0);
+        new.build(entities_and_transforms);
 
-        for (entity, transform) in entities_and_transforms {
-            root.insert(entity, transform.translation.xy());
+        new
+    }
+
+    #[must_use]
+    pub const fn get_root(&self) -> &QuadTreeNode {
+        &self.root
+    }
+
+    #[must_use]
+    pub const fn get_root_mut(&mut self) -> &mut QuadTreeNode {
+        &mut self.root
+    }
+
+    // Collect all the node bounds using Breadth-First Search
+    #[must_use]
+    pub fn collect_bounds(&self) -> Vec<Aabb2d> {
+        let mut out = Vec::new();
+
+        let mut queue = VecDeque::new();
+        queue.push_back(&self.root);
+
+        while let Some(node) = queue.pop_front() {
+            out.push(node.bounds);
+
+            if let Some(children) = &node.children {
+                for child in children.iter() {
+                    queue.push_back(child);
+                }
+            }
         }
 
-        root
+        out
     }
 }

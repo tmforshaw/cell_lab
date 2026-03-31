@@ -2,7 +2,7 @@ use bevy::{math::bounding::Aabb2d, prelude::*};
 
 use crate::{
     cells::{CELL_MAX_VELOCITY, Cell, Velocity},
-    spatial_partitioning::quadtree::QuadTreeNode,
+    spatial_partitioning::cell_quadtree::CellQuadTree,
 };
 
 const IMPULSE_STRENGTH_SCALE_FACTOR: f32 = 10.;
@@ -55,15 +55,21 @@ pub fn resolve_cell_collision(
         cell2_velocity.0 -= (dir * impulse_strength * cell2_mass_ratio).clamp_length_max(CELL_MAX_VELOCITY);
     }
 }
-pub fn collision_system(mut cells: Query<(Entity, &Cell, &mut Transform, &mut Velocity)>) {
+
+pub fn collision_system(
+    mut cell_quadtree: ResMut<CellQuadTree>,
+    mut cells: Query<(Entity, &Cell, &mut Transform, &mut Velocity)>,
+) {
     // Create a read-only Vec so that the collision resolution can borrow 'cells' mutably
     let mut entities_and_transforms = Vec::new();
     for (entity, _cell, &transform, _velocity) in &cells {
         entities_and_transforms.push((entity, transform));
     }
 
-    // Build the quadtree
-    let root = QuadTreeNode::build_tree(entities_and_transforms.clone());
+    // Build the cell quadtree, and get the root node
+    *cell_quadtree = CellQuadTree::default();
+    cell_quadtree.0.build(&entities_and_transforms);
+    let root = cell_quadtree.0.get_root();
 
     for (entity, transform) in entities_and_transforms {
         let mut candidates = Vec::new();

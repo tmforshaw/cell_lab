@@ -35,6 +35,7 @@ use crate::{
             bound_cells, cell_decay, cells_absorb_chemical, cells_do_meiosis, increment_cell_age, move_cells, spawn_chemicals,
         },
     },
+    spatial_partitioning::cell_quadtree::{CellQuadTree, ShowCellQuadTree, visualize_cell_quadtree},
     state::{GameMode, PlayModeState, exit_play_mode, init_play_mode},
 };
 
@@ -65,6 +66,8 @@ fn main() {
         .init_resource::<ChemicalTimer>()
         .init_resource::<CellEditorUiStyleApplied>()
         .init_resource::<CellEditorState>()
+        .init_resource::<CellQuadTree>()
+        .init_resource::<ShowCellQuadTree>()
         .add_systems(Startup, setup)
         .add_message::<CellEditorInitialGenomeMessage>()
         .add_message::<CellEditorAgeMessage>()
@@ -86,6 +89,7 @@ fn main() {
                 collision_system,
                 cells_absorb_chemical,
                 cells_do_meiosis,
+                visualize_cell_quadtree,
             )
                 .run_if(in_state(GameMode::Play)),
         )
@@ -112,6 +116,7 @@ fn main() {
                 split_cells,
                 remove_negative_aged_cells,
                 reverse_splits,
+                visualize_cell_quadtree,
             )
                 .run_if(in_state(GameMode::CellEditor)),
         )
