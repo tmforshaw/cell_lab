@@ -4,6 +4,7 @@ use bevy_prototype_lyon::prelude::*;
 use crate::{
     cell::Cell,
     cell_editor::{events::SelectedCell, state::CellEditorState},
+    genome_bank::GenomeCollection,
 };
 
 const SPLIT_ARROW_WIDTH: f32 = 0.1;
@@ -15,18 +16,31 @@ const SPLIT_ARROW_COLOUR: Color = Color::linear_rgb(0.5, 0.5, 0.5);
 pub struct SplitAngleArrow;
 
 #[allow(clippy::needless_pass_by_value)]
-pub fn draw_cell_info(mut commands: Commands, state: Res<CellEditorState>, cells: Query<(Entity, &Cell), Added<SelectedCell>>) {
+pub fn draw_cell_info(
+    mut commands: Commands,
+    genome_collection: Res<GenomeCollection>,
+    state: Res<CellEditorState>,
+    cells: Query<(Entity, &Cell), Added<SelectedCell>>,
+) {
     for (entity, cell) in cells {
         // Draw the split angle
-        draw_split_angle_arrow_as_child(&mut commands, &state, entity, cell);
+        draw_split_angle_arrow_as_child(&mut commands, &genome_collection, &state, entity, cell);
 
         // TODO Draw split direction
     }
 }
 
-pub fn draw_split_angle_arrow_as_child(commands: &mut Commands, state: &Res<CellEditorState>, entity: Entity, cell: &Cell) {
+pub fn draw_split_angle_arrow_as_child(
+    commands: &mut Commands,
+    genome_collection: &GenomeCollection,
+    state: &Res<CellEditorState>,
+    entity: Entity,
+    cell: &Cell,
+) {
     // Calculate the length and direction for the split angle
-    let dir = Vec2::Y.rotate(Vec2::from_angle(state.genomes[cell.genome_id].split_angle));
+    let dir = Vec2::Y.rotate(Vec2::from_angle(
+        state.get_selected_genome_bank(genome_collection)[cell.genome_id].split_angle,
+    ));
 
     let start = -dir / 2.;
 

@@ -4,6 +4,8 @@ use crate::cell_material::CellMaterial;
 use crate::chemical::Chemical;
 use crate::dish::{Dish, DishMarker};
 
+use crate::genome::GenomeId;
+use crate::genome_bank::{GenomeBankId, GenomeCollection};
 use crate::{
     cell::{CELL_ENERGY, CELL_MAX_VELOCITY, Cell, STARTING_CELL_NUM},
     helpers::random_vec2,
@@ -32,6 +34,7 @@ pub enum GameMode {
 #[allow(clippy::needless_pass_by_value)]
 pub fn init_play_mode(
     mut commands: Commands,
+    genome_collection: Res<GenomeCollection>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<CellMaterial>>,
     state: Res<PlayModeState>,
@@ -41,11 +44,13 @@ pub fn init_play_mode(
 
     // Spawn cells
     for _ in 0..STARTING_CELL_NUM {
-        commands.spawn(Cell::new_bundle(
+        commands.spawn(Cell::new_bundle_with_genome(
             CELL_ENERGY,
+            GenomeId::default(),
+            GenomeBankId::default(),
             random_vec2(Vec2::splat(CELL_MAX_VELOCITY)),
             random_vec2(state.dish.size / 2.),
-            Color::linear_rgb(0.25, 1., 0.25),
+            &genome_collection,
             &mut meshes,
             &mut materials,
         ));

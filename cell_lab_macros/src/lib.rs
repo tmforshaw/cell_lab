@@ -6,6 +6,7 @@ use syn::{Ident, LitInt, Token, parse_macro_input};
 struct EnumInput {
     enum_name: Ident,
     variant_prefix: Ident,
+    constant_name: Ident,
     count: LitInt,
 }
 
@@ -13,12 +14,19 @@ impl Parse for EnumInput {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let enum_name: Ident = input.parse()?;
         input.parse::<Token![,]>()?;
+
         let variant_prefix: Ident = input.parse()?;
         input.parse::<Token![,]>()?;
+
+        let constant_name: Ident = input.parse()?;
+        input.parse::<Token![,]>()?;
+
         let count: LitInt = input.parse()?;
+
         Ok(EnumInput {
             enum_name,
             variant_prefix,
+            constant_name,
             count,
         })
     }
@@ -29,10 +37,12 @@ pub fn generate_enum(input: TokenStream) -> TokenStream {
     let EnumInput {
         enum_name,
         variant_prefix,
+        constant_name,
         count,
     } = parse_macro_input!(input as EnumInput);
     let count_value: usize = count.base10_parse().expect("Invalid number");
 
+    // Create the enum variants using the prefix and numbers in a range
     let variants = (1..=count_value).map(|i| {
         let variant_name = format_ident!("{}{}", variant_prefix, i);
         if i == 1 {
@@ -42,18 +52,22 @@ pub fn generate_enum(input: TokenStream) -> TokenStream {
         }
     });
 
+    // Generate From<usize> for Enum
     let from_usize_matches = (0..count_value).map(|i| {
         let variant_name = format_ident!("{}{}", variant_prefix, i + 1);
         quote! { #i => #enum_name::#variant_name }
     });
 
+    // Generate From<Enum> for usize
     let from_enum_matches = (0..count_value).map(|i| {
         let variant_name = format_ident!("{}{}", variant_prefix, i + 1);
         quote! { #enum_name::#variant_name => #i }
     });
 
-    let enum_max_const = format_ident!("{}_MAX", enum_name.to_string().to_uppercase());
+    // Generate the name of the max num constant
+    let enum_max_const = format_ident!("{}", constant_name.to_string().to_uppercase());
 
+    // Generate a std::fmt::Display implementation
     let display_matches = (1..=count_value).map(|i| {
         let variant_name = format_ident!("{}{}", variant_prefix, i);
         quote! {
@@ -61,6 +75,7 @@ pub fn generate_enum(input: TokenStream) -> TokenStream {
         }
     });
 
+    // Turn all those generated texts into code to be pasted
     let expanded = quote! {
         #[derive(Debug, Clone, Copy, Default, PartialEq, PartialOrd, Ord, Eq)]
         pub enum #enum_name {

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{cell::Cell, cell_editor::systems::CellTimeOfBirth, genome::GenomeId};
+use crate::{cell::Cell, cell_editor::systems::CellTimeOfBirth};
 
 // TODO
 #[allow(dead_code)]
@@ -8,7 +8,6 @@ use crate::{cell::Cell, cell_editor::systems::CellTimeOfBirth, genome::GenomeId}
 pub struct SplitHistoryData {
     pub simulation_age: f32,
     pub parent: Cell,
-    pub parent_genome_id: GenomeId,
     pub parent_position: Vec2,
     pub parent_velocity: Vec2,
     pub parent_time_of_birth: CellTimeOfBirth,

@@ -2,10 +2,9 @@ use bevy::prelude::*;
 
 use std::ops::{Index, IndexMut};
 
-use crate::genome::{Genome, GenomeId};
+use cell_lab_macros::generate_enum;
 
-pub const GENOME_MAX_NUM: usize = 9;
-pub const GENOME_BANK_MAX_NUM: usize = 16;
+use crate::genome::{GENOME_MAX_NUM, Genome, GenomeId};
 
 pub struct GenomeBank {
     pub initial: GenomeId,
@@ -40,40 +39,31 @@ impl IndexMut<GenomeId> for GenomeBank {
     }
 }
 
-pub enum GenomeBankId {}
+generate_enum!(GenomeBankId, B, GENOME_BANK_MAX_NUM, 16);
 
 #[derive(Resource)]
 pub struct GenomeCollection {
-    genome_collection: Vec<GenomeBank>,
+    genome_collection: [GenomeBank; GENOME_BANK_MAX_NUM],
 }
 
 impl Default for GenomeCollection {
     fn default() -> Self {
         Self {
-            genome_collection: vec![GenomeBank::default()],
+            genome_collection: std::array::from_fn(|_| GenomeBank::default()),
         }
     }
 }
 
-impl Index<(usize, GenomeId)> for GenomeCollection {
-    type Output = Genome;
+impl Index<GenomeBankId> for GenomeCollection {
+    type Output = GenomeBank;
 
-    fn index(&self, index: (usize, GenomeId)) -> &Self::Output {
-        &self.genome_collection.get(index.0).unwrap_or_else(|| {
-            panic!(
-                "Index Error: Tried to access '{}' element of GenomeBank of length {}.",
-                index.0,
-                self.genome_collection.len()
-            )
-        })[index.1]
+    fn index(&self, index: GenomeBankId) -> &Self::Output {
+        &self.genome_collection[Into::<usize>::into(index)]
     }
 }
 
-impl IndexMut<(usize, GenomeId)> for GenomeCollection {
-    fn index_mut(&mut self, index: (usize, GenomeId)) -> &mut Self::Output {
-        &mut self
-            .genome_collection
-            .get_mut(index.0)
-            .unwrap_or_else(|| panic!("Index Error: Tried to access element outside of GenomeBank range."))[index.1]
+impl IndexMut<GenomeBankId> for GenomeCollection {
+    fn index_mut(&mut self, index: GenomeBankId) -> &mut Self::Output {
+        &mut self.genome_collection[Into::<usize>::into(index)]
     }
 }

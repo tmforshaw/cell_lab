@@ -4,7 +4,7 @@ use bevy_egui::{
     egui::{self, Color32, Context, CornerRadius, Stroke, Ui, containers::ComboBox},
 };
 
-use crate::{cell_editor::events::CellEditorSplitAngleMessage, genome::GenomeId};
+use crate::{cell_editor::events::CellEditorSplitAngleMessage, genome::GenomeId, genome_bank::GenomeCollection};
 
 use crate::{
     cell::{MAX_CELL_AGE, MAX_CELL_ENERGY},
@@ -23,10 +23,12 @@ pub struct CellEditorUiStyleApplied(bool);
 
 // TODO
 #[allow(clippy::too_many_lines)]
+#[allow(clippy::too_many_arguments)]
 /// # Errors
 /// Returns an error if egui ui context cannot be found
 pub fn cell_editor_ui_update(
     mut egui_ctx: EguiContexts,
+    mut genome_collection: ResMut<GenomeCollection>,
     mut state: ResMut<CellEditorState>,
     mut cell_editor_style_applied: ResMut<CellEditorUiStyleApplied>,
     mut age_message_writer: MessageWriter<CellEditorAgeMessage>,
@@ -68,12 +70,12 @@ pub fn cell_editor_ui_update(
             ui.add_space(SEPARATOR_SPACING);
 
             ui.horizontal(|ui| {
-                let mut checked = state.selected_genome == state.genomes.initial;
+                let mut checked = state.selected_genome == state.get_selected_genome_bank(&genome_collection).initial;
                 if ui.checkbox(&mut checked, "Initial Genome").changed() {
                     // Initial genome checkbox was clicked
-                    if state.genomes.initial != state.selected_genome {
+                    if state.get_selected_genome_bank(&genome_collection).initial != state.selected_genome {
                         // Initial genome has actually changed
-                        state.genomes.initial = state.selected_genome;
+                        state.get_selected_genome_bank_mut(&mut genome_collection).initial = state.selected_genome;
 
                         // Do an event
                     }
@@ -84,18 +86,18 @@ pub fn cell_editor_ui_update(
                 // Cell type selection
                 ui.label("Cell Type:");
                 ComboBox::from_id_salt("cell_type")
-                    .selected_text(format!("{}", state.get_selected_genome().cell_type))
+                    .selected_text(format!("{}", state.get_selected_genome(&genome_collection).cell_type))
                     .show_ui(ui, |ui| {
                         if ui
                             .selectable_value(
-                                &mut state.get_selected_genome_mut().cell_type,
+                                &mut state.get_selected_genome_mut(&mut genome_collection).cell_type,
                                 CellType::Phagocyte,
                                 CellType::Phagocyte.to_string(),
                             )
                             .changed()
                             || ui
                                 .selectable_value(
-                                    &mut state.get_selected_genome_mut().cell_type,
+                                    &mut state.get_selected_genome_mut(&mut genome_collection).cell_type,
                                     CellType::Photocyte,
                                     CellType::Photocyte.to_string(),
                                 )
@@ -111,12 +113,20 @@ pub fn cell_editor_ui_update(
             ui.add_space(SEPARATOR_SPACING);
 
             // Daughter 1 parameters
-            if create_daughter_subsection(ui, &mut state.get_selected_genome_mut().daughter_genomes.0, 0) {
+            if create_daughter_subsection(
+                ui,
+                &mut state.get_selected_genome_mut(&mut genome_collection).daughter_genomes.0,
+                0,
+            ) {
                 // Daughter 1 was changed
             }
 
             // Daughter 2 parameters
-            if create_daughter_subsection(ui, &mut state.get_selected_genome_mut().daughter_genomes.1, 1) {
+            if create_daughter_subsection(
+                ui,
+                &mut state.get_selected_genome_mut(&mut genome_collection).daughter_genomes.1,
+                1,
+            ) {
                 // Daughter 2 was changed
             }
 
@@ -125,7 +135,7 @@ pub fn cell_editor_ui_update(
                 ui.label("Colour: ");
 
                 // Create a colour picker
-                if create_colour_edit_ui(ui, &mut state.get_selected_genome_mut().colour) {
+                if create_colour_edit_ui(ui, &mut state.get_selected_genome_mut(&mut genome_collection).colour) {
                     // Colour was changed
                     colour_message_writer.write(CellEditorColourMessage);
                 }
@@ -138,31 +148,31 @@ pub fn cell_editor_ui_update(
             // Select "use split age" or "use split energy"
             ui.horizontal(|ui| {
                 ui.radio_value(
-                    &mut state.get_selected_genome_mut().split_type,
+                    &mut state.get_selected_genome_mut(&mut genome_collection).split_type,
                     CellSplitType::Energy,
                     "Use Split Energy",
                 );
                 ui.radio_value(
-                    &mut state.get_selected_genome_mut().split_type,
+                    &mut state.get_selected_genome_mut(&mut genome_collection).split_type,
                     CellSplitType::Age,
                     "Use Split Age",
                 );
                 ui.radio_value(
-                    &mut state.get_selected_genome_mut().split_type,
+                    &mut state.get_selected_genome_mut(&mut genome_collection).split_type,
                     CellSplitType::Never,
                     "Never Split",
                 );
             });
 
             // Show different UI depending on use_split_age
-            match state.get_selected_genome().split_type {
+            match state.get_selected_genome(&genome_collection).split_type {
                 CellSplitType::Energy => {
                     // Split energy parameter
                     ui.horizontal(|ui| {
                         ui.label("Split Energy: ");
                         if ui
                             .add(egui::Slider::new(
-                                &mut state.get_selected_genome_mut().split_energy,
+                                &mut state.get_selected_genome_mut(&mut genome_collection).split_energy,
                                 0.0..=MAX_CELL_ENERGY,
                             ))
                             .changed()
@@ -177,7 +187,7 @@ pub fn cell_editor_ui_update(
                         ui.label("Split Age: ");
                         if ui
                             .add(egui::Slider::new(
-                                &mut state.get_selected_genome_mut().split_age,
+                                &mut state.get_selected_genome_mut(&mut genome_collection).split_age,
                                 0.0..=MAX_CELL_AGE,
                             ))
                             .changed()
@@ -194,7 +204,7 @@ pub fn cell_editor_ui_update(
                 ui.label("Split Fraction: ");
                 if ui
                     .add(egui::Slider::new(
-                        &mut state.get_selected_genome_mut().split_fraction,
+                        &mut state.get_selected_genome_mut(&mut genome_collection).split_fraction,
                         0.0..=1.0,
                     ))
                     .changed()
@@ -206,12 +216,12 @@ pub fn cell_editor_ui_update(
             ui.add_space(SUBSECTION_SPACING);
 
             // Split angle parameter
-            let mut angle_degrees = -state.get_selected_genome().split_angle.to_degrees();
+            let mut angle_degrees = -state.get_selected_genome(&genome_collection).split_angle.to_degrees();
             ui.horizontal(|ui| {
                 ui.label("Split Angle: ");
                 if ui.add(egui::Slider::new(&mut angle_degrees, (0.)..=360.)).changed() {
                     // Split angle was changed
-                    state.get_selected_genome_mut().split_angle = -angle_degrees.to_radians();
+                    state.get_selected_genome_mut(&mut genome_collection).split_angle = -angle_degrees.to_radians();
 
                     split_angle_message_writer.write(CellEditorSplitAngleMessage);
                 }
@@ -224,7 +234,7 @@ pub fn cell_editor_ui_update(
                 ui.label("Split Force: ");
                 if ui
                     .add(egui::Slider::new(
-                        &mut state.get_selected_genome_mut().split_force,
+                        &mut state.get_selected_genome_mut(&mut genome_collection).split_force,
                         (0.)..=50.,
                     ))
                     .changed()

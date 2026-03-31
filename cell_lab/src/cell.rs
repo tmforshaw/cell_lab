@@ -7,7 +7,13 @@ use rand::RngExt;
 
 use std::f32::consts::PI;
 
-use crate::{cell_material::CellMaterial, chemical::Chemical, genome::GenomeId, genome_bank::GenomeBank, state::PlayModeState};
+use crate::{
+    cell_material::CellMaterial,
+    chemical::Chemical,
+    genome::{Genome, GenomeId},
+    genome_bank::{GenomeBankId, GenomeCollection},
+    state::PlayModeState,
+};
 
 #[derive(Component)]
 pub struct Velocity(pub Vec2);
@@ -28,42 +34,44 @@ pub struct Cell {
     pub energy: f32,
     pub age: f32,
     pub genome_id: GenomeId,
+    pub genome_bank_id: GenomeBankId,
 }
 
 impl Cell {
-    #[must_use]
-    pub fn new_bundle(
-        // genome_bank: GenomeBank,
-        energy: f32,
-        velocity: Vec2,
-        position: Vec2,
-        colour: Color,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<CellMaterial>>,
-    ) -> impl Bundle {
-        let cell = Self {
-            energy,
-            age: 0.,
-            genome_id: GenomeId::default(),
-        };
-        (
-            cell.clone(),
-            Velocity(velocity),
-            Transform::from_translation(position.extend(1.)).with_scale(cell.get_size().extend(1.)),
-            Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
-            // MeshMaterial2d(materials.add(CellMaterial::new(genome_bank[cell.genome_id].colour))),
-            MeshMaterial2d(materials.add(CellMaterial::new(colour))),
-        )
-    }
+    // #[must_use]
+    // pub fn new_bundle(
+    //     // genome_bank: GenomeBank,
+    //     energy: f32,
+    //     velocity: Vec2,
+    //     position: Vec2,
+    //     colour: Color,
+    //     meshes: &mut ResMut<Assets<Mesh>>,
+    //     materials: &mut ResMut<Assets<CellMaterial>>,
+    // ) -> impl Bundle {
+    //     let cell = Self {
+    //         energy,
+    //         age: 0.,
+    //         genome_id: GenomeId::default(),
+    //     };
+    //     (
+    //         cell.clone(),
+    //         Velocity(velocity),
+    //         Transform::from_translation(position.extend(1.)).with_scale(cell.get_size().extend(1.)),
+    //         Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
+    //         // MeshMaterial2d(materials.add(CellMaterial::new(genome_bank[cell.genome_id].colour))),
+    //         MeshMaterial2d(materials.add(CellMaterial::new(colour))),
+    //     )
+    // }
 
+    #[allow(clippy::too_many_arguments)]
     #[must_use]
     pub fn new_bundle_with_genome(
         energy: f32,
         genome_id: GenomeId,
-        // genome_bank: GenomeBank,
+        genome_bank_id: GenomeBankId,
         velocity: Vec2,
         position: Vec2,
-        colour: Color,
+        genome_collection: &GenomeCollection,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<CellMaterial>>,
     ) -> impl Bundle {
@@ -71,14 +79,14 @@ impl Cell {
             energy,
             age: 0.,
             genome_id,
+            genome_bank_id,
         };
         (
             cell.clone(),
             Velocity(velocity),
             Transform::from_translation(position.extend(1.)).with_scale(cell.get_size().extend(1.)),
             Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
-            // MeshMaterial2d(materials.add(CellMaterial::new(genome_bank[genome_id].colour))),
-            MeshMaterial2d(materials.add(CellMaterial::new(colour))),
+            MeshMaterial2d(materials.add(CellMaterial::new(cell.get_genome(genome_collection).colour))),
         )
     }
 
@@ -89,22 +97,31 @@ impl Cell {
         energy: f32,
         age: f32,
         genome_id: GenomeId,
-        // genome_bank: GenomeBank,
+        genome_bank_id: GenomeBankId,
         velocity: Vec2,
         position: Vec2,
-        colour: Color,
+        genome_collection: &GenomeCollection,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<CellMaterial>>,
     ) -> impl Bundle {
-        let cell = Self { energy, age, genome_id };
+        let cell = Self {
+            energy,
+            age,
+            genome_id,
+            genome_bank_id,
+        };
         (
             cell.clone(),
             Velocity(velocity),
             Transform::from_translation(position.extend(1.)).with_scale(cell.get_size().extend(1.)),
             Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
-            // MeshMaterial2d(materials.add(CellMaterial::new(genome_bank[genome_id].colour))),
-            MeshMaterial2d(materials.add(CellMaterial::new(colour))),
+            MeshMaterial2d(materials.add(CellMaterial::new(cell.get_genome(genome_collection).colour))),
         )
+    }
+
+    #[must_use]
+    pub fn get_genome<'a>(&self, genome_collection: &'a GenomeCollection) -> &'a Genome {
+        &genome_collection[self.genome_bank_id][self.genome_id]
     }
 
     #[must_use]
@@ -199,13 +216,17 @@ pub fn cells_absorb_chemical(
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn cells_do_meiosis(
     mut commands: Commands,
+    genome_collection: Res<GenomeCollection>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<CellMaterial>>,
-    mut query: Query<(&mut Transform, &mut Cell, &mut Velocity, &MeshMaterial2d<CellMaterial>)>,
+    mut query: Query<(&mut Transform, &mut Cell, &mut Velocity)>,
 ) {
-    for (mut transform, mut cell, mut velocity, material_handle) in &mut query {
+    // TODO Reuse splitting from editor
+
+    for (mut transform, mut cell, mut velocity) in &mut query {
         if cell.energy > CELL_DIVISION_ENERGY {
             // Generate a random angle for the velocity
             let angle = rand::rng().random::<f32>() * PI;
@@ -217,19 +238,17 @@ pub fn cells_do_meiosis(
             // Scale the magnitude so it conserves momentum
             let magnitude_scale = velocity.0.length() / (v1 + v2).length();
 
-            if let Some(material) = materials.get(&material_handle.0) {
-                let colour = Color::linear_rgba(material.colour.x, material.colour.y, material.colour.z, material.colour.w);
-
-                // Create a new cell
-                commands.spawn(Cell::new_bundle(
-                    cell.energy / 2.,
-                    v2 * magnitude_scale,
-                    transform.translation.xy(),
-                    colour,
-                    &mut meshes,
-                    &mut materials,
-                ));
-            }
+            // Create a new cell
+            commands.spawn(Cell::new_bundle_with_genome(
+                cell.energy / 2.,
+                cell.genome_id,
+                cell.genome_bank_id,
+                v2 * magnitude_scale,
+                transform.translation.xy(),
+                &genome_collection,
+                &mut meshes,
+                &mut materials,
+            ));
 
             // Change cell energy and velocity, then resize cell
             cell.energy /= 2.;

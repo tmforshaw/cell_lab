@@ -6,43 +6,43 @@ use crate::{
     cell_material::CellMaterial,
     dish::DishMarker,
     genome::{Genome, GenomeId},
-    genome_bank::{GenomeBank, GenomeCollection},
+    genome_bank::{GenomeBank, GenomeBankId, GenomeCollection},
 };
 
 #[derive(Resource, Default)]
 pub struct CellEditorState {
-    pub selected_genome_bank: usize,
+    pub selected_genome_bank: GenomeBankId,
     pub selected_genome: GenomeId,
     pub age: f32,
-    pub genomes: GenomeBank,
     pub history: SplitHistory,
 }
 
 impl CellEditorState {
     #[must_use]
-    pub fn get_selected_genome(&self) -> &Genome {
-        &self.genomes[self.selected_genome]
+    pub fn get_selected_genome<'a>(&self, genome_collection: &'a GenomeCollection) -> &'a Genome {
+        &genome_collection[self.selected_genome_bank][self.selected_genome]
     }
 
     #[must_use]
-    pub fn get_selected_genome_mut(&mut self) -> &mut Genome {
-        &mut self.genomes[self.selected_genome]
+    pub fn get_selected_genome_mut<'a>(&mut self, genome_collection: &'a mut GenomeCollection) -> &'a mut Genome {
+        &mut genome_collection[self.selected_genome_bank][self.selected_genome]
     }
 
-    // #[must_use]
-    // pub fn get_selected_genome<'a>(&self, genome_collection: &'a GenomeCollection) -> &'a Genome {
-    //     &genome_collection[(self.selected_genome_bank, self.selected_genome)]
-    // }
+    #[must_use]
+    pub fn get_selected_genome_bank<'a>(&self, genome_collection: &'a GenomeCollection) -> &'a GenomeBank {
+        &genome_collection[self.selected_genome_bank]
+    }
 
-    // #[must_use]
-    // pub fn get_selected_genome_mut<'a>(&mut self, genome_collection: &'a mut GenomeCollection) -> &'a mut Genome {
-    //     &mut genome_collection[(self.selected_genome_bank, self.selected_genome)]
-    // }
+    #[must_use]
+    pub fn get_selected_genome_bank_mut<'a>(&mut self, genome_collection: &'a mut GenomeCollection) -> &'a mut GenomeBank {
+        &mut genome_collection[self.selected_genome_bank]
+    }
 }
 
 #[allow(clippy::needless_pass_by_value)]
 pub fn init_cell_editor_mode(
     mut commands: Commands,
+    genome_collection: Res<GenomeCollection>,
     mut state: ResMut<CellEditorState>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<CellMaterial>>,
@@ -66,9 +66,10 @@ pub fn init_cell_editor_mode(
         Cell::new_bundle_with_genome(
             100.,
             state.selected_genome,
+            state.selected_genome_bank,
             Vec2::ZERO,
             Vec2::ZERO,
-            state.genomes[state.selected_genome].colour,
+            &genome_collection,
             &mut meshes,
             &mut materials,
         ),

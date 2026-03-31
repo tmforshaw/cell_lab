@@ -77,12 +77,12 @@ impl Default for Genome {
     }
 }
 
-generate_enum!(GenomeId, M, 9);
+generate_enum!(GenomeId, M, GENOME_MAX_NUM, 9);
 
 pub struct DaughterData {
     pub energy: f32,
     pub genome_id: GenomeId,
-    pub colour: Color,
+    pub colour: Color, // TODO Remove this in favour of finding it from the genome
     pub velocity: Vec2,
     pub position: Vec2,
 }
