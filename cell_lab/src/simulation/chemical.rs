@@ -3,7 +3,7 @@ use bevy::{prelude::*, render::render_resource::AsBindGroup, shader::ShaderRef, 
 // Chemical parameters
 pub const CHEMICAL_SIZE: f32 = 20.;
 pub const CHEMICAL_ENERGY: f32 = 10.;
-pub const CHEMICAL_SPAWN_RATE: f32 = 10.;
+pub const CHEMICAL_SPAWN_RATE: f32 = 20.;
 pub const CHEMICAL_MAX_NUM: usize = 400;
 pub const CHEMICAL_COLOUR: Color = Color::linear_rgba(0.5, 0.1, 0.1, 0.75);
 

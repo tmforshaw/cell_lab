@@ -38,6 +38,8 @@ use crate::{
     state::{GameMode, PlayModeState, exit_play_mode, init_play_mode},
 };
 
+// TODO Check if entity is already despawned when despawning
+
 pub mod cell_editor;
 pub mod cells;
 pub mod collision;
