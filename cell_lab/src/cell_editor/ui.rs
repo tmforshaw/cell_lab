@@ -4,15 +4,13 @@ use bevy_egui::{
     egui::{self, Color32, Context, CornerRadius, Stroke, Ui, containers::ComboBox},
 };
 
-use crate::{cell_editor::events::CellEditorSplitAngleMessage, genome::GenomeId, genome_bank::GenomeCollection};
-
 use crate::{
-    cell::{MAX_CELL_AGE, MAX_CELL_ENERGY},
     cell_editor::{
-        events::{CellEditorAgeMessage, CellEditorColourMessage, CellEditorSelectedGenomeMessage},
+        events::{CellEditorAgeMessage, CellEditorColourMessage, CellEditorSelectedGenomeMessage, CellEditorSplitAngleMessage},
         state::CellEditorState,
     },
-    genome::{CellSplitType, CellType},
+    cells::{MAX_CELL_AGE, MAX_CELL_ENERGY},
+    genomes::{CellSplitType, CellType, GenomeCollection, GenomeId},
     ui::{SEPARATOR_SPACING, SUBSECTION_SPACING},
 };
 

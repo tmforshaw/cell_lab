@@ -13,7 +13,6 @@ use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
 use bevy_prototype_lyon::plugin::ShapePlugin;
 
 use crate::{
-    cell::{bound_cells, cell_decay, cells_absorb_chemical, cells_do_meiosis, increment_cell_age, move_cells},
     cell_editor::{
         drawing::draw_cell_info,
         events::{
@@ -26,23 +25,24 @@ use crate::{
         systems::{remove_negative_aged_cells, reverse_splits, split_cells},
         ui::{CellEditorUiStyleApplied, cell_editor_ui_update},
     },
-    cell_material::CellMaterial,
-    chemical::{ChemicalMaterial, ChemicalTimer, spawn_chemicals},
-    genome_bank::GenomeCollection,
+    cells::cell_material::CellMaterial,
+    genomes::genome_bank::GenomeCollection,
     input::{cell_editor_mode_keyboard_event_reader, play_mode_keyboard_event_reader},
+    simulation::{
+        chemical::{ChemicalMaterial, ChemicalTimer},
+        systems::{
+            bound_cells, cell_decay, cells_absorb_chemical, cells_do_meiosis, increment_cell_age, move_cells, spawn_chemicals,
+        },
+    },
     state::{GameMode, PlayModeState, exit_play_mode, init_play_mode},
 };
 
-pub mod cell;
 pub mod cell_editor;
-pub mod cell_material;
-pub mod chemical;
-pub mod dish;
-pub mod genome;
-pub mod genome_bank;
+pub mod cells;
+pub mod genomes;
 pub mod helpers;
 pub mod input;
-pub mod macros;
+pub mod simulation;
 pub mod state;
 pub mod ui;
 

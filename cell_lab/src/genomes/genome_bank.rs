@@ -4,7 +4,7 @@ use std::ops::{Index, IndexMut};
 
 use cell_lab_macros::generate_enum;
 
-use crate::genome::{GENOME_MAX_NUM, Genome, GenomeId};
+use crate::genomes::{GENOME_MAX_NUM, Genome, GenomeId};
 
 const GENOME_BANK_COLOUR_OFFSET: f32 = 120.;
 

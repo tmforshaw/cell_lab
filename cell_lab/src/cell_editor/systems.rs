@@ -1,11 +1,9 @@
 use bevy::prelude::*;
 
 use crate::{
-    cell::{Cell, Velocity},
     cell_editor::{events::SelectedCell, history::SplitHistoryData, state::CellEditorState},
-    cell_material::CellMaterial,
-    genome::CellSplitType,
-    genome_bank::GenomeCollection,
+    cells::{Cell, CellMaterial, Velocity},
+    genomes::{CellSplitType, GenomeCollection},
 };
 
 #[derive(Component, Debug, Clone)]

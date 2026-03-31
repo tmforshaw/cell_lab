@@ -1,14 +1,13 @@
 use bevy::prelude::*;
 
 use crate::{
-    cell::Cell,
     cell_editor::{
         drawing::{SplitAngleArrow, draw_split_angle_arrow_as_child},
         state::CellEditorState,
         systems::CellTimeOfBirth,
     },
-    cell_material::CellMaterial,
-    genome_bank::GenomeCollection,
+    cells::{Cell, CellMaterial},
+    genomes::GenomeCollection,
 };
 
 pub const SELECTION_COLOUR: Color = Color::linear_rgb(1.0, 1.0, 0.0);

@@ -1,14 +1,13 @@
 use bevy::prelude::*;
 
-use crate::cell_material::CellMaterial;
-use crate::chemical::Chemical;
-use crate::dish::{Dish, DishMarker};
-
-use crate::genome::GenomeId;
-use crate::genome_bank::{GenomeBankId, GenomeCollection};
 use crate::{
-    cell::{CELL_ENERGY, CELL_MAX_VELOCITY, Cell, STARTING_CELL_NUM},
+    cells::{CELL_ENERGY, CELL_MAX_VELOCITY, Cell, CellMaterial, STARTING_CELL_NUM},
+    genomes::{GenomeBankId, GenomeCollection, GenomeId},
     helpers::random_vec2,
+    simulation::{
+        chemical::Chemical,
+        dish::{Dish, DishMarker},
+    },
 };
 
 #[derive(Resource, Default)]

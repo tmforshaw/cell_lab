@@ -2,9 +2,9 @@ use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
 
 use crate::{
-    cell::Cell,
     cell_editor::{events::SelectedCell, state::CellEditorState},
-    genome_bank::GenomeCollection,
+    cells::Cell,
+    genomes::GenomeCollection,
 };
 
 const SPLIT_ARROW_WIDTH: f32 = 0.1;

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{cell::Cell, cell_editor::systems::CellTimeOfBirth};
+use crate::{cell_editor::systems::CellTimeOfBirth, cells::Cell};
 
 // TODO
 #[allow(dead_code)]

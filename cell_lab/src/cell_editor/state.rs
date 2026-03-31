@@ -1,12 +1,10 @@
 use bevy::prelude::*;
 
 use crate::{
-    cell::Cell,
     cell_editor::{events::SelectedCell, history::SplitHistory},
-    cell_material::CellMaterial,
-    dish::DishMarker,
-    genome::{Genome, GenomeId},
-    genome_bank::{GenomeBank, GenomeBankId, GenomeCollection},
+    cells::{Cell, CellMaterial},
+    genomes::{Genome, GenomeBank, GenomeBankId, GenomeCollection, GenomeId},
+    simulation::dish::DishMarker,
 };
 
 #[derive(Resource, Default)]
