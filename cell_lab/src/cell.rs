@@ -26,6 +26,8 @@ pub const MAX_CELL_AGE: f32 = 100.;
 pub const MAX_CELL_ENERGY: f32 = 100.;
 pub const MIN_CELL_ENERGY: f32 = 1.;
 pub const CELL_SPLIT_PADDING: f32 = 1.2; // Multiplier for offset of daughters from each other (Multiplies radius)
+pub const CELL_SIZE_MULTIPLIER: f32 = 10.;
+pub const CELL_SIZE_SCALE_FACTOR: f32 = 0.75;
 
 #[derive(Bundle)]
 pub struct CellBundle {
@@ -127,7 +129,8 @@ impl Cell {
 
     #[must_use]
     pub fn get_size(&self) -> Vec2 {
-        Vec2::splat(self.energy * 2.)
+        // Scale energy, and then multiply that value to get the size
+        Vec2::splat(self.energy.powf(CELL_SIZE_SCALE_FACTOR) * CELL_SIZE_MULTIPLIER)
     }
 
     pub fn split_into_daughter_bundles(
