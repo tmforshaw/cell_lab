@@ -5,12 +5,10 @@ use bevy::{
 
 use rand::RngExt;
 
-use std::f32::consts::PI;
-
 use crate::{
     cell_material::CellMaterial,
     chemical::Chemical,
-    genome::{Genome, GenomeId},
+    genome::{CellSplitType, Genome, GenomeId, get_daughter_data},
     genome_bank::{GenomeBankId, GenomeCollection},
     state::PlayModeState,
 };
@@ -19,15 +17,43 @@ use crate::{
 pub struct Velocity(pub Vec2);
 
 // Cell parameters
-pub const CELL_ENERGY: f32 = 40.;
+pub const CELL_ENERGY: f32 = 10.;
 pub const CELL_MAX_VELOCITY: f32 = 100.;
 const RANDOM_ACCELERATION: f32 = 10.;
 pub const STARTING_CELL_NUM: u32 = 20;
-const CELL_DIVISION_ENERGY: f32 = 60.;
 const CELL_ENERGY_DECAY: f32 = 1.;
 pub const MAX_CELL_AGE: f32 = 100.;
 pub const MAX_CELL_ENERGY: f32 = 100.;
 pub const MIN_CELL_ENERGY: f32 = 1.;
+pub const CELL_SPLIT_PADDING: f32 = 1.2; // Multiplier for offset of daughters from each other (Multiplies radius)
+
+#[derive(Bundle)]
+pub struct CellBundle {
+    pub cell: Cell,
+    pub velocity: Velocity,
+    pub transform: Transform,
+    pub mesh: Mesh2d,
+    pub material: MeshMaterial2d<CellMaterial>,
+}
+
+impl CellBundle {
+    #[must_use]
+    pub const fn new(
+        cell: Cell,
+        velocity: Velocity,
+        transform: Transform,
+        mesh: Mesh2d,
+        material: MeshMaterial2d<CellMaterial>,
+    ) -> Self {
+        Self {
+            cell,
+            velocity,
+            transform,
+            mesh,
+            material,
+        }
+    }
+}
 
 #[derive(Component, Debug, Clone)]
 pub struct Cell {
@@ -38,50 +64,25 @@ pub struct Cell {
 }
 
 impl Cell {
-    // #[must_use]
-    // pub fn new_bundle(
-    //     // genome_bank: GenomeBank,
-    //     energy: f32,
-    //     velocity: Vec2,
-    //     position: Vec2,
-    //     colour: Color,
-    //     meshes: &mut ResMut<Assets<Mesh>>,
-    //     materials: &mut ResMut<Assets<CellMaterial>>,
-    // ) -> impl Bundle {
-    //     let cell = Self {
-    //         energy,
-    //         age: 0.,
-    //         genome_id: GenomeId::default(),
-    //     };
-    //     (
-    //         cell.clone(),
-    //         Velocity(velocity),
-    //         Transform::from_translation(position.extend(1.)).with_scale(cell.get_size().extend(1.)),
-    //         Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
-    //         // MeshMaterial2d(materials.add(CellMaterial::new(genome_bank[cell.genome_id].colour))),
-    //         MeshMaterial2d(materials.add(CellMaterial::new(colour))),
-    //     )
-    // }
-
     #[allow(clippy::too_many_arguments)]
     #[must_use]
-    pub fn new_bundle_with_genome(
+    pub fn new_bundle(
         energy: f32,
         genome_id: GenomeId,
         genome_bank_id: GenomeBankId,
         velocity: Vec2,
         position: Vec2,
         genome_collection: &GenomeCollection,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<CellMaterial>>,
-    ) -> impl Bundle {
+        meshes: &mut Assets<Mesh>,
+        materials: &mut Assets<CellMaterial>,
+    ) -> CellBundle {
         let cell = Self {
             energy,
             age: 0.,
             genome_id,
             genome_bank_id,
         };
-        (
+        CellBundle::new(
             cell.clone(),
             Velocity(velocity),
             Transform::from_translation(position.extend(1.)).with_scale(cell.get_size().extend(1.)),
@@ -93,7 +94,7 @@ impl Cell {
     //TODO
     #[allow(clippy::too_many_arguments)]
     #[must_use]
-    pub fn new_bundle_with_genome_and_age(
+    pub fn new_bundle_with_age(
         energy: f32,
         age: f32,
         genome_id: GenomeId,
@@ -101,16 +102,16 @@ impl Cell {
         velocity: Vec2,
         position: Vec2,
         genome_collection: &GenomeCollection,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<CellMaterial>>,
-    ) -> impl Bundle {
+        meshes: &mut Assets<Mesh>,
+        materials: &mut Assets<CellMaterial>,
+    ) -> CellBundle {
         let cell = Self {
             energy,
             age,
             genome_id,
             genome_bank_id,
         };
-        (
+        CellBundle::new(
             cell.clone(),
             Velocity(velocity),
             Transform::from_translation(position.extend(1.)).with_scale(cell.get_size().extend(1.)),
@@ -127,6 +128,78 @@ impl Cell {
     #[must_use]
     pub fn get_size(&self) -> Vec2 {
         Vec2::splat(self.energy * 2.)
+    }
+
+    pub fn split_into_daughter_bundles(
+        &self,
+        genome_collection: &GenomeCollection,
+        transform: &Transform,
+        velocity: &Velocity,
+        meshes: &mut ResMut<Assets<Mesh>>,
+        materials: &mut ResMut<Assets<CellMaterial>>,
+    ) -> Option<(CellBundle, CellBundle)> {
+        self.split_into_daughter_bundles_with_age(0.0, genome_collection, transform, velocity, meshes, materials)
+    }
+
+    // TODO Add parent's velocity into this to conserve momentum
+    pub fn split_into_daughter_bundles_with_age(
+        &self,
+        age: f32,
+        genome_collection: &GenomeCollection,
+        transform: &Transform,
+        velocity: &Velocity,
+        meshes: &mut Assets<Mesh>,
+        materials: &mut Assets<CellMaterial>,
+    ) -> Option<(CellBundle, CellBundle)> {
+        let genome = self.get_genome(genome_collection);
+
+        match genome.split_type {
+            CellSplitType::Age | CellSplitType::Energy => {
+                // Check the correct parameter based on the parent's split type
+                if (genome.split_type == CellSplitType::Age && self.age >= genome.split_age)
+                    || (genome.split_type == CellSplitType::Energy && self.energy >= genome.split_energy)
+                {
+                    // Get the data for both daughters
+                    let (d1, d2) = get_daughter_data(
+                        self,
+                        transform.translation.xy(),
+                        velocity.0,
+                        transform.scale.xy(),
+                        genome_collection,
+                    );
+
+                    return Some((
+                        // Set the first daughter's parameters, and get its bundle
+                        Self::new_bundle_with_age(
+                            d1.energy,
+                            age,
+                            d1.genome_id,
+                            self.genome_bank_id,
+                            d1.velocity,
+                            d1.position,
+                            genome_collection,
+                            meshes,
+                            materials,
+                        ),
+                        // Set the second daughter's parameters, and get its bundle
+                        Self::new_bundle_with_age(
+                            d2.energy,
+                            age,
+                            d2.genome_id,
+                            self.genome_bank_id,
+                            d2.velocity,
+                            d2.position,
+                            genome_collection,
+                            meshes,
+                            materials,
+                        ),
+                    ));
+                }
+            }
+            CellSplitType::Never => {}
+        }
+
+        None
     }
 }
 
@@ -222,38 +295,20 @@ pub fn cells_do_meiosis(
     genome_collection: Res<GenomeCollection>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<CellMaterial>>,
-    mut query: Query<(&mut Transform, &mut Cell, &mut Velocity)>,
+    cells: Query<(Entity, &mut Cell, &Transform, &Velocity)>,
 ) {
-    // TODO Reuse splitting from editor
+    for (entity, parent, transform, velocity) in cells {
+        if let Some((d1_bundle, d2_bundle)) =
+            parent.split_into_daughter_bundles(&genome_collection, transform, velocity, &mut meshes, &mut materials)
+        {
+            // Spawn the daughters
+            commands.spawn(d1_bundle);
+            commands.spawn(d2_bundle);
 
-    for (mut transform, mut cell, mut velocity) in &mut query {
-        if cell.energy > CELL_DIVISION_ENERGY {
-            // Generate a random angle for the velocity
-            let angle = rand::rng().random::<f32>() * PI;
-
-            // Rotate the velocity to match these angles
-            let v1 = velocity.0.rotate(Vec2::from_angle(angle / 2.));
-            let v2 = velocity.0.rotate(Vec2::from_angle(-angle / 2.));
-
-            // Scale the magnitude so it conserves momentum
-            let magnitude_scale = velocity.0.length() / (v1 + v2).length();
-
-            // Create a new cell
-            commands.spawn(Cell::new_bundle_with_genome(
-                cell.energy / 2.,
-                cell.genome_id,
-                cell.genome_bank_id,
-                v2 * magnitude_scale,
-                transform.translation.xy(),
-                &genome_collection,
-                &mut meshes,
-                &mut materials,
-            ));
-
-            // Change cell energy and velocity, then resize cell
-            cell.energy /= 2.;
-            velocity.0 = v1 * magnitude_scale;
-            transform.scale = cell.get_size().extend(1.);
+            // Despawn the parent cell
+            commands.entity(entity).despawn();
+        } else {
+            // Didn't split
         }
     }
 }

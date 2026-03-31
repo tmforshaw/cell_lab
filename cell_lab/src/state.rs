@@ -44,7 +44,7 @@ pub fn init_play_mode(
 
     // Spawn cells
     for _ in 0..STARTING_CELL_NUM {
-        commands.spawn(Cell::new_bundle_with_genome(
+        commands.spawn(Cell::new_bundle(
             CELL_ENERGY,
             GenomeId::default(),
             GenomeBankId::default(),

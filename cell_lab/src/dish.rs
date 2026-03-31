@@ -4,24 +4,37 @@ use bevy::prelude::*;
 const DISH_SIZE: Vec2 = Vec2::new(1200., 1200.);
 const DISH_COLOUR: Color = Color::linear_rgb(0.2, 0.2, 0.2);
 
+#[derive(Component)]
+pub struct DishMarker;
+
+#[derive(Bundle)]
+pub struct DishBundle {
+    pub sprite: Sprite,
+    pub marker: DishMarker,
+}
+
+impl DishBundle {
+    #[must_use]
+    pub const fn new(sprite: Sprite) -> Self {
+        Self {
+            sprite,
+            marker: DishMarker,
+        }
+    }
+}
+
 pub struct Dish {
     pub size: Vec2,
 }
 
-#[derive(Component)]
-pub struct DishMarker;
-
 impl Dish {
     #[must_use]
-    pub fn into_bundle(&self) -> impl Bundle {
-        (
-            Sprite {
-                color: DISH_COLOUR,
-                custom_size: Some(self.size),
-                ..default()
-            },
-            DishMarker,
-        )
+    pub fn into_bundle(&self) -> DishBundle {
+        DishBundle::new(Sprite {
+            color: DISH_COLOUR,
+            custom_size: Some(self.size),
+            ..default()
+        })
     }
 }
 

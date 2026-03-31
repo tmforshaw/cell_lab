@@ -3,7 +3,10 @@ use std::f32::consts::PI;
 use bevy::prelude::*;
 use cell_lab_macros::generate_enum;
 
-use crate::{cell::Cell, genome_bank::GenomeCollection};
+use crate::{
+    cell::{CELL_SPLIT_PADDING, Cell},
+    genome_bank::GenomeCollection,
+};
 
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq, PartialOrd, Ord, Eq)]
 pub enum CellType {
@@ -27,8 +30,8 @@ impl std::fmt::Display for CellType {
 
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum CellSplitType {
-    Energy,
     #[default]
+    Energy,
     Age,
     Never,
 }
@@ -90,6 +93,7 @@ pub struct DaughterData {
 pub fn get_daughter_data(
     parent_cell: &Cell,
     parent_position: Vec2,
+    parent_velocity: Vec2,
     parent_scale: Vec2,
     genome_collection: &GenomeCollection,
 ) -> (DaughterData, DaughterData) {
@@ -103,14 +107,20 @@ pub fn get_daughter_data(
     let d1_genome_id = parent_genome.daughter_genomes.0;
     let d2_genome_id = parent_genome.daughter_genomes.1;
 
-    // Give velocity depending on split angle
-    let velocity_mag = parent_genome.split_force * 0.1;
-    let d1_velocity = velocity_mag * Vec2::Y.rotate(Vec2::from_angle(parent_genome.split_angle - PI / 2.));
-    let d2_velocity = velocity_mag * Vec2::Y.rotate(Vec2::from_angle(parent_genome.split_angle + PI / 2.));
+    // Give new velocity depending on split angle
+    let velocity_mag = parent_genome.split_force;
+    let d1_new_velocity = velocity_mag * Vec2::Y.rotate(Vec2::from_angle(parent_genome.split_angle - PI / 2.));
+    let d2_new_velocity = velocity_mag * Vec2::Y.rotate(Vec2::from_angle(parent_genome.split_angle + PI / 2.));
 
-    // Offset the daughters
-    let d1_position = parent_position + (parent_scale * parent_genome.split_fraction) / 2. * d1_velocity;
-    let d2_position = parent_position + (parent_scale * (1. - parent_genome.split_fraction)) / 2. * d2_velocity;
+    // Add half of the parent's velocity to these new opposing velocities
+    let d1_velocity = d1_new_velocity + parent_velocity / 2.;
+    let d2_velocity = d2_new_velocity + parent_velocity / 2.;
+
+    // Offset the daughters by their width (plus a little bit of padding)
+    let d1_position =
+        parent_position + (parent_scale * parent_genome.split_fraction) / 2. * d1_new_velocity.normalize() * CELL_SPLIT_PADDING;
+    let d2_position = parent_position
+        + (parent_scale * (1. - parent_genome.split_fraction)) / 2. * d2_new_velocity.normalize() * CELL_SPLIT_PADDING;
 
     (
         // Set the first daughter's parameters

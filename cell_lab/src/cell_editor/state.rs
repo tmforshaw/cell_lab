@@ -63,7 +63,7 @@ pub fn init_cell_editor_mode(
 
     // Create a bundle for the selected genome, make it selected, then spawn it
     commands.spawn((
-        Cell::new_bundle_with_genome(
+        Cell::new_bundle(
             100.,
             state.selected_genome,
             state.selected_genome_bank,

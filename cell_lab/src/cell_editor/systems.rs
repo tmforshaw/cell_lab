@@ -4,7 +4,7 @@ use crate::{
     cell::{Cell, Velocity},
     cell_editor::{events::SelectedCell, history::SplitHistoryData, state::CellEditorState},
     cell_material::CellMaterial,
-    genome::{CellSplitType, get_daughter_data},
+    genome::CellSplitType,
     genome_bank::GenomeCollection,
 };
 
@@ -21,85 +21,61 @@ pub fn split_cells(
     mut materials: ResMut<Assets<CellMaterial>>,
 ) {
     for (entity, parent, transform, parent_velocity, parent_time_of_birth) in cells {
-        match state.get_selected_genome_bank(&genome_collection)[parent.genome_id].split_type {
-            CellSplitType::Age => {
-                let parent_genome = &state.get_selected_genome_bank(&genome_collection)[parent.genome_id];
+        let parent_genome = parent.get_genome(&genome_collection);
 
-                // Parent is ready to split
-                if parent.age >= parent_genome.split_age {
-                    let (d1, d2) =
-                        get_daughter_data(parent, transform.translation.xy(), transform.scale.xy(), &genome_collection);
+        // TODO allow splitting by energy
+        // TODO Don't split in the editor based on energy
+        if parent_genome.split_type != CellSplitType::Energy {
+            // Calculate the time of birth for these daughters
+            let time_of_birth = if let Some(&CellTimeOfBirth(parent_time_of_birth)) = parent_time_of_birth {
+                CellTimeOfBirth(parent_time_of_birth + parent_genome.split_age)
+            } else {
+                CellTimeOfBirth(parent_genome.split_age)
+            };
 
-                    let time_of_birth = if let Some(&CellTimeOfBirth(parent_time_of_birth)) = parent_time_of_birth {
-                        CellTimeOfBirth(parent_time_of_birth + parent_genome.split_age)
-                    } else {
-                        CellTimeOfBirth(parent_genome.split_age)
-                    };
+            // Calculate the age based on when the daughters were found to be born
+            let daughter_age = (state.age - time_of_birth.0).max(0.);
 
-                    let daughter_age = (state.age - time_of_birth.0).min(0.);
+            // Get the bundles for the daughter's based on the parent
+            if let Some((d1_bundle, d2_bundle)) = parent.split_into_daughter_bundles_with_age(
+                daughter_age,
+                &genome_collection,
+                transform,
+                parent_velocity,
+                &mut meshes,
+                &mut materials,
+            ) {
+                // Add the daughter's time of birth as a component
+                let d1_bundle = (d1_bundle, time_of_birth.clone());
+                let d2_bundle = (d2_bundle, time_of_birth.clone());
 
-                    // Set the first daughter's parameters, and get its bundle
-                    let d1_bundle = (
-                        Cell::new_bundle_with_genome_and_age(
-                            d1.energy,
-                            daughter_age,
-                            d1.genome_id,
-                            parent.genome_bank_id,
-                            d1.velocity,
-                            d1.position,
-                            &genome_collection,
-                            &mut meshes,
-                            &mut materials,
-                        ),
-                        time_of_birth.clone(),
-                    );
-
-                    // Set the second daughter's parameters, and get its bundle
-                    let d2_bundle = (
-                        Cell::new_bundle_with_genome_and_age(
-                            d2.energy,
-                            daughter_age,
-                            d2.genome_id,
-                            parent.genome_bank_id,
-                            d2.velocity,
-                            d2.position,
-                            &genome_collection,
-                            &mut meshes,
-                            &mut materials,
-                        ),
-                        time_of_birth.clone(),
-                    );
-
-                    // Spawn the daughter with the selected cell marker, if necessary
-                    if state.selected_genome == d1.genome_id {
-                        commands.spawn((d1_bundle, SelectedCell));
-                    } else {
-                        commands.spawn(d1_bundle);
-                    }
-
-                    // Spawn the daughter with the selected cell marker, if necessary
-                    if state.selected_genome == d2.genome_id {
-                        commands.spawn((d2_bundle, SelectedCell));
-                    } else {
-                        commands.spawn(d2_bundle);
-                    }
-
-                    // Despawn the parent cell
-                    commands.entity(entity).despawn();
-
-                    // Add this split to the split history
-                    let simulation_age = state.age;
-                    state.history.insert(SplitHistoryData {
-                        simulation_age,
-                        parent: parent.clone(),
-                        parent_position: transform.translation.xy(),
-                        parent_velocity: parent_velocity.0,
-                        parent_time_of_birth: parent_time_of_birth.map_or(CellTimeOfBirth(0.0), std::clone::Clone::clone),
-                    });
+                // Spawn the daughter with the selected cell marker, if necessary
+                if state.selected_genome == parent_genome.daughter_genomes.0 {
+                    commands.spawn((d1_bundle, SelectedCell));
+                } else {
+                    commands.spawn(d1_bundle);
                 }
+
+                // Spawn the daughter with the selected cell marker, if necessary
+                if state.selected_genome == parent_genome.daughter_genomes.1 {
+                    commands.spawn((d2_bundle, SelectedCell));
+                } else {
+                    commands.spawn(d2_bundle);
+                }
+
+                // Despawn the parent cell
+                commands.entity(entity).despawn();
+
+                // Add this split to the split history
+                let simulation_age = state.age;
+                state.history.insert(SplitHistoryData {
+                    simulation_age,
+                    parent: parent.clone(),
+                    parent_position: transform.translation.xy(),
+                    parent_velocity: parent_velocity.0,
+                    parent_time_of_birth: parent_time_of_birth.map_or(CellTimeOfBirth(0.0), std::clone::Clone::clone),
+                });
             }
-            CellSplitType::Energy => todo!(),
-            CellSplitType::Never => {}
         }
     }
 }
@@ -119,7 +95,7 @@ pub fn reverse_splits(
         }
 
         // Restore the parent
-        let bundle = Cell::new_bundle_with_genome_and_age(
+        let bundle = Cell::new_bundle_with_age(
             current.parent.energy,
             current.parent.age,
             current.parent.genome_id,
