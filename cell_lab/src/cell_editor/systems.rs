@@ -10,6 +10,34 @@ use crate::{
 pub struct CellTimeOfBirth(pub f32);
 
 #[allow(clippy::needless_pass_by_value)]
+pub fn bound_cells(state: Res<CellEditorState>, mut query: Query<(&mut Transform, &mut Velocity), With<Cell>>) {
+    // TODO This is copied code
+    for (mut transform, mut velocity) in &mut query {
+        let size = transform.scale.xy();
+
+        let bounds = (state.bounds - size) / 2.;
+
+        // X Bound Collision Resolution
+        if transform.translation.x <= -bounds.x {
+            velocity.0.x *= -1.;
+            transform.translation.x = -bounds.x;
+        } else if transform.translation.x >= bounds.x {
+            velocity.0.x *= -1.;
+            transform.translation.x = bounds.x;
+        }
+
+        // Y Bound Collision Resolution
+        if transform.translation.y <= -bounds.y {
+            velocity.0.y *= -1.;
+            transform.translation.y = -bounds.y;
+        } else if transform.translation.y >= bounds.y {
+            velocity.0.y *= -1.;
+            transform.translation.y = bounds.y;
+        }
+    }
+}
+
+#[allow(clippy::needless_pass_by_value)]
 pub fn split_cells(
     mut commands: Commands,
     genome_collection: Res<GenomeCollection>,
@@ -22,7 +50,6 @@ pub fn split_cells(
         let parent_genome = parent.get_genome(&genome_collection);
 
         // TODO allow splitting by energy
-        // TODO Don't split in the editor based on energy
         if parent_genome.split_type != CellSplitType::Energy {
             // Calculate the time of birth for these daughters
             let time_of_birth = if let Some(&CellTimeOfBirth(parent_time_of_birth)) = parent_time_of_birth {

@@ -7,12 +7,27 @@ use crate::{
     simulation::dish::DishMarker,
 };
 
-#[derive(Resource, Default)]
+const CELL_EDITOR_SIZE: Vec2 = Vec2::new(1200., 1200.);
+
+#[derive(Resource)]
 pub struct CellEditorState {
     pub selected_genome_bank: GenomeBankId,
     pub selected_genome: GenomeId,
     pub age: f32,
+    pub bounds: Vec2,
     pub history: SplitHistory,
+}
+
+impl Default for CellEditorState {
+    fn default() -> Self {
+        Self {
+            selected_genome_bank: GenomeBankId::default(),
+            selected_genome: GenomeId::default(),
+            age: f32::default(),
+            bounds: CELL_EDITOR_SIZE,
+            history: SplitHistory::default(),
+        }
+    }
 }
 
 impl CellEditorState {

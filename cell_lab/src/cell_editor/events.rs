@@ -6,7 +6,7 @@ use crate::{
         state::CellEditorState,
         systems::CellTimeOfBirth,
     },
-    cells::{Cell, CellMaterial},
+    cells::{Cell, CellMaterial, Velocity},
     genomes::GenomeCollection,
 };
 
@@ -23,7 +23,10 @@ pub struct SelectionBorder;
 pub struct CellEditorInitialGenomeMessage;
 
 #[derive(Message, Debug, Clone)]
-pub struct CellEditorAgeMessage;
+pub struct CellEditorAgeMessage {
+    pub prev_age: f32,
+    pub new_age: f32,
+}
 
 #[derive(Message, Debug, Clone)]
 pub struct CellEditorSelectedGenomeMessage;
@@ -48,17 +51,23 @@ pub fn cell_editor_initial_genome_message_reader(
 // TODO
 #[allow(clippy::needless_pass_by_value)]
 pub fn cell_editor_age_message_reader(
-    events: MessageReader<CellEditorAgeMessage>,
+    mut events: MessageReader<CellEditorAgeMessage>,
     state: Res<CellEditorState>,
-    mut cells: Query<(&mut Cell, Option<&CellTimeOfBirth>)>,
+    mut cells: Query<(&mut Cell, Option<&CellTimeOfBirth>, &mut Transform, &Velocity)>,
 ) {
-    if !events.is_empty() {
-        for (mut cell, time_of_birth) in &mut cells {
+    for ev in events.read() {
+        let delta_age = ev.new_age - ev.prev_age;
+
+        for (mut cell, time_of_birth, mut transform, velocity) in &mut cells {
+            // Set the cell's new age
             if let Some(time_of_birth) = time_of_birth {
                 cell.age = state.age - time_of_birth.0;
             } else {
                 cell.age = state.age;
             }
+
+            // Move the cell via its velocity
+            transform.translation += (velocity.0 * delta_age).extend(0.);
         }
     }
 }

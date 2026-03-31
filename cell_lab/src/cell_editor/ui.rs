@@ -9,12 +9,13 @@ use crate::{
         events::{CellEditorAgeMessage, CellEditorColourMessage, CellEditorSelectedGenomeMessage, CellEditorSplitAngleMessage},
         state::CellEditorState,
     },
-    cells::{MAX_CELL_AGE, MAX_CELL_ENERGY},
+    cells::{MAX_CELL_ENERGY, MAX_CELL_SPLIT_AGE},
     genomes::{CellSplitType, CellType, GenomeCollection, GenomeId},
     ui::{SEPARATOR_SPACING, SUBSECTION_SPACING},
 };
 
 const CELL_EDITOR_WIDTH: f32 = 600.;
+const MAX_EDITOR_AGE: f32 = 25.;
 
 #[derive(Resource, Default)]
 pub struct CellEditorUiStyleApplied(bool);
@@ -190,7 +191,7 @@ pub fn cell_editor_ui_update(
                         if ui
                             .add(egui::Slider::new(
                                 &mut state.get_selected_genome_mut(&mut genome_collection).split_age,
-                                0.0..=MAX_CELL_AGE,
+                                0.0..=MAX_CELL_SPLIT_AGE,
                             ))
                             .changed()
                         {
@@ -255,12 +256,17 @@ pub fn cell_editor_ui_update(
 
             ui.horizontal_centered(|ui| {
                 ui.label("Age:");
+
+                let prev_age = state.age;
                 if ui
-                    .add(egui::Slider::new(&mut state.age, 0.0..=100.0).show_value(true))
+                    .add(egui::Slider::new(&mut state.age, 0.0..=MAX_EDITOR_AGE).show_value(true))
                     .changed()
                 {
                     // Age was changed
-                    age_message_writer.write(CellEditorAgeMessage);
+                    age_message_writer.write(CellEditorAgeMessage {
+                        prev_age,
+                        new_age: state.age,
+                    });
                 }
             });
         });

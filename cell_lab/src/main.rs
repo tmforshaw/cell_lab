@@ -98,6 +98,8 @@ fn main() {
         .add_systems(
             Update,
             (
+                collision_system,
+                bound_cells,
                 cell_editor_mode_keyboard_event_reader,
                 cell_editor_initial_genome_message_reader,
                 cell_editor_age_message_reader,
