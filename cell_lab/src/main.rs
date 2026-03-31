@@ -33,8 +33,6 @@ use crate::{
     state::{GameMode, PlayModeState, exit_play_mode, init_play_mode},
 };
 
-// TODO use genome bank when setting material colour
-
 pub mod cell;
 pub mod cell_editor;
 pub mod cell_material;

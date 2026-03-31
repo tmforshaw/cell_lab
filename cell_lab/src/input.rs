@@ -4,7 +4,6 @@ use crate::state::GameMode;
 
 pub fn play_mode_keyboard_event_reader(mut events: MessageReader<KeyboardInput>, mut next_mode: ResMut<NextState<GameMode>>) {
     for ev in events.read() {
-        // TODO
         #[allow(clippy::single_match)]
         match ev.key_code {
             KeyCode::Digit2 => next_mode.set(GameMode::CellEditor),
@@ -18,7 +17,6 @@ pub fn cell_editor_mode_keyboard_event_reader(
     mut next_mode: ResMut<NextState<GameMode>>,
 ) {
     for ev in events.read() {
-        // TODO
         #[allow(clippy::single_match)]
         match ev.key_code {
             KeyCode::Digit1 => next_mode.set(GameMode::Play),

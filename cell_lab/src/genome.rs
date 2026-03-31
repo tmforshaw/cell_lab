@@ -82,7 +82,6 @@ generate_enum!(GenomeId, M, GENOME_MAX_NUM, 9);
 pub struct DaughterData {
     pub energy: f32,
     pub genome_id: GenomeId,
-    pub colour: Color, // TODO Remove this in favour of finding it from the genome
     pub velocity: Vec2,
     pub position: Vec2,
 }
@@ -103,10 +102,6 @@ pub fn get_daughter_data(
     let d1_genome_id = genome_bank[parent_genome_id].daughter_genomes.0;
     let d2_genome_id = genome_bank[parent_genome_id].daughter_genomes.1;
 
-    // Set colour according to genome bank
-    let d1_colour = genome_bank[d1_genome_id].colour;
-    let d2_colour = genome_bank[d2_genome_id].colour;
-
     // Give velocity depending on split angle
     let velocity_mag = genome_bank[parent_genome_id].split_force * 0.1;
     let d1_velocity = velocity_mag * Vec2::Y.rotate(Vec2::from_angle(genome_bank[parent_genome_id].split_angle - PI / 2.));
@@ -121,7 +116,6 @@ pub fn get_daughter_data(
         DaughterData {
             energy: d1_energy,
             genome_id: d1_genome_id,
-            colour: d1_colour,
             velocity: d1_velocity,
             position: d1_position,
         },
@@ -129,7 +123,6 @@ pub fn get_daughter_data(
         DaughterData {
             energy: d2_energy,
             genome_id: d2_genome_id,
-            colour: d2_colour,
             velocity: d2_velocity,
             position: d2_position,
         },
