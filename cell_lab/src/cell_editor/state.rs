@@ -64,16 +64,8 @@ pub fn init_cell_editor_mode(
     // Reset the simulation age
     state.editor_age = CellEditorAge::default();
 
-    // Spawn bacground
-    commands.spawn((
-        Sprite {
-            color: Color::linear_rgb(0.2, 0.2, 0.2),
-            custom_size: Some(Vec2::splat(1200.)),
-            ..default()
-        },
-        Transform::from_xyz(0., 0., 0.),
-        DishMarker,
-    ));
+    // Spawn dish
+    commands.spawn(state.dish.into_bundle());
 
     // Create a bundle for the selected genome, make it selected, then spawn it
     commands.spawn((

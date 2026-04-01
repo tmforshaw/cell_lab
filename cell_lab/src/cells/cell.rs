@@ -11,13 +11,12 @@ pub struct Velocity(pub Vec2);
 // Cell parameters
 pub const CELL_ENERGY: f32 = 10.;
 pub const CELL_MAX_VELOCITY: f32 = 100.;
-pub const STARTING_CELL_NUM: u32 = 20;
-pub const RANDOM_ACCELERATION: f32 = 10.;
+pub const STARTING_CELL_NUM: u32 = 1;
 pub const CELL_ENERGY_DECAY: f32 = 1.;
-pub const MAX_CELL_SPLIT_AGE: f32 = 25.;
-pub const MAX_CELL_ENERGY: f32 = 100.;
-pub const MIN_CELL_ENERGY: f32 = 2.;
-pub const CELL_SPLIT_PADDING: f32 = 1.2; // Multiplier for offset of daughters from each other (Multiplies radius)
+pub const CELL_MAX_SPLIT_AGE: f32 = 25.;
+pub const CELL_MAX_ENERGY: f32 = 50.;
+pub const CELL_MIN_ENERGY: f32 = 2.;
+pub const CELL_SPLIT_PADDING: f32 = 1.1; // Multiplier for offset of daughters from each other (Multiplies radius)
 pub const CELL_SIZE_MULTIPLIER: f32 = 10.;
 pub const CELL_SIZE_SCALE_FACTOR: f32 = 0.75;
 

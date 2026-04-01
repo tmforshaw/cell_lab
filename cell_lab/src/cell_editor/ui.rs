@@ -9,7 +9,7 @@ use crate::{
         events::{CellEditorAgeMessage, CellEditorColourMessage, CellEditorSelectedGenomeMessage, CellEditorSplitAngleMessage},
         state::CellEditorState,
     },
-    cells::{MAX_CELL_ENERGY, MAX_CELL_SPLIT_AGE},
+    cells::{CELL_MAX_ENERGY, CELL_MAX_SPLIT_AGE},
     genomes::{CellSplitType, CellType, GenomeCollection, GenomeId},
     ui::{SEPARATOR_SPACING, SUBSECTION_SPACING},
 };
@@ -175,7 +175,7 @@ pub fn cell_editor_ui_update(
                         if ui
                             .add(egui::Slider::new(
                                 &mut state.get_selected_genome_mut(&mut genome_collection).split_energy,
-                                0.0..=MAX_CELL_ENERGY,
+                                0.0..=CELL_MAX_ENERGY,
                             ))
                             .changed()
                         {
@@ -190,7 +190,7 @@ pub fn cell_editor_ui_update(
                         if ui
                             .add(egui::Slider::new(
                                 &mut state.get_selected_genome_mut(&mut genome_collection).split_age,
-                                0.0..=MAX_CELL_SPLIT_AGE,
+                                0.0..=CELL_MAX_SPLIT_AGE,
                             ))
                             .changed()
                         {

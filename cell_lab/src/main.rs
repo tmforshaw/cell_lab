@@ -42,6 +42,7 @@ use crate::{
 };
 
 // TODO Collision and bound check in cell editor messes up the time reversal
+// TODO Strange bug where cell can split even though it has split type never split (And the daughters are bigger than the parent)
 
 pub mod cell_editor;
 pub mod cells;

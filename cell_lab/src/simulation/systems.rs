@@ -2,11 +2,10 @@ use bevy::{
     math::bounding::{Aabb2d, IntersectsVolume},
     prelude::*,
 };
-use rand::RngExt;
 
 use crate::{
     cell_editor::state::CellEditorState,
-    cells::{CELL_ENERGY_DECAY, CELL_MAX_VELOCITY, Cell, CellMaterial, MIN_CELL_ENERGY, RANDOM_ACCELERATION, Velocity},
+    cells::{CELL_ENERGY_DECAY, CELL_MAX_ENERGY, CELL_MAX_VELOCITY, CELL_MIN_ENERGY, Cell, CellMaterial, Velocity},
     despawning::PendingDespawn,
     game_mode::GameMode,
     genomes::GenomeCollection,
@@ -32,15 +31,8 @@ pub fn increment_cell_age(time: Res<Time>, mut query: Query<&mut Cell, Without<P
 #[allow(clippy::needless_pass_by_value, clippy::type_complexity)]
 pub fn move_cells(time: Res<Time>, mut query: Query<(&mut Transform, &mut Velocity), (With<Cell>, Without<PendingDespawn>)>) {
     let dt = time.delta().as_secs_f32();
-    let mut rng = rand::rng();
 
     for (mut transform, mut velocity) in &mut query {
-        // Slight random acceleration
-        velocity.0 += Vec2::new(
-            rng.random_range(-RANDOM_ACCELERATION..RANDOM_ACCELERATION),
-            rng.random_range(-RANDOM_ACCELERATION..RANDOM_ACCELERATION),
-        ) * dt;
-
         // Clamp speed
         velocity.0 = velocity
             .0
@@ -95,22 +87,25 @@ pub fn cells_absorb_chemical(
     chemical_query: Query<(&Transform, &Chemical, Entity), (Without<Cell>, Without<PendingDespawn>)>,
 ) {
     for (mut cell_transform, mut cell) in &mut cell_query {
-        for (chemical_transform, chemical, chemical_entity) in chemical_query.iter() {
-            // They both have sizes defined
-            let (cell_size, chemical_size) = (cell_transform.scale.xy(), chemical_transform.scale.xy());
+        // Only absorb chemicals if cell has space for it
+        if cell.energy < CELL_MAX_ENERGY {
+            for (chemical_transform, chemical, chemical_entity) in chemical_query.iter() {
+                // They both have sizes defined
+                let (cell_size, chemical_size) = (cell_transform.scale.xy(), chemical_transform.scale.xy());
 
-            // Generate bounding boxes
-            let cell_aabb = Aabb2d::new(cell_transform.translation.xy(), cell_size / 2.);
-            let chemical_aabb = Aabb2d::new(chemical_transform.translation.xy(), chemical_size / 2.);
+                // Generate bounding boxes
+                let cell_aabb = Aabb2d::new(cell_transform.translation.xy(), cell_size / 2.);
+                let chemical_aabb = Aabb2d::new(chemical_transform.translation.xy(), chemical_size / 2.);
 
-            // Collision detected
-            if cell_aabb.intersects(&chemical_aabb) {
-                // Gain energy then resize cell based on new energy
-                cell.energy += chemical.energy;
-                cell_transform.scale = cell.get_size().extend(1.);
+                // Collision detected
+                if cell_aabb.intersects(&chemical_aabb) {
+                    // Gain energy then resize cell based on new energy
+                    cell.energy += chemical.energy;
+                    cell_transform.scale = cell.get_size().extend(1.);
 
-                // Despawn the chemical
-                commands.entity(chemical_entity).insert(PendingDespawn);
+                    // Despawn the chemical
+                    commands.entity(chemical_entity).insert(PendingDespawn);
+                }
             }
         }
     }
@@ -153,7 +148,7 @@ pub fn cell_decay(
         cell.energy -= CELL_ENERGY_DECAY * dt;
 
         // Remove cell if its too small
-        if cell.energy <= MIN_CELL_ENERGY {
+        if cell.energy <= CELL_MIN_ENERGY {
             commands.entity(entity).insert(PendingDespawn);
         } else {
             // Resize the cell
