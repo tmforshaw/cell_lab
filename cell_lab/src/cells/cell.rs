@@ -17,8 +17,7 @@ pub const CELL_MAX_SPLIT_AGE: f32 = 25.;
 pub const CELL_MAX_ENERGY: f32 = 50.;
 pub const CELL_MIN_ENERGY: f32 = 2.;
 pub const CELL_SPLIT_PADDING: f32 = 1.1; // Multiplier for offset of daughters from each other (Multiplies radius)
-// pub const CELL_SIZE_MULTIPLIER: f32 = 10.;
-pub const CELL_SIZE_SCALE_FACTOR: f32 = 0.75;
+pub const CELL_SIZE_SCALE_FACTOR: f32 = 0.5; // The power which determines the scale between energy and mass
 
 #[derive(Bundle)]
 pub struct CellBundle {

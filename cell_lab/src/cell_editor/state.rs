@@ -8,7 +8,7 @@ use crate::{
 };
 
 const CELL_EDITOR_SIZE: Vec2 = Vec2::new(1200., 1200.);
-const CELL_EDITOR_CELL_SIZE_PER_MASS: f32 = 10.;
+const CELL_EDITOR_CELL_SIZE_PER_MASS: f32 = 20.;
 const CELL_EDITOR_CELL_ENERGY_GAIN_RATE: f32 = 2.;
 
 #[derive(Resource)]
