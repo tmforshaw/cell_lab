@@ -24,10 +24,7 @@ pub struct SelectionBorder;
 pub struct CellEditorInitialGenomeMessage;
 
 #[derive(Message, Debug, Clone)]
-pub struct CellEditorAgeMessage {
-    pub prev_age: f32,
-    pub new_age: f32,
-}
+pub struct CellEditorAgeMessage;
 
 #[derive(Message, Debug, Clone)]
 pub struct CellEditorSelectedGenomeMessage;
@@ -54,19 +51,17 @@ pub fn cell_editor_age_message_reader(
     state: Res<CellEditorState>,
     mut cells: Query<(&mut Cell, Option<&CellTimeOfBirth>, &mut Transform, &Velocity), Without<PendingDespawn>>,
 ) {
-    for ev in events.read() {
-        let delta_age = ev.new_age - ev.prev_age;
-
+    for _ev in events.read() {
         for (mut cell, time_of_birth, mut transform, velocity) in &mut cells {
             // Set the cell's new age
             if let Some(time_of_birth) = time_of_birth {
-                cell.age = state.age - time_of_birth.0;
+                cell.age = state.editor_age.age - time_of_birth.0;
             } else {
-                cell.age = state.age;
+                cell.age = state.editor_age.age;
             }
 
             // Move the cell via its velocity
-            transform.translation += (velocity.0 * delta_age).extend(0.);
+            transform.translation += (velocity.0 * state.editor_age.delta()).extend(0.);
         }
     }
 }

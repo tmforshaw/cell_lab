@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    cell_editor::{events::SelectedCell, history::SplitHistory},
+    cell_editor::{editor_age::CellEditorAge, events::SelectedCell, history::SplitHistory},
     cells::{Cell, CellMaterial},
     genomes::{Genome, GenomeBank, GenomeBankId, GenomeCollection, GenomeId},
     simulation::dish::{Dish, DishMarker},
@@ -13,7 +13,7 @@ const CELL_EDITOR_SIZE: Vec2 = Vec2::new(1200., 1200.);
 pub struct CellEditorState {
     pub selected_genome_bank: GenomeBankId,
     pub selected_genome: GenomeId,
-    pub age: f32,
+    pub editor_age: CellEditorAge,
     pub dish: Dish,
     pub history: SplitHistory,
 }
@@ -23,7 +23,7 @@ impl Default for CellEditorState {
         Self {
             selected_genome_bank: GenomeBankId::default(),
             selected_genome: GenomeId::default(),
-            age: f32::default(),
+            editor_age: CellEditorAge::default(),
             dish: Dish::new(CELL_EDITOR_SIZE),
             history: SplitHistory::default(),
         }
@@ -60,8 +60,9 @@ pub fn init_cell_editor_mode(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<CellMaterial>>,
 ) {
+    // TODO Maybe don't need this
     // Reset the simulation age
-    state.age = 0.;
+    state.editor_age = CellEditorAge::default();
 
     // Spawn bacground
     commands.spawn((

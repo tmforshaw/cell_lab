@@ -1,4 +1,5 @@
 pub mod drawing;
+pub mod editor_age;
 pub mod events;
 pub mod history;
 pub mod state;

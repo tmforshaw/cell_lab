@@ -32,7 +32,7 @@ pub fn split_cells(
             };
 
             // Calculate the age based on when the daughters were found to be born
-            let daughter_age = (state.age - time_of_birth.0).max(0.);
+            let daughter_age = (state.editor_age.age - time_of_birth.0).max(0.);
 
             // Get the bundles for the daughter's based on the parent
             if let Some((d1_bundle, d2_bundle)) = parent.split_into_daughter_bundles_with_age(
@@ -65,9 +65,9 @@ pub fn split_cells(
                 commands.entity(entity).insert(PendingDespawn);
 
                 // Add this split to the split history
-                let simulation_age = state.age;
+                let editor_age = state.editor_age;
                 state.history.insert(SplitHistoryData {
-                    simulation_age,
+                    editor_age,
                     parent: parent.clone(),
                     parent_position: transform.translation.xy(),
                     parent_velocity: parent_velocity.0,
@@ -88,7 +88,7 @@ pub fn reverse_splits(
 ) {
     while let Some(current) = state.history.get() {
         // If the age hasn't went back enough to reach any split events
-        if state.age >= current.simulation_age {
+        if state.editor_age.age >= current.editor_age.age {
             break;
         }
 
@@ -126,7 +126,7 @@ pub fn remove_negative_aged_cells(
 ) {
     // Despawn any daughters which have age that is below the current simulation age
     for (entity, CellTimeOfBirth(birth)) in cells {
-        if *birth > state.age {
+        if *birth > state.editor_age.age {
             commands.entity(entity).insert(PendingDespawn);
         }
     }

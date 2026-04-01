@@ -256,16 +256,16 @@ pub fn cell_editor_ui_update(
             ui.horizontal_centered(|ui| {
                 ui.label("Age:");
 
-                let prev_age = state.age;
+                let prev_age = state.editor_age.age;
+                let mut age = state.editor_age.age;
                 if ui
-                    .add(egui::Slider::new(&mut state.age, 0.0..=MAX_EDITOR_AGE).show_value(true))
+                    .add(egui::Slider::new(&mut age, 0.0..=MAX_EDITOR_AGE).show_value(true))
                     .changed()
                 {
+                    state.editor_age.age = age;
+                    state.editor_age.prev_age = Some(prev_age);
                     // Age was changed
-                    age_message_writer.write(CellEditorAgeMessage {
-                        prev_age,
-                        new_age: state.age,
-                    });
+                    age_message_writer.write(CellEditorAgeMessage);
                 }
             });
         });

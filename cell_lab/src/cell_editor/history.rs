@@ -1,10 +1,13 @@
 use bevy::prelude::*;
 
-use crate::{cell_editor::systems::CellTimeOfBirth, cells::Cell};
+use crate::{
+    cell_editor::{editor_age::CellEditorAge, systems::CellTimeOfBirth},
+    cells::Cell,
+};
 
 #[derive(Debug, Clone)]
 pub struct SplitHistoryData {
-    pub simulation_age: f32,
+    pub editor_age: CellEditorAge,
     pub parent: Cell,
     pub parent_position: Vec2,
     pub parent_velocity: Vec2,
