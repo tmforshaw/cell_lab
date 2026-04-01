@@ -7,7 +7,7 @@ use crate::spatial_partitioning::quadtree::QuadTree;
 use super::quadtree::QuadTreeTrait;
 
 const CELL_QUADTREE_SIZE: Vec2 = Vec2::splat(1200.);
-const CELL_QUADTREE_MAX_DEPTH: usize = 4;
+const CELL_QUADTREE_MAX_DEPTH: usize = 6;
 const CELL_QUADTREE_MAX_CAPACITY_PER_NODE: usize = 8;
 const CELL_QUADTREE_COLOUR: Color = Color::linear_rgba(0., 0., 1., 0.5);
 

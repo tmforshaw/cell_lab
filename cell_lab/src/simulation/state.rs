@@ -11,7 +11,7 @@ use crate::{
 };
 
 const SIMULATION_SIZE: Vec2 = Vec2::splat(1200.);
-const SIMULATION_CELL_SIZE_PER_MASS: f32 = 15.;
+const SIMULATION_CELL_SIZE_PER_MASS: f32 = 5.;
 
 #[derive(Resource)]
 pub struct SimulationState {

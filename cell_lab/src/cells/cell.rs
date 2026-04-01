@@ -12,7 +12,7 @@ pub struct Velocity(pub Vec2);
 // Cell parameters
 pub const CELL_STARTING_ENERGY: f32 = 10.;
 pub const CELL_MAX_VELOCITY: f32 = 100.;
-pub const STARTING_CELL_NUM: u32 = 10;
+pub const STARTING_CELL_NUM: u32 = 100;
 pub const CELL_ENERGY_DECAY: f32 = 1.;
 pub const CELL_MAX_SPLIT_AGE: f32 = 25.;
 pub const CELL_MAX_ENERGY: f32 = 50.;

@@ -91,7 +91,7 @@ pub fn cells_absorb_chemical(
     for (mut cell, mut cell_transform) in &mut cell_query {
         // Only absorb chemicals if cell has space for it
         if cell.energy < CELL_MAX_ENERGY {
-            let cell_aabb = Aabb2d::new(cell_transform.translation.xy(), cell_transform.scale.xy() * 0.5);
+            let cell_aabb = Aabb2d::new(cell_transform.translation.xy(), cell_transform.scale.xy());
 
             let mut candidates = Vec::new();
             chemical_quadtree_root.query(&cell_aabb, &mut candidates);
