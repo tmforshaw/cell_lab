@@ -9,7 +9,7 @@ use crate::{
 pub struct Velocity(pub Vec2);
 
 // Cell parameters
-pub const CELL_ENERGY: f32 = 10.;
+pub const CELL_STARTING_ENERGY: f32 = 10.;
 pub const CELL_MAX_VELOCITY: f32 = 100.;
 pub const STARTING_CELL_NUM: u32 = 1;
 pub const CELL_ENERGY_DECAY: f32 = 1.;
@@ -17,7 +17,7 @@ pub const CELL_MAX_SPLIT_AGE: f32 = 25.;
 pub const CELL_MAX_ENERGY: f32 = 50.;
 pub const CELL_MIN_ENERGY: f32 = 2.;
 pub const CELL_SPLIT_PADDING: f32 = 1.1; // Multiplier for offset of daughters from each other (Multiplies radius)
-pub const CELL_SIZE_MULTIPLIER: f32 = 10.;
+// pub const CELL_SIZE_MULTIPLIER: f32 = 10.;
 pub const CELL_SIZE_SCALE_FACTOR: f32 = 0.75;
 
 #[derive(Bundle)]
@@ -54,6 +54,7 @@ pub struct Cell {
     pub age: f32,
     pub genome_id: GenomeId,
     pub genome_bank_id: GenomeBankId,
+    pub size_per_mass: f32,
 }
 
 impl Cell {
@@ -63,6 +64,7 @@ impl Cell {
         energy: f32,
         genome_id: GenomeId,
         genome_bank_id: GenomeBankId,
+        size_per_mass: f32,
         velocity: Vec2,
         position: Vec2,
         genome_collection: &GenomeCollection,
@@ -74,6 +76,7 @@ impl Cell {
             age: 0.,
             genome_id,
             genome_bank_id,
+            size_per_mass,
         };
         CellBundle::new(
             cell.clone(),
@@ -90,6 +93,7 @@ impl Cell {
         energy: f32,
         genome_id: GenomeId,
         genome_bank_id: GenomeBankId,
+        size_per_mass: f32,
         velocity: Vec2,
         position: Vec2,
         rotation: f32,
@@ -102,6 +106,7 @@ impl Cell {
             age: 0.,
             genome_id,
             genome_bank_id,
+            size_per_mass,
         };
         CellBundle::new(
             cell.clone(),
@@ -121,6 +126,7 @@ impl Cell {
         age: f32,
         genome_id: GenomeId,
         genome_bank_id: GenomeBankId,
+        size_per_mass: f32,
         velocity: Vec2,
         position: Vec2,
         genome_collection: &GenomeCollection,
@@ -132,6 +138,7 @@ impl Cell {
             age,
             genome_id,
             genome_bank_id,
+            size_per_mass,
         };
         CellBundle::new(
             cell.clone(),
@@ -149,6 +156,7 @@ impl Cell {
         age: f32,
         genome_id: GenomeId,
         genome_bank_id: GenomeBankId,
+        size_per_mass: f32,
         velocity: Vec2,
         position: Vec2,
         rotation: f32,
@@ -161,6 +169,7 @@ impl Cell {
             age,
             genome_id,
             genome_bank_id,
+            size_per_mass,
         };
         CellBundle::new(
             cell.clone(),
@@ -187,7 +196,7 @@ impl Cell {
     #[must_use]
     pub fn get_size(&self) -> Vec2 {
         // Get masss then multiply that value to get the size
-        Vec2::splat(self.get_mass() * CELL_SIZE_MULTIPLIER)
+        Vec2::splat(self.get_mass() * self.size_per_mass)
     }
 
     pub fn split_into_daughter_bundles(
@@ -228,6 +237,7 @@ impl Cell {
                             age,
                             d1.genome_id,
                             self.genome_bank_id,
+                            self.size_per_mass,
                             d1.velocity,
                             d1.position,
                             d1.rotation + transform.rotation.to_euler(EulerRot::XYZ).2,
@@ -241,6 +251,7 @@ impl Cell {
                             age,
                             d2.genome_id,
                             self.genome_bank_id,
+                            self.size_per_mass,
                             d2.velocity,
                             d2.position,
                             d2.rotation + transform.rotation.to_euler(EulerRot::XYZ).2,

@@ -60,6 +60,8 @@ pub fn cell_editor_age_message_reader(
                 cell.age = state.editor_age.get_age();
             }
 
+            // println!("{}", state.editor_age.delta());
+
             // Move the cell via its velocity
             transform.translation += (velocity.0 * state.editor_age.delta()).extend(0.);
         }

@@ -2,12 +2,13 @@ use bevy::prelude::*;
 
 use crate::{
     cell_editor::{editor_age::CellEditorAge, events::SelectedCell, history::SplitHistory},
-    cells::{Cell, CellMaterial},
+    cells::{CELL_STARTING_ENERGY, Cell, CellMaterial},
     genomes::{Genome, GenomeBank, GenomeBankId, GenomeCollection, GenomeId},
     simulation::dish::{Dish, DishMarker},
 };
 
 const CELL_EDITOR_SIZE: Vec2 = Vec2::new(1200., 1200.);
+const CELL_EDITOR_CELL_SIZE_PER_MASS: f32 = 50.;
 
 #[derive(Resource)]
 pub struct CellEditorState {
@@ -16,6 +17,8 @@ pub struct CellEditorState {
     pub editor_age: CellEditorAge,
     pub dish: Dish,
     pub history: SplitHistory,
+    pub cell_size_per_mass: f32,
+    // pub energy_gain_rate:
 }
 
 impl Default for CellEditorState {
@@ -26,6 +29,7 @@ impl Default for CellEditorState {
             editor_age: CellEditorAge::default(),
             dish: Dish::new(CELL_EDITOR_SIZE),
             history: SplitHistory::default(),
+            cell_size_per_mass: CELL_EDITOR_CELL_SIZE_PER_MASS,
         }
     }
 }
@@ -70,9 +74,10 @@ pub fn init_cell_editor_mode(
     // Create a bundle for the selected genome, make it selected, then spawn it
     commands.spawn((
         Cell::new_bundle(
-            100.,
+            CELL_STARTING_ENERGY,
             state.selected_genome,
             state.selected_genome_bank,
+            state.cell_size_per_mass,
             Vec2::ZERO,
             Vec2::ZERO,
             &genome_collection,

@@ -31,7 +31,7 @@ impl CellEditorAge {
     }
 
     pub const fn set_age(&mut self, age: f32) {
-        self.prev_age = Some(age);
+        self.prev_age = Some(self.age);
         self.age = age;
     }
 

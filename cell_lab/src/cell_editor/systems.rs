@@ -108,6 +108,7 @@ pub fn reverse_splits(
             current.parent.age,
             current.parent.genome_id,
             current.parent.genome_bank_id,
+            state.cell_size_per_mass,
             current.parent_velocity,
             current.parent_position,
             &genome_collection,

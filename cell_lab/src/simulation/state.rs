@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    cells::{CELL_ENERGY, CELL_MAX_VELOCITY, Cell, CellMaterial, STARTING_CELL_NUM},
+    cells::{CELL_STARTING_ENERGY, CELL_MAX_VELOCITY, Cell, CellMaterial, STARTING_CELL_NUM},
     genomes::{GenomeBankId, GenomeCollection, GenomeId},
     helpers::random_vec2,
     simulation::{
@@ -11,24 +11,27 @@ use crate::{
 };
 
 const SIMULATION_SIZE: Vec2 = Vec2::splat(1200.);
+const SIMULATION_CELL_SIZE_PER_MASS: f32 = 10.;
 
 #[derive(Resource)]
 pub struct SimulationState {
     pub dish: Dish,
+    pub cell_size_per_mass: f32,
 }
 
 impl Default for SimulationState {
     fn default() -> Self {
         Self {
             dish: Dish::new(SIMULATION_SIZE),
+            cell_size_per_mass: SIMULATION_CELL_SIZE_PER_MASS,
         }
     }
 }
 
 impl SimulationState {
     #[must_use]
-    pub const fn new(dish: Dish) -> Self {
-        Self { dish }
+    pub fn new(dish: Dish) -> Self {
+        Self { dish, ..default() }
     }
 }
 
@@ -49,9 +52,10 @@ pub fn init_simulation_mode(
     // Spawn cells
     for _ in 0..STARTING_CELL_NUM {
         commands.spawn(Cell::new_bundle(
-            CELL_ENERGY,
+            CELL_STARTING_ENERGY,
             GenomeId::default(),
             GenomeBankId::default(),
+            state.cell_size_per_mass,
             random_vec2(Vec2::splat(CELL_MAX_VELOCITY)),
             random_vec2(state.dish.size / 2.),
             &genome_collection,
