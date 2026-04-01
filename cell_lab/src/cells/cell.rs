@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use crate::{
     cells::CellMaterial,
     genomes::{CellSplitType, Genome, GenomeBankId, GenomeCollection, GenomeId, get_daughter_data},
+    spatial_partitioning::quadtree::QuadTreeData,
 };
 
 #[derive(Component)]
@@ -11,7 +12,7 @@ pub struct Velocity(pub Vec2);
 // Cell parameters
 pub const CELL_STARTING_ENERGY: f32 = 10.;
 pub const CELL_MAX_VELOCITY: f32 = 100.;
-pub const STARTING_CELL_NUM: u32 = 1;
+pub const STARTING_CELL_NUM: u32 = 10;
 pub const CELL_ENERGY_DECAY: f32 = 1.;
 pub const CELL_MAX_SPLIT_AGE: f32 = 25.;
 pub const CELL_MAX_ENERGY: f32 = 50.;
@@ -188,6 +189,8 @@ impl Cell {
 
     #[must_use]
     pub fn get_mass(&self) -> f32 {
+        //TODO
+        #[allow(clippy::suboptimal_flops)]
         // Scale energy to get mass
         self.energy.powf(CELL_SIZE_SCALE_FACTOR)
     }
@@ -267,3 +270,5 @@ impl Cell {
         None
     }
 }
+
+impl QuadTreeData for Cell {}

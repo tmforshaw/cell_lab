@@ -25,26 +25,33 @@ use crate::{
         systems::{modify_cell_energy, remove_low_energy_cells, remove_negative_aged_cells, reverse_splits, split_cells},
         ui::{CellEditorUiStyleApplied, cell_editor_ui_update},
     },
-    cells::{CellMaterial, SelectionCellMaterial},
+    cells::{Cell, CellMaterial, SelectionCellMaterial},
     collision::systems::collision_system,
     despawning::apply_pending_despawns,
     game_mode::GameMode,
     genomes::genome_bank::GenomeCollection,
-    input::{cell_editor_mode_keyboard_event_reader, simulation_mode_keyboard_event_reader},
+    input::{
+        cell_editor_mode_keyboard_event_reader, mode_independent_keyboard_event_reader, simulation_mode_keyboard_event_reader,
+    },
     simulation::{
-        chemical::{ChemicalMaterial, ChemicalTimer},
+        chemical::{Chemical, ChemicalMaterial, ChemicalTimer},
         state::{SimulationState, exit_simulation_mode, init_simulation_mode},
         systems::{
             bound_cells, cell_decay, cells_absorb_chemical, cells_do_meiosis, increment_cell_age, move_cells, spawn_chemicals,
         },
     },
-    spatial_partitioning::cell_quadtree::{CellQuadTree, ShowCellQuadTree, visualize_cell_quadtree},
+    spatial_partitioning::{
+        cell_quadtree::{CellQuadTree, ShowCellQuadTree},
+        chemical_quadtree::{ChemicalQuadTree, ShowChemicalQuadTree},
+        systems::{build_quadtree, visualise_quadtree},
+    },
 };
 
 // TODO Collision and bound check in cell editor messes up the time reversal
 // TODO Strange bug where cell can split even though it has split type never split (And the daughters are bigger than the parent)
 // TODO Possible bug in simulation mode where cells that split don't get an energy check until the decay function is ran
 // TODO Cell editor jitter when reversing split time (Possibly need to put a marker on cells that are in the process of splitting)
+// TODO Quadtree size would be wrong if simulation or cell editor dish changed size
 
 pub mod cell_editor;
 pub mod cells;
@@ -74,19 +81,22 @@ fn main() {
         .init_resource::<CellEditorState>()
         .init_resource::<CellQuadTree>()
         .init_resource::<ShowCellQuadTree>()
+        .init_resource::<ChemicalQuadTree>()
+        .init_resource::<ShowChemicalQuadTree>()
         .add_message::<CellEditorInitialGenomeMessage>()
         .add_message::<CellEditorAgeMessage>()
         .add_message::<CellEditorSelectedGenomeMessage>()
         .add_message::<CellEditorColourMessage>()
         .add_message::<CellEditorSplitAngleMessage>()
         //
-        // --------------------------- All Systems ----------------------------
+        // --------------------- Mode Independent Systems ----------------------
         //
         .add_systems(Startup, setup)
         .add_systems(PreUpdate, apply_pending_despawns.run_if(state_changed::<GameMode>)) // Need to do despawning right now when GameMode changes
+        .add_systems(Update, mode_independent_keyboard_event_reader)
         .add_systems(PostUpdate, apply_pending_despawns) // Despawn after the update in most cases
         //
-        // -------------------------- Simulation Mode -------------------------
+        // ------------------------- Simulation Mode ---------------------------
         //
         .add_systems(OnEnter(GameMode::Simulation), init_simulation_mode)
         .add_systems(
@@ -96,11 +106,13 @@ fn main() {
                 increment_cell_age,
                 spawn_chemicals,
                 move_cells,
+                build_quadtree::<CellQuadTree, Cell>,
+                build_quadtree::<CellQuadTree, Chemical>,
                 cells_absorb_chemical,
                 cells_do_meiosis,
                 bound_cells,
                 collision_system,
-                visualize_cell_quadtree,
+                visualise_quadtree::<CellQuadTree, ShowCellQuadTree>,
             )
                 .run_if(in_state(GameMode::Simulation)),
         )
@@ -127,9 +139,10 @@ fn main() {
                 draw_cell_info,
                 split_cells,
                 reverse_splits,
+                build_quadtree::<CellQuadTree, Cell>,
                 collision_system,
                 bound_cells,
-                visualize_cell_quadtree,
+                visualise_quadtree::<CellQuadTree, ShowCellQuadTree>,
             )
                 .run_if(in_state(GameMode::CellEditor)),
         )

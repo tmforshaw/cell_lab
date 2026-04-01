@@ -57,8 +57,9 @@ pub fn resolve_cell_collision(
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn collision_system(
-    mut cell_quadtree: ResMut<CellQuadTree>,
+    cell_quadtree: Res<CellQuadTree>,
     mut cells: Query<(Entity, &Cell, &mut Transform, &mut Velocity), Without<PendingDespawn>>,
 ) {
     // Create a read-only Vec so that the collision resolution can borrow 'cells' mutably
@@ -67,9 +68,7 @@ pub fn collision_system(
         entities_and_transforms.push((entity, transform));
     }
 
-    // Build the cell quadtree, and get the root node
-    *cell_quadtree = CellQuadTree::default();
-    cell_quadtree.0.build(&entities_and_transforms);
+    // Assume that quadtree is already built, so just get root
     let root = cell_quadtree.0.get_root();
 
     for (entity, transform) in entities_and_transforms {

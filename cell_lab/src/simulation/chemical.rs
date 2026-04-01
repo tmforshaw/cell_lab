@@ -1,5 +1,7 @@
 use bevy::{prelude::*, render::render_resource::AsBindGroup, shader::ShaderRef, sprite_render::Material2d};
 
+use crate::spatial_partitioning::quadtree::QuadTreeData;
+
 // Chemical parameters
 pub const CHEMICAL_SIZE: f32 = 20.;
 pub const CHEMICAL_ENERGY: f32 = 10.;
@@ -41,3 +43,5 @@ impl ChemicalMaterial {
         }
     }
 }
+
+impl QuadTreeData for Chemical {}

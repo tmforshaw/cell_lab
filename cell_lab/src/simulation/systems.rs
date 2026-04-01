@@ -16,6 +16,7 @@ use crate::{
         },
         state::SimulationState,
     },
+    spatial_partitioning::chemical_quadtree::ChemicalQuadTree,
 };
 
 // Make cells age up
@@ -80,16 +81,29 @@ pub fn bound_cells(
     }
 }
 
+// TODO
 #[allow(clippy::type_complexity)]
 pub fn cells_absorb_chemical(
     mut commands: Commands,
-    mut cell_query: Query<(&mut Transform, &mut Cell), (Without<Chemical>, Without<PendingDespawn>)>,
-    chemical_query: Query<(&Transform, &Chemical, Entity), (Without<Cell>, Without<PendingDespawn>)>,
+    // mut chemical_quadtree: ResMut<ChemicalQuadTree>,
+    mut cell_query: Query<(&mut Cell, &mut Transform), (Without<Chemical>, Without<PendingDespawn>)>,
+    chemicals: Query<(Entity, &Chemical, &Transform), (Without<Cell>, Without<PendingDespawn>)>,
 ) {
-    for (mut cell_transform, mut cell) in &mut cell_query {
+    // // Create a read-only Vec so that the collision resolution can borrow 'chemicals' mutably
+    // let mut entities_and_transforms = Vec::new();
+    // for (entity, _chemical, &transform) in &chemicals {
+    //     entities_and_transforms.push((entity, transform));
+    // }
+
+    // // Build the cell quadtree, and get the root node
+    // *chemical_quadtree = ChemicalQuadTree::default();
+    // chemical_quadtree.0.build(&entities_and_transforms);
+    // let root = cell_quadtree.0.get_root();
+
+    for (mut cell, mut cell_transform) in &mut cell_query {
         // Only absorb chemicals if cell has space for it
         if cell.energy < CELL_MAX_ENERGY {
-            for (chemical_transform, chemical, chemical_entity) in chemical_query.iter() {
+            for (chemical_entity, chemical, chemical_transform) in chemicals.iter() {
                 // They both have sizes defined
                 let (cell_size, chemical_size) = (cell_transform.scale.xy(), chemical_transform.scale.xy());
 

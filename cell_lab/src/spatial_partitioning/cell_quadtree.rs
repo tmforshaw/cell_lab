@@ -1,8 +1,10 @@
-use bevy::{math::bounding::BoundingVolume, prelude::*};
+use std::ops::{Deref, DerefMut};
 
-use crate::{despawning::PendingDespawn, spatial_partitioning::quadtree::QuadtreeDebug};
+use bevy::prelude::*;
 
-use super::quadtree::QuadTree;
+use crate::spatial_partitioning::quadtree::QuadTree;
+
+use super::quadtree::QuadTreeTrait;
 
 const CELL_QUADTREE_SIZE: Vec2 = Vec2::splat(1200.);
 const CELL_QUADTREE_MAX_DEPTH: usize = 4;
@@ -23,65 +25,34 @@ impl Default for CellQuadTree {
     }
 }
 
-fn spawn_cell_quadtree_line(commands: &mut Commands, pos: Vec2, size: Vec2) {
-    commands.spawn((
-        (
-            Sprite {
-                color: CELL_QUADTREE_COLOUR,
-                custom_size: Some(size),
-                ..default()
-            },
-            Transform::from_translation(pos.extend(0.0)),
-        ),
-        QuadtreeDebug,
-    ));
+impl Deref for CellQuadTree {
+    type Target = QuadTree;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for CellQuadTree {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl QuadTreeTrait for CellQuadTree {
+    fn get_colour(&self) -> Color {
+        CELL_QUADTREE_COLOUR
+    }
 }
 
 // Whether to show quadtree or not
 #[derive(Resource, Default)]
 pub struct ShowCellQuadTree(pub bool);
 
-#[allow(clippy::needless_pass_by_value)]
-pub fn visualize_cell_quadtree(
-    mut commands: Commands,
-    cell_quadtree: ResMut<CellQuadTree>,
-    show_cell_quadtree: Res<ShowCellQuadTree>,
-    query_existing: Query<Entity, With<QuadtreeDebug>>,
-) {
-    // remove old debug visuals
-    for e in &query_existing {
-        commands.entity(e).insert(PendingDespawn);
-    }
+impl Deref for ShowCellQuadTree {
+    type Target = bool;
 
-    // Only show if the condition is set
-    if show_cell_quadtree.0 {
-        // Collect all node bounds
-        let mut rects = cell_quadtree.0.collect_bounds();
-
-        rects.reverse();
-        rects.pop();
-
-        // Spawn sprites for each
-        for aabb in rects {
-            let centre = aabb.center();
-            let size = aabb.half_size() * 2.;
-
-            let thickness = 8.0;
-
-            let hw = size.x * 0.5;
-            let hh = size.y * 0.5;
-
-            // Top
-            spawn_cell_quadtree_line(&mut commands, centre + Vec2::new(0.0, hh), Vec2::new(size.x, thickness));
-
-            // Bottom
-            spawn_cell_quadtree_line(&mut commands, centre + Vec2::new(0.0, -hh), Vec2::new(size.x, thickness));
-
-            // Left
-            spawn_cell_quadtree_line(&mut commands, centre + Vec2::new(-hw, 0.0), Vec2::new(thickness, size.y));
-
-            // Right
-            spawn_cell_quadtree_line(&mut commands, centre + Vec2::new(hw, 0.0), Vec2::new(thickness, size.y));
-        }
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }

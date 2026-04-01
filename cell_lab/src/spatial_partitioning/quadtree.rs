@@ -1,11 +1,14 @@
-use std::collections::VecDeque;
+use std::{
+    collections::VecDeque,
+    ops::{Deref, DerefMut},
+};
 
 use bevy::{
     math::bounding::{Aabb2d, BoundingVolume, IntersectsVolume},
     prelude::*,
 };
 
-use crate::collision::systems::aabb_contains_point;
+use crate::{collision::systems::aabb_contains_point, despawning::PendingDespawn};
 
 // Marker for quadtree debug sprites
 #[derive(Component)]
@@ -155,3 +158,23 @@ impl QuadTree {
         out
     }
 }
+
+pub trait QuadTreeTrait: Deref<Target = QuadTree> + DerefMut<Target = QuadTree> {
+    fn get_colour(&self) -> Color;
+}
+
+pub fn spawn_quadtree_line(commands: &mut Commands, pos: Vec2, size: Vec2, colour: Color) {
+    commands.spawn((
+        (
+            Sprite {
+                color: colour,
+                custom_size: Some(size),
+                ..default()
+            },
+            Transform::from_translation(pos.extend(0.0)),
+        ),
+        QuadtreeDebug,
+    ));
+}
+
+pub trait QuadTreeData {}
