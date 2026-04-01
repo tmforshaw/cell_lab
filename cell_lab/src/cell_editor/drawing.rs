@@ -8,10 +8,10 @@ use crate::{
     genomes::GenomeCollection,
 };
 
-const SPLIT_ARROW_WIDTH: f32 = 0.1;
+const SPLIT_ARROW_WIDTH: f32 = 0.05;
 const SPLIT_ARROW_SEGMENTS: usize = 6;
 const SPLIT_ARROW_GAP_PERCENT: f32 = 0.33;
-const SPLIT_ARROW_COLOUR: Color = Color::linear_rgb(0.5, 0.5, 0.5);
+const SPLIT_ARROW_COLOUR: Color = Color::linear_rgb(1.0, 1.0, 1.0);
 
 #[derive(Component)]
 pub struct SplitAngleArrow;

@@ -6,13 +6,13 @@ use crate::{
         state::CellEditorState,
         systems::CellTimeOfBirth,
     },
-    cells::{Cell, CellMaterial, Velocity},
+    cells::{Cell, CellMaterial, SelectionCellMaterial, Velocity},
     despawning::PendingDespawn,
     genomes::GenomeCollection,
 };
 
 pub const SELECTION_COLOUR: Color = Color::linear_rgb(1.0, 1.0, 0.0);
-pub const SELECTION_SCALE: f32 = 1.2;
+pub const SELECTION_SCALE: f32 = 1.05;
 
 #[derive(Component)]
 pub struct SelectedCell;
@@ -132,11 +132,11 @@ pub fn cell_editor_split_angle_message_reader(
 #[allow(clippy::type_complexity)]
 pub fn add_selection_borders(
     mut commands: Commands,
-    mut materials: ResMut<Assets<CellMaterial>>,
+    mut materials: ResMut<Assets<SelectionCellMaterial>>,
     query: Query<(Entity, &Mesh2d), (Added<SelectedCell>, Without<PendingDespawn>)>,
 ) {
     for (entity, mesh) in query.iter() {
-        let border_material = materials.add(CellMaterial {
+        let border_material = materials.add(SelectionCellMaterial {
             colour: SELECTION_COLOUR.to_linear().to_vec4(),
         });
 

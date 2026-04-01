@@ -25,7 +25,7 @@ use crate::{
         systems::{remove_negative_aged_cells, reverse_splits, split_cells},
         ui::{CellEditorUiStyleApplied, cell_editor_ui_update},
     },
-    cells::cell_material::CellMaterial,
+    cells::{CellMaterial, SelectionCellMaterial},
     collision::systems::collision_system,
     despawning::apply_pending_despawns,
     game_mode::GameMode,
@@ -61,6 +61,7 @@ fn main() {
         .add_plugins(EguiPlugin::default())
         .add_plugins(ShapePlugin)
         .add_plugins(Material2dPlugin::<CellMaterial>::default())
+        .add_plugins(Material2dPlugin::<SelectionCellMaterial>::default())
         .add_plugins(Material2dPlugin::<ChemicalMaterial>::default())
         .init_state::<GameMode>()
         .init_resource::<GenomeCollection>()
