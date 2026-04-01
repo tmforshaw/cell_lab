@@ -3,7 +3,7 @@ use bevy::{
     prelude::*,
 };
 
-use crate::{spatial_partitioning::cell_quadtree::ShowCellQuadTree, game_mode::GameMode};
+use crate::{game_mode::GameMode, spatial_partitioning::cell_quadtree::ShowCellQuadTree};
 
 pub fn simulation_mode_keyboard_event_reader(
     mut events: MessageReader<KeyboardInput>,
@@ -27,7 +27,6 @@ pub fn cell_editor_mode_keyboard_event_reader(
     mut show_cell_quadtree: ResMut<ShowCellQuadTree>,
 ) {
     for ev in events.read() {
-        #[allow(clippy::single_match)]
         if ev.state == ButtonState::Pressed {
             match ev.key_code {
                 KeyCode::Digit1 => next_mode.set(GameMode::Simulation),

@@ -4,7 +4,7 @@ use crate::{
     cell_editor::{events::SelectedCell, history::SplitHistory},
     cells::{Cell, CellMaterial},
     genomes::{Genome, GenomeBank, GenomeBankId, GenomeCollection, GenomeId},
-    simulation::dish::DishMarker,
+    simulation::dish::{Dish, DishMarker},
 };
 
 const CELL_EDITOR_SIZE: Vec2 = Vec2::new(1200., 1200.);
@@ -14,7 +14,7 @@ pub struct CellEditorState {
     pub selected_genome_bank: GenomeBankId,
     pub selected_genome: GenomeId,
     pub age: f32,
-    pub bounds: Vec2,
+    pub dish: Dish,
     pub history: SplitHistory,
 }
 
@@ -24,7 +24,7 @@ impl Default for CellEditorState {
             selected_genome_bank: GenomeBankId::default(),
             selected_genome: GenomeId::default(),
             age: f32::default(),
-            bounds: CELL_EDITOR_SIZE,
+            dish: Dish::new(CELL_EDITOR_SIZE),
             history: SplitHistory::default(),
         }
     }

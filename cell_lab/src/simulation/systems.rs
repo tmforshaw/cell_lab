@@ -5,8 +5,10 @@ use bevy::{
 use rand::RngExt;
 
 use crate::{
+    cell_editor::state::CellEditorState,
     cells::{CELL_ENERGY_DECAY, CELL_MAX_VELOCITY, Cell, CellMaterial, MIN_CELL_ENERGY, RANDOM_ACCELERATION, Velocity},
     despawning::PendingDespawn,
+    game_mode::GameMode,
     genomes::GenomeCollection,
     helpers::random_vec2,
     simulation::{
@@ -51,14 +53,20 @@ pub fn move_cells(time: Res<Time>, mut query: Query<(&mut Transform, &mut Veloci
 
 #[allow(clippy::needless_pass_by_value, clippy::type_complexity)]
 pub fn bound_cells(
-    state: Res<SimulationState>,
+    simulation_state: Res<SimulationState>,
+    cell_editor_state: Res<CellEditorState>,
+    game_mode: Res<State<GameMode>>,
     mut query: Query<(&mut Transform, &mut Velocity), (With<Cell>, Without<PendingDespawn>)>,
 ) {
     for (mut transform, mut velocity) in &mut query {
         let size = transform.scale.xy();
 
-        // TODO allow editor dish size to be different
-        let bounds = (state.dish.size - size) / 2.;
+        let dish_size = match game_mode.get() {
+            GameMode::Simulation => simulation_state.dish.size,
+            GameMode::CellEditor => cell_editor_state.dish.size,
+        };
+
+        let bounds = (dish_size - size) / 2.;
 
         // X Bound Collision Resolution
         if transform.translation.x <= -bounds.x {

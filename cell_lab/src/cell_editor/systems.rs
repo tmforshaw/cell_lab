@@ -10,37 +10,6 @@ use crate::{
 #[derive(Component, Debug, Clone)]
 pub struct CellTimeOfBirth(pub f32);
 
-// TODO This is copied code
-#[allow(clippy::needless_pass_by_value, clippy::type_complexity)]
-pub fn bound_cells(
-    state: Res<CellEditorState>,
-    mut query: Query<(&mut Transform, &mut Velocity), (With<Cell>, Without<PendingDespawn>)>,
-) {
-    for (mut transform, mut velocity) in &mut query {
-        let size = transform.scale.xy();
-
-        let bounds = (state.bounds - size) / 2.;
-
-        // X Bound Collision Resolution
-        if transform.translation.x <= -bounds.x {
-            velocity.0.x *= -1.;
-            transform.translation.x = -bounds.x;
-        } else if transform.translation.x >= bounds.x {
-            velocity.0.x *= -1.;
-            transform.translation.x = bounds.x;
-        }
-
-        // Y Bound Collision Resolution
-        if transform.translation.y <= -bounds.y {
-            velocity.0.y *= -1.;
-            transform.translation.y = -bounds.y;
-        } else if transform.translation.y >= bounds.y {
-            velocity.0.y *= -1.;
-            transform.translation.y = bounds.y;
-        }
-    }
-}
-
 #[allow(clippy::needless_pass_by_value)]
 pub fn split_cells(
     mut commands: Commands,

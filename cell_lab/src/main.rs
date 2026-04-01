@@ -62,8 +62,7 @@ fn main() {
         .add_plugins(ShapePlugin)
         .add_plugins(Material2dPlugin::<CellMaterial>::default())
         .add_plugins(Material2dPlugin::<ChemicalMaterial>::default())
-        // .init_state::<GameMode>()
-        .insert_state(GameMode::CellEditor)
+        .init_state::<GameMode>()
         .init_resource::<GenomeCollection>()
         .init_resource::<SimulationState>()
         .init_resource::<ChemicalTimer>()
@@ -93,10 +92,10 @@ fn main() {
                 increment_cell_age,
                 spawn_chemicals,
                 move_cells,
-                bound_cells,
-                collision_system,
                 cells_absorb_chemical,
                 cells_do_meiosis,
+                bound_cells,
+                collision_system,
                 visualize_cell_quadtree,
             )
                 .run_if(in_state(GameMode::Simulation)),
@@ -110,8 +109,6 @@ fn main() {
         .add_systems(
             Update,
             (
-                collision_system,
-                bound_cells,
                 cell_editor_mode_keyboard_event_reader,
                 cell_editor_initial_genome_message_reader,
                 cell_editor_age_message_reader,
@@ -124,6 +121,8 @@ fn main() {
                 split_cells,
                 remove_negative_aged_cells,
                 reverse_splits,
+                collision_system,
+                bound_cells,
                 visualize_cell_quadtree,
             )
                 .run_if(in_state(GameMode::CellEditor)),

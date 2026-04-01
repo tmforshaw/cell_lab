@@ -10,9 +10,19 @@ use crate::{
     },
 };
 
-#[derive(Resource, Default)]
+const SIMULATION_SIZE: Vec2 = Vec2::splat(1200.);
+
+#[derive(Resource)]
 pub struct SimulationState {
     pub dish: Dish,
+}
+
+impl Default for SimulationState {
+    fn default() -> Self {
+        Self {
+            dish: Dish::new(SIMULATION_SIZE),
+        }
+    }
 }
 
 impl SimulationState {
