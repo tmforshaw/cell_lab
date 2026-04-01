@@ -1,7 +1,7 @@
 #[derive(Default, Debug, Copy, Clone)]
 pub struct CellEditorAge {
-    pub age: f32,
-    pub prev_age: Option<f32>,
+    age: f32,
+    prev_age: Option<f32>,
 }
 
 impl CellEditorAge {
@@ -23,5 +23,20 @@ impl CellEditorAge {
     #[must_use]
     pub fn is_decreasing(&self) -> bool {
         self.delta() < 0.
+    }
+
+    #[must_use]
+    pub const fn get_age(&self) -> f32 {
+        self.age
+    }
+
+    pub const fn set_age(&mut self, age: f32) {
+        self.prev_age = Some(age);
+        self.age = age;
+    }
+
+    #[must_use]
+    pub const fn get_prev_age(&self) -> Option<f32> {
+        self.prev_age
     }
 }

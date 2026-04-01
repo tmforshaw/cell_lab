@@ -19,6 +19,11 @@ pub fn split_cells(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<CellMaterial>>,
 ) {
+    // Only split cells when age is increasing
+    if state.editor_age.is_decreasing() {
+        return;
+    }
+
     for (entity, parent, transform, parent_velocity, parent_time_of_birth) in cells {
         let parent_genome = parent.get_genome(&genome_collection);
 
@@ -32,7 +37,7 @@ pub fn split_cells(
             };
 
             // Calculate the age based on when the daughters were found to be born
-            let daughter_age = (state.editor_age.age - time_of_birth.0).max(0.);
+            let daughter_age = (state.editor_age.get_age() - time_of_birth.0).max(0.);
 
             // Get the bundles for the daughter's based on the parent
             if let Some((d1_bundle, d2_bundle)) = parent.split_into_daughter_bundles_with_age(
@@ -86,9 +91,14 @@ pub fn reverse_splits(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<CellMaterial>>,
 ) {
+    // Only reverse splits when the editor age is decreasing
+    if state.editor_age.is_increasing() {
+        return;
+    }
+
     while let Some(current) = state.history.get() {
         // If the age hasn't went back enough to reach any split events
-        if state.editor_age.age >= current.editor_age.age {
+        if state.editor_age.get_age() >= current.editor_age.get_age() {
             break;
         }
 
@@ -126,7 +136,7 @@ pub fn remove_negative_aged_cells(
 ) {
     // Despawn any daughters which have age that is below the current simulation age
     for (entity, CellTimeOfBirth(birth)) in cells {
-        if *birth > state.editor_age.age {
+        if *birth > state.editor_age.get_age() {
             commands.entity(entity).insert(PendingDespawn);
         }
     }

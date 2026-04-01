@@ -55,9 +55,9 @@ pub fn cell_editor_age_message_reader(
         for (mut cell, time_of_birth, mut transform, velocity) in &mut cells {
             // Set the cell's new age
             if let Some(time_of_birth) = time_of_birth {
-                cell.age = state.editor_age.age - time_of_birth.0;
+                cell.age = state.editor_age.get_age() - time_of_birth.0;
             } else {
-                cell.age = state.editor_age.age;
+                cell.age = state.editor_age.get_age();
             }
 
             // Move the cell via its velocity
