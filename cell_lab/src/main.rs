@@ -22,7 +22,7 @@ use crate::{
             cell_editor_selected_genome_message_reader, cell_editor_split_angle_message_reader, remove_selection_borders,
         },
         state::{CellEditorState, exit_cell_editor_mode, init_cell_editor_mode},
-        systems::{remove_negative_aged_cells, reverse_splits, split_cells},
+        systems::{modify_cell_energy, remove_low_energy_cells, remove_negative_aged_cells, reverse_splits, split_cells},
         ui::{CellEditorUiStyleApplied, cell_editor_ui_update},
     },
     cells::{CellMaterial, SelectionCellMaterial},
@@ -43,6 +43,8 @@ use crate::{
 
 // TODO Collision and bound check in cell editor messes up the time reversal
 // TODO Strange bug where cell can split even though it has split type never split (And the daughters are bigger than the parent)
+// TODO Possible bug in simulation mode where cells that split don't get an energy check until the decay function is ran
+// TODO Cell editor jitter when reversing split time (Possibly need to put a marker on cells that are in the process of splitting)
 
 pub mod cell_editor;
 pub mod cells;
@@ -118,10 +120,12 @@ fn main() {
                 cell_editor_colour_message_reader,
                 cell_editor_split_angle_message_reader,
                 remove_selection_borders,
+                remove_negative_aged_cells,
+                modify_cell_energy,
+                remove_low_energy_cells,
                 add_selection_borders,
                 draw_cell_info,
                 split_cells,
-                remove_negative_aged_cells,
                 reverse_splits,
                 collision_system,
                 bound_cells,

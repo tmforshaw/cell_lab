@@ -8,7 +8,8 @@ use crate::{
 };
 
 const CELL_EDITOR_SIZE: Vec2 = Vec2::new(1200., 1200.);
-const CELL_EDITOR_CELL_SIZE_PER_MASS: f32 = 50.;
+const CELL_EDITOR_CELL_SIZE_PER_MASS: f32 = 10.;
+const CELL_EDITOR_CELL_ENERGY_GAIN_RATE: f32 = 2.;
 
 #[derive(Resource)]
 pub struct CellEditorState {
@@ -18,7 +19,7 @@ pub struct CellEditorState {
     pub dish: Dish,
     pub history: SplitHistory,
     pub cell_size_per_mass: f32,
-    // pub energy_gain_rate:
+    pub cell_energy_gain_rate: f32,
 }
 
 impl Default for CellEditorState {
@@ -30,6 +31,7 @@ impl Default for CellEditorState {
             dish: Dish::new(CELL_EDITOR_SIZE),
             history: SplitHistory::default(),
             cell_size_per_mass: CELL_EDITOR_CELL_SIZE_PER_MASS,
+            cell_energy_gain_rate: CELL_EDITOR_CELL_ENERGY_GAIN_RATE,
         }
     }
 }
@@ -64,7 +66,7 @@ pub fn init_cell_editor_mode(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<CellMaterial>>,
 ) {
-    // TODO Maybe don't need this
+    // TODO Maybe don't need this (Make an age change event instead)
     // Reset the simulation age
     state.editor_age = CellEditorAge::default();
 

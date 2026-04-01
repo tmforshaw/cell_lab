@@ -261,11 +261,12 @@ pub fn cell_editor_ui_update(
                     .add(egui::Slider::new(&mut age, 0.0..=MAX_EDITOR_AGE).show_value(true))
                     .changed()
                 {
-                    state.editor_age.set_age(age);
-
                     // Age was changed
                     age_message_writer.write(CellEditorAgeMessage);
                 }
+
+                // Set the age even if it didnt change to stop editor_age from permanently showing as decreasing/increasing
+                state.editor_age.set_age(age);
             });
         });
 
