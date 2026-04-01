@@ -45,7 +45,7 @@ impl QuadTreeTrait for ChemicalQuadTree {
     }
 }
 
-// Whether to show quadtree or not
+// Marker for whether to show quadtree
 #[derive(Resource, Default)]
 pub struct ShowChemicalQuadTree(pub bool);
 
@@ -56,3 +56,7 @@ impl Deref for ShowChemicalQuadTree {
         &self.0
     }
 }
+
+// Marker for the quadtree visualisation debug sprites
+#[derive(Component, Default)]
+pub struct ChemicalQuadTreeDebug;

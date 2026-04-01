@@ -41,8 +41,8 @@ use crate::{
         },
     },
     spatial_partitioning::{
-        cell_quadtree::{CellQuadTree, ShowCellQuadTree},
-        chemical_quadtree::{ChemicalQuadTree, ShowChemicalQuadTree},
+        cell_quadtree::{CellQuadTree, CellQuadTreeDebug, ShowCellQuadTree},
+        chemical_quadtree::{ChemicalQuadTree, ChemicalQuadTreeDebug, ShowChemicalQuadTree},
         systems::{build_quadtree, visualise_quadtree},
     },
 };
@@ -107,12 +107,13 @@ fn main() {
                 spawn_chemicals,
                 move_cells,
                 build_quadtree::<CellQuadTree, Cell>,
-                build_quadtree::<CellQuadTree, Chemical>,
+                build_quadtree::<ChemicalQuadTree, Chemical>,
                 cells_absorb_chemical,
                 cells_do_meiosis,
                 bound_cells,
                 collision_system,
-                visualise_quadtree::<CellQuadTree, ShowCellQuadTree>,
+                visualise_quadtree::<CellQuadTree, ShowCellQuadTree, CellQuadTreeDebug>,
+                visualise_quadtree::<ChemicalQuadTree, ShowChemicalQuadTree, ChemicalQuadTreeDebug>,
             )
                 .run_if(in_state(GameMode::Simulation)),
         )
@@ -142,7 +143,7 @@ fn main() {
                 build_quadtree::<CellQuadTree, Cell>,
                 collision_system,
                 bound_cells,
-                visualise_quadtree::<CellQuadTree, ShowCellQuadTree>,
+                visualise_quadtree::<CellQuadTree, ShowCellQuadTree, CellQuadTreeDebug>,
             )
                 .run_if(in_state(GameMode::CellEditor)),
         )

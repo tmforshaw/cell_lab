@@ -74,18 +74,19 @@ pub fn collision_system(
     for (entity, transform) in entities_and_transforms {
         let mut candidates = Vec::new();
 
+        // TODO Maybe need to use scale/2 here
         // Create the bounding box for a collision with this cell, then query candidates for collision in the quadtree
         let bounds = Aabb2d::new(transform.translation.xy(), transform.scale.xy());
         root.query(&bounds, &mut candidates);
 
-        // Remove candidates which are identical to this entity, then resolve collisions
+        // Iterate through coarse collision detection candidates
         for other in candidates {
-            // Other is the same as this entity
+            // Don't consider if other == this cell
             if other == entity {
                 continue;
             }
 
-            // Check for collision against the other entity
+            // Access data for this cell and the other cell, then perform fine collision detection and resolution
             if let Ok(
                 [
                     (_entity, cell1, mut cell1_transform, mut cell1_velocity),
@@ -93,7 +94,7 @@ pub fn collision_system(
                 ],
             ) = cells.get_many_mut([entity, other])
             {
-                // Cells are colliding
+                // Check if cells are colliding, and resolve that collision
                 resolve_cell_collision(
                     cell1,
                     &mut cell1_transform,

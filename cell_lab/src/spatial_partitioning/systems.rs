@@ -4,18 +4,19 @@ use bevy::{math::bounding::BoundingVolume, prelude::*};
 
 use crate::{
     despawning::PendingDespawn,
-    spatial_partitioning::quadtree::{QuadTreeData, QuadTreeTrait, QuadtreeDebug, spawn_quadtree_line},
+    spatial_partitioning::quadtree::{QuadTreeData, QuadTreeTrait, spawn_quadtree_line},
 };
 
 #[allow(clippy::needless_pass_by_value)]
-pub fn visualise_quadtree<T, S>(
+pub fn visualise_quadtree<T, S, D>(
     mut commands: Commands,
     quadtree: Res<T>,
     show_quadtree: Res<S>,
-    query_existing: Query<Entity, (With<QuadtreeDebug>, Without<PendingDespawn>)>,
+    query_existing: Query<Entity, (With<D>, Without<PendingDespawn>)>,
 ) where
     T: QuadTreeTrait + Resource,
     S: Resource + Deref<Target = bool>,
+    D: Component + Default,
 {
     // Remove previous lines
     for e in query_existing {
@@ -39,7 +40,7 @@ pub fn visualise_quadtree<T, S>(
             let hh = size.y * 0.5;
 
             // Top
-            spawn_quadtree_line(
+            spawn_quadtree_line::<D>(
                 &mut commands,
                 centre + Vec2::new(0.0, hh),
                 Vec2::new(size.x, line_thickness),
@@ -47,7 +48,7 @@ pub fn visualise_quadtree<T, S>(
             );
 
             // Bottom
-            spawn_quadtree_line(
+            spawn_quadtree_line::<D>(
                 &mut commands,
                 centre + Vec2::new(0.0, -hh),
                 Vec2::new(size.x, line_thickness),
@@ -55,7 +56,7 @@ pub fn visualise_quadtree<T, S>(
             );
 
             // Left
-            spawn_quadtree_line(
+            spawn_quadtree_line::<D>(
                 &mut commands,
                 centre + Vec2::new(-hw, 0.0),
                 Vec2::new(line_thickness, size.y),
@@ -63,7 +64,7 @@ pub fn visualise_quadtree<T, S>(
             );
 
             // Right
-            spawn_quadtree_line(
+            spawn_quadtree_line::<D>(
                 &mut commands,
                 centre + Vec2::new(hw, 0.0),
                 Vec2::new(line_thickness, size.y),
@@ -73,6 +74,7 @@ pub fn visualise_quadtree<T, S>(
     }
 }
 
+#[allow(clippy::type_complexity)]
 pub fn build_quadtree<T: QuadTreeTrait + Resource + Default, I: Component + QuadTreeData>(
     mut quadtree: ResMut<T>,
     items: Query<(Entity, &Transform), (With<I>, Without<PendingDespawn>)>,

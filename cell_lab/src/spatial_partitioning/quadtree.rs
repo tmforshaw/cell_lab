@@ -8,11 +8,7 @@ use bevy::{
     prelude::*,
 };
 
-use crate::{collision::systems::aabb_contains_point, despawning::PendingDespawn};
-
-// Marker for quadtree debug sprites
-#[derive(Component)]
-pub struct QuadtreeDebug;
+use crate::collision::systems::aabb_contains_point;
 
 pub struct QuadTreeNode {
     bounds: Aabb2d,
@@ -163,7 +159,7 @@ pub trait QuadTreeTrait: Deref<Target = QuadTree> + DerefMut<Target = QuadTree> 
     fn get_colour(&self) -> Color;
 }
 
-pub fn spawn_quadtree_line(commands: &mut Commands, pos: Vec2, size: Vec2, colour: Color) {
+pub fn spawn_quadtree_line<D: Component + Default>(commands: &mut Commands, pos: Vec2, size: Vec2, colour: Color) {
     commands.spawn((
         (
             Sprite {
@@ -173,7 +169,7 @@ pub fn spawn_quadtree_line(commands: &mut Commands, pos: Vec2, size: Vec2, colou
             },
             Transform::from_translation(pos.extend(0.0)),
         ),
-        QuadtreeDebug,
+        D::default(),
     ));
 }
 

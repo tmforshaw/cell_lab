@@ -1,7 +1,4 @@
-use bevy::{
-    math::bounding::{Aabb2d, IntersectsVolume},
-    prelude::*,
-};
+use bevy::{math::bounding::Aabb2d, prelude::*};
 
 use crate::{
     cell_editor::state::CellEditorState,
@@ -81,44 +78,40 @@ pub fn bound_cells(
     }
 }
 
-// TODO
-#[allow(clippy::type_complexity)]
+#[allow(clippy::type_complexity, clippy::needless_pass_by_value)]
 pub fn cells_absorb_chemical(
     mut commands: Commands,
-    // mut chemical_quadtree: ResMut<ChemicalQuadTree>,
+    chemical_quadtree: Res<ChemicalQuadTree>,
     mut cell_query: Query<(&mut Cell, &mut Transform), (Without<Chemical>, Without<PendingDespawn>)>,
     chemicals: Query<(Entity, &Chemical, &Transform), (Without<Cell>, Without<PendingDespawn>)>,
 ) {
-    // // Create a read-only Vec so that the collision resolution can borrow 'chemicals' mutably
-    // let mut entities_and_transforms = Vec::new();
-    // for (entity, _chemical, &transform) in &chemicals {
-    //     entities_and_transforms.push((entity, transform));
-    // }
-
-    // // Build the cell quadtree, and get the root node
-    // *chemical_quadtree = ChemicalQuadTree::default();
-    // chemical_quadtree.0.build(&entities_and_transforms);
-    // let root = cell_quadtree.0.get_root();
+    // Assume that quadtrees are already built, so just get roots
+    let chemical_quadtree_root = chemical_quadtree.0.get_root();
 
     for (mut cell, mut cell_transform) in &mut cell_query {
         // Only absorb chemicals if cell has space for it
         if cell.energy < CELL_MAX_ENERGY {
-            for (chemical_entity, chemical, chemical_transform) in chemicals.iter() {
-                // They both have sizes defined
-                let (cell_size, chemical_size) = (cell_transform.scale.xy(), chemical_transform.scale.xy());
+            let cell_aabb = Aabb2d::new(cell_transform.translation.xy(), cell_transform.scale.xy() * 0.5);
 
-                // Generate bounding boxes
-                let cell_aabb = Aabb2d::new(cell_transform.translation.xy(), cell_size / 2.);
-                let chemical_aabb = Aabb2d::new(chemical_transform.translation.xy(), chemical_size / 2.);
+            let mut candidates = Vec::new();
+            chemical_quadtree_root.query(&cell_aabb, &mut candidates);
 
-                // Collision detected
-                if cell_aabb.intersects(&chemical_aabb) {
-                    // Gain energy then resize cell based on new energy
-                    cell.energy += chemical.energy;
-                    cell_transform.scale = cell.get_size().extend(1.);
+            // Iterate through coarse collision detection candidates
+            for chemical_entity in candidates {
+                // Get the chemical's data
+                if let Ok((_chemical_entity, chemical, chemical_transform)) = chemicals.get(chemical_entity) {
+                    let dist = (cell_transform.translation - chemical_transform.translation).length();
+                    let combined_radius = f32::midpoint(cell_transform.scale.x, chemical_transform.scale.x); // Use X since X and Y are identical
 
-                    // Despawn the chemical
-                    commands.entity(chemical_entity).insert(PendingDespawn);
+                    // Collision has occurred
+                    if dist < combined_radius {
+                        // Cell gains the chemical's energy then resizes based on new energy
+                        cell.energy += chemical.energy;
+                        cell_transform.scale = cell.get_size().extend(1.);
+
+                        // Despawn the chemical
+                        commands.entity(chemical_entity).insert(PendingDespawn);
+                    }
                 }
             }
         }

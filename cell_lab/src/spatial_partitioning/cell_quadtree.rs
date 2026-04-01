@@ -45,7 +45,7 @@ impl QuadTreeTrait for CellQuadTree {
     }
 }
 
-// Whether to show quadtree or not
+// Marker for whether to show quadtree
 #[derive(Resource, Default)]
 pub struct ShowCellQuadTree(pub bool);
 
@@ -56,3 +56,7 @@ impl Deref for ShowCellQuadTree {
         &self.0
     }
 }
+
+// Marker for the quadtree visualisation debug sprites
+#[derive(Component, Default)]
+pub struct CellQuadTreeDebug;
