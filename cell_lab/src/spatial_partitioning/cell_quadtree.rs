@@ -1,6 +1,6 @@
 use bevy::{math::bounding::BoundingVolume, prelude::*};
 
-use crate::spatial_partitioning::quadtree::QuadtreeDebug;
+use crate::{despawning::PendingDespawn, spatial_partitioning::quadtree::QuadtreeDebug};
 
 use super::quadtree::QuadTree;
 
@@ -50,7 +50,7 @@ pub fn visualize_cell_quadtree(
 ) {
     // remove old debug visuals
     for e in &query_existing {
-        commands.entity(e).despawn();
+        commands.entity(e).insert(PendingDespawn);
     }
 
     // Only show if the condition is set

@@ -6,17 +6,20 @@ use rand::RngExt;
 
 use crate::{
     cells::{CELL_ENERGY_DECAY, CELL_MAX_VELOCITY, Cell, CellMaterial, MIN_CELL_ENERGY, RANDOM_ACCELERATION, Velocity},
+    despawning::PendingDespawn,
     genomes::GenomeCollection,
     helpers::random_vec2,
-    simulation::chemical::{
-        CHEMICAL_COLOUR, CHEMICAL_ENERGY, CHEMICAL_MAX_NUM, CHEMICAL_SIZE, Chemical, ChemicalMaterial, ChemicalTimer,
+    simulation::{
+        chemical::{
+            CHEMICAL_COLOUR, CHEMICAL_ENERGY, CHEMICAL_MAX_NUM, CHEMICAL_SIZE, Chemical, ChemicalMaterial, ChemicalTimer,
+        },
+        state::SimulationState,
     },
-    state::PlayModeState,
 };
 
 // Make cells age up
 #[allow(clippy::needless_pass_by_value)]
-pub fn increment_cell_age(time: Res<Time>, mut query: Query<&mut Cell>) {
+pub fn increment_cell_age(time: Res<Time>, mut query: Query<&mut Cell, Without<PendingDespawn>>) {
     let dt = time.delta_secs();
     for mut cell in &mut query {
         cell.age += dt;
@@ -24,8 +27,8 @@ pub fn increment_cell_age(time: Res<Time>, mut query: Query<&mut Cell>) {
 }
 
 // Move cells smoothly
-#[allow(clippy::needless_pass_by_value)]
-pub fn move_cells(time: Res<Time>, mut query: Query<(&mut Transform, &mut Velocity), With<Cell>>) {
+#[allow(clippy::needless_pass_by_value, clippy::type_complexity)]
+pub fn move_cells(time: Res<Time>, mut query: Query<(&mut Transform, &mut Velocity), (With<Cell>, Without<PendingDespawn>)>) {
     let dt = time.delta().as_secs_f32();
     let mut rng = rand::rng();
 
@@ -46,11 +49,15 @@ pub fn move_cells(time: Res<Time>, mut query: Query<(&mut Transform, &mut Veloci
     }
 }
 
-#[allow(clippy::needless_pass_by_value)]
-pub fn bound_cells(state: Res<PlayModeState>, mut query: Query<(&mut Transform, &mut Velocity), With<Cell>>) {
+#[allow(clippy::needless_pass_by_value, clippy::type_complexity)]
+pub fn bound_cells(
+    state: Res<SimulationState>,
+    mut query: Query<(&mut Transform, &mut Velocity), (With<Cell>, Without<PendingDespawn>)>,
+) {
     for (mut transform, mut velocity) in &mut query {
         let size = transform.scale.xy();
 
+        // TODO allow editor dish size to be different
         let bounds = (state.dish.size - size) / 2.;
 
         // X Bound Collision Resolution
@@ -73,10 +80,11 @@ pub fn bound_cells(state: Res<PlayModeState>, mut query: Query<(&mut Transform, 
     }
 }
 
+#[allow(clippy::type_complexity)]
 pub fn cells_absorb_chemical(
     mut commands: Commands,
-    mut cell_query: Query<(&mut Transform, &mut Cell), Without<Chemical>>,
-    chemical_query: Query<(&Transform, &Chemical, Entity), Without<Cell>>,
+    mut cell_query: Query<(&mut Transform, &mut Cell), (Without<Chemical>, Without<PendingDespawn>)>,
+    chemical_query: Query<(&Transform, &Chemical, Entity), (Without<Cell>, Without<PendingDespawn>)>,
 ) {
     for (mut cell_transform, mut cell) in &mut cell_query {
         for (chemical_transform, chemical, chemical_entity) in chemical_query.iter() {
@@ -94,7 +102,7 @@ pub fn cells_absorb_chemical(
                 cell_transform.scale = cell.get_size().extend(1.);
 
                 // Despawn the chemical
-                commands.entity(chemical_entity).despawn();
+                commands.entity(chemical_entity).insert(PendingDespawn);
             }
         }
     }
@@ -106,7 +114,7 @@ pub fn cells_do_meiosis(
     genome_collection: Res<GenomeCollection>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<CellMaterial>>,
-    cells: Query<(Entity, &mut Cell, &Transform, &Velocity)>,
+    cells: Query<(Entity, &mut Cell, &Transform, &Velocity), Without<PendingDespawn>>,
 ) {
     for (entity, parent, transform, velocity) in cells {
         if let Some((d1_bundle, d2_bundle)) =
@@ -117,7 +125,7 @@ pub fn cells_do_meiosis(
             commands.spawn(d2_bundle);
 
             // Despawn the parent cell
-            commands.entity(entity).despawn();
+            commands.entity(entity).insert(PendingDespawn);
         } else {
             // Didn't split
         }
@@ -125,7 +133,11 @@ pub fn cells_do_meiosis(
 }
 
 #[allow(clippy::needless_pass_by_value)]
-pub fn cell_decay(mut commands: Commands, time: Res<Time>, mut query: Query<(&mut Transform, &mut Cell, Entity)>) {
+pub fn cell_decay(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut query: Query<(&mut Transform, &mut Cell, Entity), Without<PendingDespawn>>,
+) {
     let dt = time.delta().as_secs_f32();
 
     for (mut transform, mut cell, entity) in &mut query {
@@ -134,7 +146,7 @@ pub fn cell_decay(mut commands: Commands, time: Res<Time>, mut query: Query<(&mu
 
         // Remove cell if its too small
         if cell.energy <= MIN_CELL_ENERGY {
-            commands.entity(entity).despawn();
+            commands.entity(entity).insert(PendingDespawn);
         } else {
             // Resize the cell
             transform.scale = cell.get_size().extend(1.);
@@ -148,7 +160,7 @@ pub fn spawn_chemicals(
     mut materials: ResMut<Assets<ChemicalMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
     time: Res<Time>,
-    state: Res<PlayModeState>,
+    state: Res<SimulationState>,
     mut timer: ResMut<ChemicalTimer>,
     chemicals: Query<(), With<Chemical>>,
 ) {

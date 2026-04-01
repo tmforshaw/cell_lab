@@ -7,6 +7,7 @@ use crate::{
         systems::CellTimeOfBirth,
     },
     cells::{Cell, CellMaterial, Velocity},
+    despawning::PendingDespawn,
     genomes::GenomeCollection,
 };
 
@@ -37,7 +38,6 @@ pub struct CellEditorColourMessage;
 #[derive(Message, Debug, Clone)]
 pub struct CellEditorSplitAngleMessage;
 
-// TODO
 #[allow(clippy::needless_pass_by_value)]
 pub fn cell_editor_initial_genome_message_reader(
     events: MessageReader<CellEditorInitialGenomeMessage>,
@@ -48,12 +48,11 @@ pub fn cell_editor_initial_genome_message_reader(
     }
 }
 
-// TODO
 #[allow(clippy::needless_pass_by_value)]
 pub fn cell_editor_age_message_reader(
     mut events: MessageReader<CellEditorAgeMessage>,
     state: Res<CellEditorState>,
-    mut cells: Query<(&mut Cell, Option<&CellTimeOfBirth>, &mut Transform, &Velocity)>,
+    mut cells: Query<(&mut Cell, Option<&CellTimeOfBirth>, &mut Transform, &Velocity), Without<PendingDespawn>>,
 ) {
     for ev in events.read() {
         let delta_age = ev.new_age - ev.prev_age;
@@ -72,14 +71,13 @@ pub fn cell_editor_age_message_reader(
     }
 }
 
-// TODO
 #[allow(clippy::needless_pass_by_value)]
 pub fn cell_editor_selected_genome_message_reader(
     events: MessageReader<CellEditorSelectedGenomeMessage>,
     mut commands: Commands,
-    selected_entities: Query<Entity, With<SelectedCell>>,
+    selected_entities: Query<Entity, (With<SelectedCell>, Without<PendingDespawn>)>,
     state: Res<CellEditorState>,
-    cells_with_entity: Query<(Entity, &Cell)>,
+    cells_with_entity: Query<(Entity, &Cell), Without<PendingDespawn>>,
 ) {
     if !events.is_empty() {
         for entity in selected_entities {
@@ -98,7 +96,7 @@ pub fn cell_editor_selected_genome_message_reader(
 pub fn cell_editor_colour_message_reader(
     events: MessageReader<CellEditorColourMessage>,
     genome_collection: Res<GenomeCollection>,
-    mut selected_materials: Query<&mut MeshMaterial2d<CellMaterial>, With<SelectedCell>>,
+    mut selected_materials: Query<&mut MeshMaterial2d<CellMaterial>, (With<SelectedCell>, Without<PendingDespawn>)>,
     state: Res<CellEditorState>,
     mut materials: ResMut<Assets<CellMaterial>>,
 ) {
@@ -111,21 +109,21 @@ pub fn cell_editor_colour_message_reader(
     }
 }
 
-#[allow(clippy::needless_pass_by_value)]
+#[allow(clippy::needless_pass_by_value, clippy::type_complexity)]
 pub fn cell_editor_split_angle_message_reader(
     mut commands: Commands,
     events: MessageReader<CellEditorSplitAngleMessage>,
     genome_collection: Res<GenomeCollection>,
     state: Res<CellEditorState>,
-    arrows: Query<(Entity, &ChildOf), With<SplitAngleArrow>>,
-    selected_entities: Query<Entity, With<SelectedCell>>,
-    selected_cells: Query<(Entity, &Cell), With<SelectedCell>>,
+    arrows: Query<(Entity, &ChildOf), (With<SplitAngleArrow>, Without<PendingDespawn>)>,
+    selected_entities: Query<Entity, (With<SelectedCell>, Without<PendingDespawn>)>,
+    selected_cells: Query<(Entity, &Cell), (With<SelectedCell>, Without<PendingDespawn>)>,
 ) {
     if !events.is_empty() {
         // Despawn the previous arrows
         for (arrow_entity, child_of) in arrows {
             if selected_entities.get(child_of.parent()).is_ok() {
-                commands.entity(arrow_entity).despawn();
+                commands.entity(arrow_entity).insert(PendingDespawn);
             }
         }
 
@@ -136,10 +134,11 @@ pub fn cell_editor_split_angle_message_reader(
     }
 }
 
+#[allow(clippy::type_complexity)]
 pub fn add_selection_borders(
     mut commands: Commands,
     mut materials: ResMut<Assets<CellMaterial>>,
-    query: Query<(Entity, &Mesh2d), Added<SelectedCell>>,
+    query: Query<(Entity, &Mesh2d), (Added<SelectedCell>, Without<PendingDespawn>)>,
 ) {
     for (entity, mesh) in query.iter() {
         let border_material = materials.add(CellMaterial {
@@ -161,23 +160,16 @@ pub fn add_selection_borders(
 pub fn remove_selection_borders(
     mut commands: Commands,
     mut removed_selections: RemovedComponents<SelectedCell>,
-    children_query: Query<&Children>,
-    border_query: Query<(), With<SelectionBorder>>,
+    children_query: Query<&Children, Without<PendingDespawn>>,
+    border_query: Query<(), (With<SelectionBorder>, Without<PendingDespawn>)>,
 ) {
     for entity in removed_selections.read() {
         if let Ok(children) = children_query.get(entity) {
             for &child in children {
                 if border_query.get(child).is_ok() {
-                    commands.entity(child).despawn();
+                    commands.entity(child).insert(PendingDespawn);
                 }
             }
         }
     }
-
-    // // SelectedCell was changed on this frame
-    // if !removed_selections.is_empty() {
-    //     for entity in borders {
-    //         commands.entity(entity).despawn();
-    //     }
-    // }
 }

@@ -2,8 +2,6 @@ use bevy::prelude::*;
 
 use crate::{cell_editor::systems::CellTimeOfBirth, cells::Cell};
 
-// TODO
-#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct SplitHistoryData {
     pub simulation_age: f32,

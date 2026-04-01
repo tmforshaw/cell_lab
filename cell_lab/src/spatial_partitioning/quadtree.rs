@@ -5,7 +5,7 @@ use bevy::{
     prelude::*,
 };
 
-use crate::collision::collider::aabb_contains_point;
+use crate::collision::systems::aabb_contains_point;
 
 // Marker for quadtree debug sprites
 #[derive(Component)]

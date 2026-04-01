@@ -3,15 +3,19 @@ use bevy::prelude::*;
 use crate::{
     cell_editor::{events::SelectedCell, history::SplitHistoryData, state::CellEditorState},
     cells::{Cell, CellMaterial, Velocity},
+    despawning::PendingDespawn,
     genomes::{CellSplitType, GenomeCollection},
 };
 
 #[derive(Component, Debug, Clone)]
 pub struct CellTimeOfBirth(pub f32);
 
-#[allow(clippy::needless_pass_by_value)]
-pub fn bound_cells(state: Res<CellEditorState>, mut query: Query<(&mut Transform, &mut Velocity), With<Cell>>) {
-    // TODO This is copied code
+// TODO This is copied code
+#[allow(clippy::needless_pass_by_value, clippy::type_complexity)]
+pub fn bound_cells(
+    state: Res<CellEditorState>,
+    mut query: Query<(&mut Transform, &mut Velocity), (With<Cell>, Without<PendingDespawn>)>,
+) {
     for (mut transform, mut velocity) in &mut query {
         let size = transform.scale.xy();
 
@@ -89,7 +93,7 @@ pub fn split_cells(
                 }
 
                 // Despawn the parent cell
-                commands.entity(entity).despawn();
+                commands.entity(entity).insert(PendingDespawn);
 
                 // Add this split to the split history
                 let simulation_age = state.age;
@@ -154,7 +158,7 @@ pub fn remove_negative_aged_cells(
     // Despawn any daughters which have age that is below the current simulation age
     for (entity, CellTimeOfBirth(birth)) in cells {
         if *birth > state.age {
-            commands.entity(entity).despawn();
+            commands.entity(entity).insert(PendingDespawn);
         }
     }
 }

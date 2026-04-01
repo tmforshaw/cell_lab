@@ -20,7 +20,6 @@ const MAX_EDITOR_AGE: f32 = 25.;
 #[derive(Resource, Default)]
 pub struct CellEditorUiStyleApplied(bool);
 
-// TODO
 #[allow(clippy::too_many_lines)]
 #[allow(clippy::too_many_arguments)]
 /// # Errors

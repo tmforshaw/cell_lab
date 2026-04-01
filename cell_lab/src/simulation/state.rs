@@ -11,33 +11,28 @@ use crate::{
 };
 
 #[derive(Resource, Default)]
-pub struct PlayModeState {
+pub struct SimulationState {
     pub dish: Dish,
 }
 
-impl PlayModeState {
+impl SimulationState {
     #[must_use]
     pub const fn new(dish: Dish) -> Self {
         Self { dish }
     }
 }
 
-#[derive(States, Debug, Default, Clone, Copy, PartialEq, PartialOrd, Ord, Eq, Hash)]
-pub enum GameMode {
-    #[default]
-    Play,
-    CellEditor,
-}
-
-// ---------------------------- Play Mode -----------------------------
 #[allow(clippy::needless_pass_by_value)]
-pub fn init_play_mode(
+pub fn init_simulation_mode(
     mut commands: Commands,
     genome_collection: Res<GenomeCollection>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<CellMaterial>>,
-    state: Res<PlayModeState>,
+    state: Res<SimulationState>,
 ) {
+    // Insert the state resource
+    commands.insert_resource(SimulationState::default());
+
     // Show dish
     commands.spawn(state.dish.into_bundle());
 
@@ -56,7 +51,7 @@ pub fn init_play_mode(
     }
 }
 
-pub fn exit_play_mode(
+pub fn exit_simulation_mode(
     mut commands: Commands,
     dishes: Query<Entity, With<DishMarker>>,
     cells: Query<Entity, With<Cell>>,

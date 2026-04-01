@@ -2,6 +2,7 @@ use bevy::{math::bounding::Aabb2d, prelude::*};
 
 use crate::{
     cells::{CELL_MAX_VELOCITY, Cell, Velocity},
+    despawning::PendingDespawn,
     spatial_partitioning::cell_quadtree::CellQuadTree,
 };
 
@@ -58,7 +59,7 @@ pub fn resolve_cell_collision(
 
 pub fn collision_system(
     mut cell_quadtree: ResMut<CellQuadTree>,
-    mut cells: Query<(Entity, &Cell, &mut Transform, &mut Velocity)>,
+    mut cells: Query<(Entity, &Cell, &mut Transform, &mut Velocity), Without<PendingDespawn>>,
 ) {
     // Create a read-only Vec so that the collision resolution can borrow 'cells' mutably
     let mut entities_and_transforms = Vec::new();

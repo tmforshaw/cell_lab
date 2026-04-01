@@ -26,30 +26,33 @@ use crate::{
         ui::{CellEditorUiStyleApplied, cell_editor_ui_update},
     },
     cells::cell_material::CellMaterial,
-    collision::collider::collision_system,
+    collision::systems::collision_system,
+    despawning::apply_pending_despawns,
+    game_mode::GameMode,
     genomes::genome_bank::GenomeCollection,
-    input::{cell_editor_mode_keyboard_event_reader, play_mode_keyboard_event_reader},
+    input::{cell_editor_mode_keyboard_event_reader, simulation_mode_keyboard_event_reader},
     simulation::{
         chemical::{ChemicalMaterial, ChemicalTimer},
+        state::{SimulationState, exit_simulation_mode, init_simulation_mode},
         systems::{
             bound_cells, cell_decay, cells_absorb_chemical, cells_do_meiosis, increment_cell_age, move_cells, spawn_chemicals,
         },
     },
     spatial_partitioning::cell_quadtree::{CellQuadTree, ShowCellQuadTree, visualize_cell_quadtree},
-    state::{GameMode, PlayModeState, exit_play_mode, init_play_mode},
 };
 
-// TODO Check if entity is already despawned when despawning
+// TODO Collision and bound check in cell editor messes up the time reversal
 
 pub mod cell_editor;
 pub mod cells;
 pub mod collision;
+pub mod despawning;
+pub mod game_mode;
 pub mod genomes;
 pub mod helpers;
 pub mod input;
 pub mod simulation;
 pub mod spatial_partitioning;
-pub mod state;
 pub mod ui;
 
 fn main() {
@@ -62,26 +65,31 @@ fn main() {
         // .init_state::<GameMode>()
         .insert_state(GameMode::CellEditor)
         .init_resource::<GenomeCollection>()
-        .init_resource::<PlayModeState>()
+        .init_resource::<SimulationState>()
         .init_resource::<ChemicalTimer>()
         .init_resource::<CellEditorUiStyleApplied>()
         .init_resource::<CellEditorState>()
         .init_resource::<CellQuadTree>()
         .init_resource::<ShowCellQuadTree>()
-        .add_systems(Startup, setup)
         .add_message::<CellEditorInitialGenomeMessage>()
         .add_message::<CellEditorAgeMessage>()
         .add_message::<CellEditorSelectedGenomeMessage>()
         .add_message::<CellEditorColourMessage>()
         .add_message::<CellEditorSplitAngleMessage>()
         //
-        // ---------------------------- Play Mode -----------------------------
+        // --------------------------- All Systems ----------------------------
         //
-        .add_systems(OnEnter(GameMode::Play), init_play_mode)
+        .add_systems(Startup, setup)
+        .add_systems(PreUpdate, apply_pending_despawns.run_if(state_changed::<GameMode>)) // Need to do despawning right now when GameMode changes
+        .add_systems(PostUpdate, apply_pending_despawns) // Despawn after the update in most cases
+        //
+        // -------------------------- Simulation Mode -------------------------
+        //
+        .add_systems(OnEnter(GameMode::Simulation), init_simulation_mode)
         .add_systems(
             Update,
             (
-                play_mode_keyboard_event_reader,
+                simulation_mode_keyboard_event_reader,
                 increment_cell_age,
                 spawn_chemicals,
                 move_cells,
@@ -91,10 +99,10 @@ fn main() {
                 cells_do_meiosis,
                 visualize_cell_quadtree,
             )
-                .run_if(in_state(GameMode::Play)),
+                .run_if(in_state(GameMode::Simulation)),
         )
-        .add_systems(PostUpdate, (cell_decay).run_if(in_state(GameMode::Play)))
-        .add_systems(OnExit(GameMode::Play), exit_play_mode)
+        .add_systems(PostUpdate, (cell_decay).run_if(in_state(GameMode::Simulation)))
+        .add_systems(OnExit(GameMode::Simulation), exit_simulation_mode)
         //
         // ------------------------- Cell Editor Mode --------------------------
         //
@@ -127,6 +135,7 @@ fn main() {
         .add_systems(OnExit(GameMode::CellEditor), exit_cell_editor_mode)
         //
         // ---------------------------------------------------------------------
+        //
         .run();
 }
 

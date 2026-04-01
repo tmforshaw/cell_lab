@@ -115,7 +115,6 @@ impl Cell {
         )
     }
 
-    //TODO
     #[allow(clippy::too_many_arguments)]
     #[must_use]
     pub fn new_bundle_with_age(
@@ -144,7 +143,6 @@ impl Cell {
         )
     }
 
-    //TODO
     #[allow(clippy::too_many_arguments)]
     #[must_use]
     pub fn new_bundle_with_rotation_and_age(
@@ -204,7 +202,6 @@ impl Cell {
         self.split_into_daughter_bundles_with_age(0.0, genome_collection, transform, velocity, meshes, materials)
     }
 
-    // TODO Add parent's velocity into this to conserve momentum
     pub fn split_into_daughter_bundles_with_age(
         &self,
         age: f32,

@@ -4,6 +4,7 @@ use bevy_prototype_lyon::prelude::*;
 use crate::{
     cell_editor::{events::SelectedCell, state::CellEditorState},
     cells::Cell,
+    despawning::PendingDespawn,
     genomes::GenomeCollection,
 };
 
@@ -15,12 +16,12 @@ const SPLIT_ARROW_COLOUR: Color = Color::linear_rgb(0.5, 0.5, 0.5);
 #[derive(Component)]
 pub struct SplitAngleArrow;
 
-#[allow(clippy::needless_pass_by_value)]
+#[allow(clippy::needless_pass_by_value, clippy::type_complexity)]
 pub fn draw_cell_info(
     mut commands: Commands,
     genome_collection: Res<GenomeCollection>,
     state: Res<CellEditorState>,
-    cells: Query<(Entity, &Cell), Added<SelectedCell>>,
+    cells: Query<(Entity, &Cell), (Added<SelectedCell>, Without<PendingDespawn>)>,
 ) {
     for (entity, cell) in cells {
         // Draw the split angle
