@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 
 use std::ops::{Index, IndexMut};
 
@@ -8,6 +9,7 @@ use crate::genomes::{GENOME_MAX_NUM, Genome, GenomeId};
 
 const GENOME_BANK_COLOUR_OFFSET: f32 = 120.;
 
+#[derive(Serialize, Deserialize)]
 pub struct GenomeBank {
     pub initial: GenomeId,
     bank: [Genome; GENOME_MAX_NUM],

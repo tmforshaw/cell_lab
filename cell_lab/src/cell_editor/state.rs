@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    cell_editor::{editor_age::CellEditorAge, events::SelectedCell, history::SplitHistory},
+    cell_editor::{editor_age::CellEditorAge, events::SelectedCell, history::SplitHistory, ui_dialog::CellEditorDialogState},
     cells::{CELL_STARTING_ENERGY, Cell, CellMaterial},
     genomes::{Genome, GenomeBank, GenomeBankId, GenomeCollection, GenomeId},
     simulation::dish::{Dish, DishMarker},
@@ -66,6 +66,9 @@ pub fn init_cell_editor_mode(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<CellMaterial>>,
 ) {
+    // Insert the CellEditorDialogState resource
+    commands.insert_resource(CellEditorDialogState::default());
+
     // TODO Maybe don't need this (Make an age change event instead)
     // Reset the simulation age
     state.editor_age = CellEditorAge::default();
@@ -91,6 +94,9 @@ pub fn init_cell_editor_mode(
 }
 
 pub fn exit_cell_editor_mode(mut commands: Commands, dishes: Query<Entity, With<DishMarker>>, cells: Query<Entity, With<Cell>>) {
+    // Remove the CellEditorDialogState resource
+    commands.remove_resource::<CellEditorDialogState>();
+
     for entity in dishes {
         commands.entity(entity).despawn();
     }

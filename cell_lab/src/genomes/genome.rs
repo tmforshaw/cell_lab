@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 use cell_lab_macros::generate_enum;
+use serde::{Deserialize, Serialize};
 
-#[derive(Component, Debug, Default, Clone, Copy, PartialEq, PartialOrd, Ord, Eq)]
+#[derive(Component, Debug, Default, Clone, Copy, PartialEq, PartialOrd, Ord, Eq, Serialize, Deserialize)]
 pub enum CellType {
     #[default]
     Phagocyte,
@@ -21,7 +22,7 @@ impl std::fmt::Display for CellType {
     }
 }
 
-#[derive(Component, Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Component, Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum CellSplitType {
     #[default]
     Energy,
@@ -29,7 +30,7 @@ pub enum CellSplitType {
     Never,
 }
 
-#[derive(Component, Debug, Clone)]
+#[derive(Component, Debug, Clone, Serialize, Deserialize)]
 pub struct Genome {
     pub id: GenomeId,
     pub cell_type: CellType,

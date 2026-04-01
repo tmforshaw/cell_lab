@@ -77,7 +77,7 @@ pub fn generate_enum(input: TokenStream) -> TokenStream {
 
     // Turn all those generated texts into code to be pasted
     let expanded = quote! {
-        #[derive(Debug, Clone, Copy, Default, PartialEq, PartialOrd, Ord, Eq)]
+        #[derive(Debug, Clone, Copy, Default, PartialEq, PartialOrd, Ord, Eq, Serialize, Deserialize)]
         pub enum #enum_name {
             #(#variants),*
         }

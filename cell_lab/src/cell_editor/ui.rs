@@ -8,9 +8,11 @@ use crate::{
     cell_editor::{
         events::{CellEditorAgeMessage, CellEditorColourMessage, CellEditorSelectedGenomeMessage, CellEditorSplitAngleMessage},
         state::CellEditorState,
+        ui_dialog::CellEditorDialogState,
     },
     cells::{CELL_MAX_ENERGY, CELL_MAX_SPLIT_AGE},
     genomes::{CellSplitType, CellType, GenomeCollection, GenomeId},
+    helpers::sanitise_filename,
     ui::{SEPARATOR_SPACING, SUBSECTION_SPACING},
 };
 
@@ -28,6 +30,7 @@ pub fn cell_editor_ui_update(
     mut egui_ctx: EguiContexts,
     mut genome_collection: ResMut<GenomeCollection>,
     mut state: ResMut<CellEditorState>,
+    mut dialog_state: ResMut<CellEditorDialogState>,
     mut cell_editor_style_applied: ResMut<CellEditorUiStyleApplied>,
     mut age_message_writer: MessageWriter<CellEditorAgeMessage>,
     mut selected_genome_message_writer: MessageWriter<CellEditorSelectedGenomeMessage>,
@@ -61,6 +64,20 @@ pub fn cell_editor_ui_update(
                         selected_genome_message_writer.write(CellEditorSelectedGenomeMessage);
                     }
                 })
+            });
+
+            ui.add_space(SUBSECTION_SPACING);
+
+            ui.horizontal(|ui| {
+                // Save button
+                if ui.button("Save").clicked() {
+                    dialog_state.save_dialog_open = true;
+                }
+
+                // Load button
+                if ui.button("Load").clicked() {
+                    dialog_state.load_dialog_open = true;
+                }
             });
 
             ui.add_space(SEPARATOR_SPACING);
@@ -269,6 +286,44 @@ pub fn cell_editor_ui_update(
                 state.editor_age.set_age(age);
             });
         });
+
+    // Render save/load dialogs if they are open
+    if dialog_state.save_dialog_open || dialog_state.load_dialog_open {
+        egui::Window::new("Save Dialog")
+            .collapsible(false)
+            .resizable(false)
+            .show(ctx, |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("Name of genome: ");
+                    if ui.text_edit_singleline(&mut dialog_state.save_text).changed() {
+                        // Sanitise the name so it can be a filename
+                        dialog_state.save_text = sanitise_filename(&dialog_state.save_text);
+                    }
+
+                    ui.horizontal(|ui| {
+                        if ui.button("Submit").clicked() {
+                            // Save
+                            println!("Saved genome as '{}'", dialog_state.save_text);
+
+                            dialog_state.save_dialog_open = false;
+
+                            // Clear the text
+                            dialog_state.save_text.clear();
+                        }
+
+                        if ui.button("Cancel").clicked() {
+                            // Cancelled
+                            println!("Cancelled saving genome as '{}'", dialog_state.save_text);
+
+                            dialog_state.save_dialog_open = false;
+
+                            // Clear the text
+                            dialog_state.save_text.clear();
+                        }
+                    })
+                });
+            });
+    }
 
     Ok(())
 }

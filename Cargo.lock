@@ -1920,6 +1920,7 @@ dependencies = [
  "bevy_prototype_lyon",
  "cell_lab_macros",
  "rand 0.10.0",
+ "serde",
 ]
 
 [[package]]
