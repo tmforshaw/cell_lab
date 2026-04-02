@@ -122,6 +122,14 @@ pub fn get_genome_banks_in_folder() -> Option<Vec<String>> {
     Some(files)
 }
 
+pub fn does_genome_bank_exist_in_folder<S: AsRef<str>>(filename: S) -> bool {
+    let Some(files) = get_genome_banks_in_folder() else {
+        return false;
+    };
+
+    files.contains(&filename.as_ref().to_string())
+}
+
 pub fn read_genome_bank_file<S: AsRef<str>>(filename: S) -> Option<GenomeBank> {
     // Get the data folder
     let genome_bank = if let Some(data_dir) = get_data_dir() {
