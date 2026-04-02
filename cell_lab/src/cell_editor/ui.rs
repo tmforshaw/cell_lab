@@ -370,39 +370,39 @@ pub fn cell_editor_ui_update(
                         && !files.is_empty()
                     {
                         let selected_file = dialog_state.load_selected_file.unwrap_or(0);
+                        dialog_state.load_selected_file = Some(selected_file); // Update the selected file to show the selected value
 
                         // List out all the selectable genomes in a list
-                        ComboBox::from_id_salt("genome_list")
-                            .selected_text(files[selected_file].clone())
-                            .show_ui(ui, |ui| {
-                                if files
-                                    .iter()
-                                    .enumerate()
-                                    .map(|(i, file)| {
-                                        let mut changed = false;
+                        if files
+                            .iter()
+                            .enumerate()
+                            .map(|(i, file)| {
+                                let mut changed = false;
 
-                                        ui.horizontal(|ui| {
-                                            changed = ui
-                                                .selectable_value(&mut dialog_state.load_selected_file, Some(i), file)
-                                                .changed();
+                                ui.horizontal(|ui| {
+                                    // Show a selectable value
+                                    changed = ui
+                                        .selectable_value(&mut dialog_state.load_selected_file, Some(i), file)
+                                        .changed();
 
-                                            // Delete this genome
-                                            if ui.button("Delete").clicked() {
-                                                dialog_state.delete_file = Some(files[selected_file].clone());
+                                    // Delete this genome
+                                    if ui.button("Delete").clicked() {
+                                        dialog_state.delete_file = Some(files[selected_file].clone());
 
-                                                dialog_state.delete_dialog_open = true;
-                                            }
-                                        });
+                                        dialog_state.delete_dialog_open = true;
+                                    }
+                                });
 
-                                        changed
-                                    })
-                                    .fold(false, |acc, changed| acc | changed)
-                                {
-                                    // Selected genome bank was changed
-                                }
-                            });
+                                changed
+                            })
+                            .fold(false, |acc, changed| acc | changed)
+                        {
+                            // Selected genome bank was changed
+                        }
 
-                        ui.add_space(SUBSECTION_SPACING);
+                        ui.add_space(SEPARATOR_SPACING);
+                        ui.separator();
+                        ui.add_space(SEPARATOR_SPACING);
 
                         ui.horizontal(|ui| {
                             // Load genome

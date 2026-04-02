@@ -10,8 +10,8 @@ use crate::{
     },
 };
 
-const SIMULATION_SIZE: Vec2 = Vec2::splat(1200.);
-const SIMULATION_CELL_SIZE_PER_MASS: f32 = 5.;
+const SIMULATION_SIZE: Vec2 = Vec2::splat(1600.);
+const SIMULATION_CELL_SIZE_PER_MASS: f32 = 10.;
 
 #[derive(Resource)]
 pub struct SimulationState {

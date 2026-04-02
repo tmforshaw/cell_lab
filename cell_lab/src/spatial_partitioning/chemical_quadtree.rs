@@ -6,7 +6,7 @@ use crate::spatial_partitioning::quadtree::QuadTree;
 
 use super::quadtree::QuadTreeTrait;
 
-const CHEMICAL_QUADTREE_SIZE: Vec2 = Vec2::splat(1200.);
+const CHEMICAL_QUADTREE_SIZE: Vec2 = Vec2::splat(1600.);
 const CHEMICAL_QUADTREE_MAX_DEPTH: usize = 6;
 const CHEMICAL_QUADTREE_MAX_CAPACITY_PER_NODE: usize = 8;
 const CHEMICAL_QUADTREE_COLOUR: Color = Color::linear_rgba(1., 0., 1., 0.5);

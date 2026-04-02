@@ -7,7 +7,7 @@ use crate::{
     simulation::dish::{Dish, DishMarker},
 };
 
-const CELL_EDITOR_SIZE: Vec2 = Vec2::new(1200., 1200.);
+const CELL_EDITOR_SIZE: Vec2 = Vec2::splat(1600.);
 const CELL_EDITOR_CELL_SIZE_PER_MASS: f32 = 20.;
 const CELL_EDITOR_CELL_ENERGY_GAIN_RATE: f32 = 2.;
 
