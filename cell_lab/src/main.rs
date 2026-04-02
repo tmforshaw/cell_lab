@@ -48,6 +48,8 @@ use crate::{
     },
 };
 
+pub const WINDOW_SIZE: Vec2 = Vec2::splat(1400.);
+
 // TODO Collision and bound check in cell editor messes up the time reversal
 // TODO Strange bug where cell can split even though it has split type never split (And the daughters are bigger than the parent)
 // TODO Possible bug in simulation mode where cells that split don't get an energy check until the decay function is ran (May stay alive for a frame too long)
@@ -55,6 +57,7 @@ use crate::{
 // TODO Quadtree size would be wrong if simulation or cell editor dish changed size
 // TODO Add semi-sanitise filename where spaces are shown as spaces, but replaced with _ later on
 // TODO Message popup when trying to save empty filename
+// TODO Load default genome button
 
 pub mod cell_editor;
 pub mod cells;

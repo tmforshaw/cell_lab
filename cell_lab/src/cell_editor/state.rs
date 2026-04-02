@@ -1,13 +1,14 @@
 use bevy::prelude::*;
 
 use crate::{
+    WINDOW_SIZE,
     cell_editor::{editor_age::CellEditorAge, events::SelectedCell, history::SplitHistory, ui_dialog::CellEditorUiDialogState},
     cells::{CELL_STARTING_ENERGY, Cell, CellMaterial},
     genomes::{Genome, GenomeBank, GenomeBankId, GenomeCollection, GenomeId},
     simulation::dish::{Dish, DishMarker},
 };
 
-const CELL_EDITOR_SIZE: Vec2 = Vec2::splat(1600.);
+const CELL_EDITOR_SIZE: Vec2 = WINDOW_SIZE;
 const CELL_EDITOR_CELL_SIZE_PER_MASS: f32 = 20.;
 const CELL_EDITOR_CELL_ENERGY_GAIN_RATE: f32 = 2.;
 

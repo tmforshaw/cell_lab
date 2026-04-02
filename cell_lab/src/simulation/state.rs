@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
+    WINDOW_SIZE,
     cells::{CELL_MAX_VELOCITY, CELL_STARTING_ENERGY, Cell, CellMaterial, STARTING_CELL_NUM},
     genomes::{GenomeBankId, GenomeCollection, GenomeId},
     helpers::random_vec2,
@@ -10,7 +11,7 @@ use crate::{
     },
 };
 
-const SIMULATION_SIZE: Vec2 = Vec2::splat(1600.);
+const SIMULATION_SIZE: Vec2 = WINDOW_SIZE;
 const SIMULATION_CELL_SIZE_PER_MASS: f32 = 10.;
 
 #[derive(Resource)]
