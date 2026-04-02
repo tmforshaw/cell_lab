@@ -57,7 +57,7 @@ pub const WINDOW_SIZE: Vec2 = Vec2::splat(1400.);
 // TODO Quadtree size would be wrong if simulation or cell editor dish changed size
 // TODO Add semi-sanitise filename where spaces are shown as spaces, but replaced with _ later on
 // TODO Message popup when trying to save empty filename
-// TODO Load default genome button
+// TODO Add Load default genome bank button within the load dialog
 
 pub mod cell_editor;
 pub mod cells;

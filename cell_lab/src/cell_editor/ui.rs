@@ -8,7 +8,7 @@ use crate::{
     cell_editor::{
         events::{CellEditorAgeMessage, CellEditorColourMessage, CellEditorSelectedGenomeMessage, CellEditorSplitAngleMessage},
         state::CellEditorState,
-        ui_dialog::{load_or_delete_dialog, save_or_overwrite_dialog},
+        ui_dialog::{default_genome_dialog, load_or_delete_dialog, save_or_overwrite_dialog},
     },
     cells::{CELL_MAX_ENERGY, CELL_MAX_SPLIT_AGE},
     genomes::{CellSplitType, CellType, GenomeCollection, GenomeId},
@@ -75,6 +75,11 @@ pub fn cell_editor_ui_update(
                 // Load button
                 if ui.button("Load").clicked() {
                     state.dialogs.open_load_dialog();
+                }
+
+                // Default Genome button
+                if ui.button("Replace Mode With Default").clicked() {
+                    state.dialogs.open_default_genome_dialog();
                 }
             });
 
@@ -289,6 +294,10 @@ pub fn cell_editor_ui_update(
     save_or_overwrite_dialog(ctx, &mut state.dialogs, selected_genome_bank);
 
     load_or_delete_dialog(ctx, &mut state.dialogs, selected_genome_bank);
+
+    let selected_genome = state.get_selected_genome_mut(&mut genome_collection);
+    let selected_genome_id = state.selected_genome;
+    default_genome_dialog(ctx, &mut state.dialogs, selected_genome, selected_genome_id);
 
     Ok(())
 }

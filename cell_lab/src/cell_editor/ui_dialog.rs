@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_egui::egui::{self, Context};
 
 use crate::{
-    genomes::GenomeBank,
+    genomes::{Genome, GenomeBank, GenomeId, genome::colour_from_genome_id},
     serialisation::{
         delete_genome_bank_file, does_genome_bank_exist_in_folder, get_genome_banks_in_folder, read_genome_bank_file,
         sanitise_filename, write_genome_bank_to_file,
@@ -18,7 +18,8 @@ pub struct CellEditorUiDialogState {
     load_dialog_open: bool,
     pub load_selected_file: Option<usize>,
     delete_dialog_open: bool,
-    pub delete_file: Option<String>,
+    delete_file: Option<String>,
+    default_genome_dialog_open: bool,
 }
 
 impl CellEditorUiDialogState {
@@ -40,6 +41,11 @@ impl CellEditorUiDialogState {
     #[must_use]
     pub const fn delete_dialog_is_open(&self) -> bool {
         self.delete_dialog_open
+    }
+
+    #[must_use]
+    pub const fn default_genome_dialog_is_open(&self) -> bool {
+        self.default_genome_dialog_open
     }
 
     pub fn open_save_dialog(&mut self) {
@@ -74,6 +80,14 @@ impl CellEditorUiDialogState {
             delete_file: Some(delete_file.as_ref().to_string()),
             load_dialog_open: false,
             load_selected_file: self.load_selected_file,
+            ..default()
+        };
+    }
+
+    pub fn open_default_genome_dialog(&mut self) {
+        // Open default genome dialog, everything else gets cleared
+        *self = Self {
+            default_genome_dialog_open: true,
             ..default()
         };
     }
@@ -266,5 +280,39 @@ pub fn load_or_delete_dialog(ctx: &Context, dialogs: &mut CellEditorUiDialogStat
                     }
                 });
         }
+    }
+}
+
+pub fn default_genome_dialog(
+    ctx: &Context,
+    dialogs: &mut CellEditorUiDialogState,
+    selected_genome: &mut Genome,
+    selected_genome_id: GenomeId,
+) {
+    // Render default genome dialog if it is open
+    if dialogs.default_genome_dialog_is_open() {
+        egui::Window::new("Replace Current Mode With Default")
+            .collapsible(false)
+            .resizable(false)
+            .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
+            .show(ctx, |ui| {
+                ui.horizontal(|ui| {
+                    // Confirm overwrite of genome
+                    if ui.button("Confirm").clicked() {
+                        // Make a default genome, with the correct colour
+                        *selected_genome = Genome::new(selected_genome_id);
+                        selected_genome.colour = colour_from_genome_id(selected_genome_id);
+
+                        // Exit this dialog
+                        dialogs.close_all_dialogs();
+                    }
+
+                    // Cancel deletion
+                    if ui.button("Cancel").clicked() {
+                        // Exit this dialog
+                        dialogs.close_all_dialogs();
+                    }
+                });
+            });
     }
 }

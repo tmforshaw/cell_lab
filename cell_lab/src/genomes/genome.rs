@@ -75,3 +75,14 @@ impl Default for Genome {
 }
 
 generate_enum!(GenomeId, M, GENOME_MAX_NUM, 9);
+
+const GENOME_INDEX_COLOUR_OFFSET: f32 = 120.;
+pub fn colour_from_genome_id(genome_id: GenomeId) -> Color {
+    Color::hsv(
+        (Into::<usize>::into(genome_id) as f32 / GENOME_MAX_NUM as f32)
+            .mul_add(360.0, GENOME_INDEX_COLOUR_OFFSET)
+            .rem_euclid(360.),
+        0.8,
+        0.9,
+    )
+}

@@ -5,9 +5,7 @@ use std::ops::{Index, IndexMut};
 
 use cell_lab_macros::generate_enum;
 
-use crate::genomes::{GENOME_MAX_NUM, Genome, GenomeId};
-
-const GENOME_BANK_COLOUR_OFFSET: f32 = 120.;
+use crate::genomes::{GENOME_MAX_NUM, Genome, GenomeId, genome::colour_from_genome_id};
 
 #[derive(Serialize, Deserialize)]
 pub struct GenomeBank {
@@ -23,13 +21,7 @@ impl Default for GenomeBank {
                 let mut genome = Genome::new(i.into());
 
                 // Select a visually distinct colour for each genome
-                genome.colour = Color::hsv(
-                    (i as f32 / GENOME_MAX_NUM as f32)
-                        .mul_add(360.0, GENOME_BANK_COLOUR_OFFSET)
-                        .rem_euclid(360.),
-                    0.8,
-                    0.9,
-                );
+                genome.colour = colour_from_genome_id(i.into());
                 genome
             }),
         }
