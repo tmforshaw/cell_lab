@@ -2,6 +2,8 @@ use bevy::prelude::*;
 use cell_lab_macros::generate_enum;
 use serde::{Deserialize, Serialize};
 
+const GENOME_INDEX_COLOUR_OFFSET: f32 = 120.;
+
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq, PartialOrd, Ord, Eq, Serialize, Deserialize)]
 pub enum CellType {
     #[default]
@@ -76,7 +78,7 @@ impl Default for Genome {
 
 generate_enum!(GenomeId, M, GENOME_MAX_NUM, 9);
 
-const GENOME_INDEX_COLOUR_OFFSET: f32 = 120.;
+#[must_use]
 pub fn colour_from_genome_id(genome_id: GenomeId) -> Color {
     Color::hsv(
         (Into::<usize>::into(genome_id) as f32 / GENOME_MAX_NUM as f32)
