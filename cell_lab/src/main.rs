@@ -52,6 +52,7 @@ use crate::{
 // TODO Possible bug in simulation mode where cells that split don't get an energy check until the decay function is ran
 // TODO Cell editor jitter when reversing split time (Possibly need to put a marker on cells that are in the process of splitting)
 // TODO Quadtree size would be wrong if simulation or cell editor dish changed size
+// TODO Add overwrite checking for saving of genome banks
 
 pub mod cell_editor;
 pub mod cells;
@@ -61,6 +62,7 @@ pub mod game_mode;
 pub mod genomes;
 pub mod helpers;
 pub mod input;
+pub mod serialisation;
 pub mod simulation;
 pub mod spatial_partitioning;
 pub mod ui;
