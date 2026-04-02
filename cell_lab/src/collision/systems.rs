@@ -74,8 +74,7 @@ pub fn collision_system(
     for (entity, transform) in entities_and_transforms {
         let mut candidates = Vec::new();
 
-        // TODO Maybe need to use scale/2 here
-        // Create the bounding box for a collision with this cell, then query candidates for collision in the quadtree
+        // Create the bounding box for a collision with this cell, then query candidates for collision in the quadtree (Don't half the size, to include neighbouring quadrants)
         let bounds = Aabb2d::new(transform.translation.xy(), transform.scale.xy());
         root.query(&bounds, &mut candidates);
 

@@ -8,13 +8,14 @@ use crate::{
 };
 
 #[allow(clippy::needless_pass_by_value)]
-pub fn visualise_quadtree<T, S, D>(
+pub fn visualise_quadtree<Id, T, S, D>(
     mut commands: Commands,
     quadtree: Res<T>,
     show_quadtree: Res<S>,
     query_existing: Query<Entity, (With<D>, Without<PendingDespawn>)>,
 ) where
-    T: QuadTreeTrait + Resource,
+    Id: Copy,
+    T: QuadTreeTrait<Id> + Resource,
     S: Resource + Deref<Target = bool>,
     D: Component + Default,
 {
@@ -75,9 +76,9 @@ pub fn visualise_quadtree<T, S, D>(
 }
 
 #[allow(clippy::type_complexity)]
-pub fn build_quadtree<T: QuadTreeTrait + Resource + Default, I: Component + QuadTreeData>(
+pub fn build_quadtree<T: QuadTreeTrait<Entity> + Resource + Default, Item: Component + QuadTreeData>(
     mut quadtree: ResMut<T>,
-    items: Query<(Entity, &Transform), (With<I>, Without<PendingDespawn>)>,
+    items: Query<(Entity, &Transform), (With<Item>, Without<PendingDespawn>)>,
 ) {
     // Turn query into Vec of entities and transforms
     let mut entities_and_transforms = Vec::new();

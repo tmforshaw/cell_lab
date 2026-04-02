@@ -10,14 +10,14 @@ use bevy::{
 
 use crate::collision::systems::aabb_contains_point;
 
-pub struct QuadTreeNode {
+pub struct QuadTreeNode<Id: Copy> {
     bounds: Aabb2d,
-    points: Vec<(Entity, Vec2)>,
+    points: Vec<(Id, Vec2)>,
     children: Option<Box<[Self; 4]>>,
     depth: usize,
 }
 
-impl QuadTreeNode {
+impl<Id: Copy> QuadTreeNode<Id> {
     #[must_use]
     pub const fn new(bounds: Aabb2d, depth: usize) -> Self {
         Self {
@@ -40,13 +40,13 @@ impl QuadTreeNode {
         ]));
     }
 
-    pub fn insert(&mut self, entity: Entity, position: Vec2, node_capacity: usize, max_depth: usize) -> bool {
+    pub fn insert(&mut self, identifier: Id, position: Vec2, node_capacity: usize, max_depth: usize) -> bool {
         if !aabb_contains_point(&self.bounds, position) {
             return false;
         }
 
         if self.points.len() < node_capacity || self.depth >= max_depth {
-            self.points.push((entity, position));
+            self.points.push((identifier, position));
 
             return true;
         }
@@ -57,7 +57,7 @@ impl QuadTreeNode {
 
         if let Some(children) = &mut self.children {
             for child in children.iter_mut() {
-                if child.insert(entity, position, node_capacity, max_depth) {
+                if child.insert(identifier, position, node_capacity, max_depth) {
                     return true;
                 }
             }
@@ -66,14 +66,14 @@ impl QuadTreeNode {
         false
     }
 
-    pub fn query(&self, bounds: &Aabb2d, out: &mut Vec<Entity>) {
+    pub fn query(&self, bounds: &Aabb2d, out: &mut Vec<Id>) {
         if !self.bounds.intersects(bounds) {
             return;
         }
 
-        for (entity, position) in &self.points {
+        for (identifier, position) in &self.points {
             if aabb_contains_point(bounds, *position) {
-                out.push(*entity);
+                out.push(*identifier);
             }
         }
 
@@ -85,13 +85,13 @@ impl QuadTreeNode {
     }
 }
 
-pub struct QuadTree {
-    pub root: QuadTreeNode,
+pub struct QuadTree<I: Copy> {
+    pub root: QuadTreeNode<I>,
     pub max_depth: usize,
     pub node_capacity: usize,
 }
 
-impl QuadTree {
+impl<Id: Copy> QuadTree<Id> {
     #[must_use]
     pub fn new(centre: Vec2, size: Vec2, max_depth: usize, max_capacity_per_node: usize) -> Self {
         Self {
@@ -101,10 +101,10 @@ impl QuadTree {
         }
     }
 
-    pub fn build(&mut self, entities_and_transforms: &Vec<(Entity, Transform)>) {
-        for (entity, transform) in entities_and_transforms {
+    pub fn build(&mut self, identifiers_and_transforms: &Vec<(Id, Transform)>) {
+        for (identifier, transform) in identifiers_and_transforms {
             self.root
-                .insert(*entity, transform.translation.xy(), self.node_capacity, self.max_depth);
+                .insert(*identifier, transform.translation.xy(), self.node_capacity, self.max_depth);
         }
     }
 
@@ -114,22 +114,22 @@ impl QuadTree {
         size: Vec2,
         max_depth: usize,
         max_capacity_per_node: usize,
-        entities_and_transforms: &Vec<(Entity, Transform)>,
+        identifiers_and_transforms: &Vec<(Id, Transform)>,
     ) -> Self {
         let mut new = Self::new(centre, size, max_depth, max_capacity_per_node);
 
-        new.build(entities_and_transforms);
+        new.build(identifiers_and_transforms);
 
         new
     }
 
     #[must_use]
-    pub const fn get_root(&self) -> &QuadTreeNode {
+    pub const fn get_root(&self) -> &QuadTreeNode<Id> {
         &self.root
     }
 
     #[must_use]
-    pub const fn get_root_mut(&mut self) -> &mut QuadTreeNode {
+    pub const fn get_root_mut(&mut self) -> &mut QuadTreeNode<Id> {
         &mut self.root
     }
 
@@ -155,7 +155,7 @@ impl QuadTree {
     }
 }
 
-pub trait QuadTreeTrait: Deref<Target = QuadTree> + DerefMut<Target = QuadTree> {
+pub trait QuadTreeTrait<Id: Copy>: Deref<Target = QuadTree<Id>> + DerefMut<Target = QuadTree<Id>> {
     fn get_colour(&self) -> Color;
 }
 

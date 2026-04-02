@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy_egui::egui::{self, Context};
 
 use crate::{
+    cell_editor::simulation::CellEditorSimulationClearMessage,
     genomes::{Genome, GenomeBank, GenomeId, genome::colour_from_genome_id},
     serialisation::{
         delete_genome_bank_file, does_genome_bank_exist_in_folder, get_genome_banks_in_folder, read_genome_bank_file,
@@ -174,7 +175,12 @@ pub fn save_or_overwrite_dialog(ctx: &Context, dialogs: &mut CellEditorUiDialogS
     }
 }
 
-pub fn load_or_delete_dialog(ctx: &Context, dialogs: &mut CellEditorUiDialogState, selected_genome_bank: &mut GenomeBank) {
+pub fn load_or_delete_dialog(
+    ctx: &Context,
+    dialogs: &mut CellEditorUiDialogState,
+    selected_genome_bank: &mut GenomeBank,
+    simulation_cache_message_writer: &mut MessageWriter<CellEditorSimulationClearMessage>,
+) {
     // If delete dialog is open, don't show load dialog
     if dialogs.delete_dialog_is_open() {
         // If the delete file is specified
@@ -258,6 +264,9 @@ pub fn load_or_delete_dialog(ctx: &Context, dialogs: &mut CellEditorUiDialogStat
                                 if let Some(genome_bank) = read_genome_bank_file(&files[selected_file]) {
                                     // Set the genome bank in GenomeCollection
                                     *selected_genome_bank = genome_bank;
+
+                                    // Clear the simulation cache
+                                    simulation_cache_message_writer.write(CellEditorSimulationClearMessage);
                                 }
 
                                 // Exit the dialog
@@ -288,6 +297,7 @@ pub fn default_genome_dialog(
     dialogs: &mut CellEditorUiDialogState,
     selected_genome: &mut Genome,
     selected_genome_id: GenomeId,
+    simulation_cache_message_writer: &mut MessageWriter<CellEditorSimulationClearMessage>,
 ) {
     // Render default genome dialog if it is open
     if dialogs.default_genome_dialog_is_open() {
@@ -302,6 +312,9 @@ pub fn default_genome_dialog(
                         // Make a default genome, with the correct colour
                         *selected_genome = Genome::new(selected_genome_id);
                         selected_genome.colour = colour_from_genome_id(selected_genome_id);
+
+                        // Clear the simulation cache
+                        simulation_cache_message_writer.write(CellEditorSimulationClearMessage);
 
                         // Exit this dialog
                         dialogs.close_all_dialogs();

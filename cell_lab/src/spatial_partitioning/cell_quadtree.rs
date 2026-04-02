@@ -7,12 +7,12 @@ use crate::{WINDOW_SIZE, spatial_partitioning::quadtree::QuadTree};
 use super::quadtree::QuadTreeTrait;
 
 const CELL_QUADTREE_SIZE: Vec2 = WINDOW_SIZE;
-const CELL_QUADTREE_MAX_DEPTH: usize = 6;
-const CELL_QUADTREE_MAX_CAPACITY_PER_NODE: usize = 8;
+pub const CELL_QUADTREE_MAX_DEPTH: usize = 6;
+pub const CELL_QUADTREE_MAX_CAPACITY_PER_NODE: usize = 8;
 const CELL_QUADTREE_COLOUR: Color = Color::linear_rgba(0., 0., 1., 0.5);
 
 #[derive(Resource)]
-pub struct CellQuadTree(pub QuadTree);
+pub struct CellQuadTree(pub QuadTree<Entity>);
 
 impl Default for CellQuadTree {
     fn default() -> Self {
@@ -26,7 +26,7 @@ impl Default for CellQuadTree {
 }
 
 impl Deref for CellQuadTree {
-    type Target = QuadTree;
+    type Target = QuadTree<Entity>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -39,7 +39,7 @@ impl DerefMut for CellQuadTree {
     }
 }
 
-impl QuadTreeTrait for CellQuadTree {
+impl QuadTreeTrait<Entity> for CellQuadTree {
     fn get_colour(&self) -> Color {
         CELL_QUADTREE_COLOUR
     }

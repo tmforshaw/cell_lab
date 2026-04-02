@@ -2,11 +2,11 @@ use bevy::prelude::*;
 
 use crate::{
     cells::CellMaterial,
-    genomes::{CellSplitType, Genome, GenomeBankId, GenomeCollection, GenomeId, get_daughter_data},
+    genomes::{CellSplitType, DaughterData, Genome, GenomeBankId, GenomeCollection, GenomeId},
     spatial_partitioning::quadtree::QuadTreeData,
 };
 
-#[derive(Component)]
+#[derive(Component, Debug, Clone)]
 pub struct Velocity(pub Vec2);
 
 // Cell parameters
@@ -189,7 +189,6 @@ impl Cell {
 
     #[must_use]
     pub fn get_mass(&self) -> f32 {
-        //TODO
         #[allow(clippy::suboptimal_flops)]
         // Scale energy to get mass
         self.energy.powf(CELL_SIZE_SCALE_FACTOR)
@@ -209,18 +208,6 @@ impl Cell {
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<CellMaterial>>,
     ) -> Option<(CellBundle, CellBundle)> {
-        self.split_into_daughter_bundles_with_age(0.0, genome_collection, transform, velocity, meshes, materials)
-    }
-
-    pub fn split_into_daughter_bundles_with_age(
-        &self,
-        age: f32,
-        genome_collection: &GenomeCollection,
-        transform: &Transform,
-        velocity: &Velocity,
-        meshes: &mut Assets<Mesh>,
-        materials: &mut Assets<CellMaterial>,
-    ) -> Option<(CellBundle, CellBundle)> {
         let genome = self.get_genome(genome_collection);
 
         match genome.split_type {
@@ -230,38 +217,13 @@ impl Cell {
                     || (genome.split_type == CellSplitType::Energy && self.energy >= genome.split_energy)
                 {
                     // Get the data for both daughters
-                    let (d1, d2) = get_daughter_data(self, velocity, transform, genome_collection);
+                    let (d1, d2) = DaughterData::get_from_parent(self, velocity, transform, genome_collection);
 
-                    return Some((
-                        // Set the first daughter's parameters, and get its bundle
-                        Self::new_bundle_with_rotation_and_age(
-                            d1.energy,
-                            age,
-                            d1.genome_id,
-                            self.genome_bank_id,
-                            self.size_per_mass,
-                            d1.velocity,
-                            d1.position,
-                            d1.rotation + transform.rotation.to_euler(EulerRot::XYZ).2,
-                            genome_collection,
-                            meshes,
-                            materials,
-                        ),
-                        // Set the second daughter's parameters, and get its bundle
-                        Self::new_bundle_with_rotation_and_age(
-                            d2.energy,
-                            age,
-                            d2.genome_id,
-                            self.genome_bank_id,
-                            self.size_per_mass,
-                            d2.velocity,
-                            d2.position,
-                            d2.rotation + transform.rotation.to_euler(EulerRot::XYZ).2,
-                            genome_collection,
-                            meshes,
-                            materials,
-                        ),
-                    ));
+                    let d1_bundle = d1.into_cell_bundle(genome_collection, meshes, materials);
+                    let d2_bundle = d2.into_cell_bundle(genome_collection, meshes, materials);
+
+                    // Return the bundles for the daughters
+                    return Some((d1_bundle, d2_bundle));
                 }
             }
             CellSplitType::Never => {}

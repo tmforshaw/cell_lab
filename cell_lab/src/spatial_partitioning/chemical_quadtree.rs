@@ -12,7 +12,7 @@ const CHEMICAL_QUADTREE_MAX_CAPACITY_PER_NODE: usize = 8;
 const CHEMICAL_QUADTREE_COLOUR: Color = Color::linear_rgba(1., 0., 1., 0.5);
 
 #[derive(Resource)]
-pub struct ChemicalQuadTree(pub QuadTree);
+pub struct ChemicalQuadTree(pub QuadTree<Entity>);
 
 impl Default for ChemicalQuadTree {
     fn default() -> Self {
@@ -26,7 +26,7 @@ impl Default for ChemicalQuadTree {
 }
 
 impl Deref for ChemicalQuadTree {
-    type Target = QuadTree;
+    type Target = QuadTree<Entity>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -39,7 +39,7 @@ impl DerefMut for ChemicalQuadTree {
     }
 }
 
-impl QuadTreeTrait for ChemicalQuadTree {
+impl QuadTreeTrait<Entity> for ChemicalQuadTree {
     fn get_colour(&self) -> Color {
         CHEMICAL_QUADTREE_COLOUR
     }

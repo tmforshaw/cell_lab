@@ -8,6 +8,8 @@
 #![allow(clippy::cast_sign_loss)]
 #![allow(clippy::cast_lossless)]
 #![allow(clippy::struct_excessive_bools)]
+#![allow(clippy::while_float)]
+#![allow(clippy::assigning_clones)]
 
 use bevy::{prelude::*, sprite_render::Material2dPlugin};
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
@@ -22,8 +24,12 @@ use crate::{
             cell_editor_colour_message_reader, cell_editor_initial_genome_message_reader,
             cell_editor_selected_genome_message_reader, cell_editor_split_angle_message_reader, remove_selection_borders,
         },
+        logical_cell::clear_cells,
+        simulation::{
+            CellEditorSimulationClearMessage, clear_simulation_cache_message_reader, simulate_to_editor_age,
+            spawn_cells_from_simulation,
+        },
         state::{CellEditorState, exit_cell_editor_mode, init_cell_editor_mode},
-        systems::{modify_cell_energy, remove_low_energy_cells, remove_negative_aged_cells, reverse_splits, split_cells},
         ui::{CellEditorUiStyleApplied, cell_editor_ui_update},
     },
     cells::{Cell, CellMaterial, SelectionCellMaterial},
@@ -48,16 +54,16 @@ use crate::{
     },
 };
 
-pub const WINDOW_SIZE: Vec2 = Vec2::splat(1400.);
+pub const WINDOW_SIZE: Vec2 = Vec2::splat(1200.);
 
-// TODO Collision and bound check in cell editor messes up the time reversal
 // TODO Strange bug where cell can split even though it has split type never split (And the daughters are bigger than the parent)
 // TODO Possible bug in simulation mode where cells that split don't get an energy check until the decay function is ran (May stay alive for a frame too long)
-// TODO Cell editor jitter when reversing split time (Possibly need to put a marker on cells that are in the process of splitting)
-// TODO Quadtree size would be wrong if simulation or cell editor dish changed size
+// TODO Quadtree size would be wrong if simulation or cell editor dish was uneven
 // TODO Add semi-sanitise filename where spaces are shown as spaces, but replaced with _ later on
 // TODO Message popup when trying to save empty filename
 // TODO Add Load default genome bank button within the load dialog
+// TODO Switch UI from saying genome when it means genome bank
+// TODO Cell editor doesn't have cells dying from energy being too low
 
 pub mod cell_editor;
 pub mod cells;
@@ -95,6 +101,7 @@ fn main() {
         .add_message::<CellEditorSelectedGenomeMessage>()
         .add_message::<CellEditorColourMessage>()
         .add_message::<CellEditorSplitAngleMessage>()
+        .add_message::<CellEditorSimulationClearMessage>()
         //
         // --------------------- Mode Independent Systems ----------------------
         //
@@ -119,8 +126,8 @@ fn main() {
                 cells_do_meiosis,
                 bound_cells,
                 collision_system,
-                visualise_quadtree::<CellQuadTree, ShowCellQuadTree, CellQuadTreeDebug>,
-                visualise_quadtree::<ChemicalQuadTree, ShowChemicalQuadTree, ChemicalQuadTreeDebug>,
+                visualise_quadtree::<Entity, CellQuadTree, ShowCellQuadTree, CellQuadTreeDebug>,
+                visualise_quadtree::<Entity, ChemicalQuadTree, ShowChemicalQuadTree, ChemicalQuadTreeDebug>,
             )
                 .run_if(in_state(GameMode::Simulation)),
         )
@@ -139,18 +146,15 @@ fn main() {
                 cell_editor_selected_genome_message_reader,
                 cell_editor_colour_message_reader,
                 cell_editor_split_angle_message_reader,
+                clear_cells,
+                clear_simulation_cache_message_reader,
+                simulate_to_editor_age.after(clear_simulation_cache_message_reader),
+                spawn_cells_from_simulation.after(clear_cells).after(simulate_to_editor_age),
                 remove_selection_borders,
-                remove_negative_aged_cells,
-                modify_cell_energy,
-                remove_low_energy_cells,
                 add_selection_borders,
                 draw_cell_info,
-                split_cells,
-                reverse_splits,
                 build_quadtree::<CellQuadTree, Cell>,
-                collision_system,
-                bound_cells,
-                visualise_quadtree::<CellQuadTree, ShowCellQuadTree, CellQuadTreeDebug>,
+                visualise_quadtree::<Entity, CellQuadTree, ShowCellQuadTree, CellQuadTreeDebug>,
             )
                 .run_if(in_state(GameMode::CellEditor)),
         )

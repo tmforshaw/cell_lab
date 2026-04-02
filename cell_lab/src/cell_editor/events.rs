@@ -4,9 +4,8 @@ use crate::{
     cell_editor::{
         drawing::{SplitAngleArrow, draw_split_angle_arrow_as_child},
         state::CellEditorState,
-        systems::CellTimeOfBirth,
     },
-    cells::{Cell, CellMaterial, SelectionCellMaterial, Velocity},
+    cells::{Cell, CellMaterial, SelectionCellMaterial},
     despawning::PendingDespawn,
     genomes::GenomeCollection,
 };
@@ -46,26 +45,8 @@ pub fn cell_editor_initial_genome_message_reader(
 }
 
 #[allow(clippy::needless_pass_by_value)]
-pub fn cell_editor_age_message_reader(
-    mut events: MessageReader<CellEditorAgeMessage>,
-    state: Res<CellEditorState>,
-    mut cells: Query<(&mut Cell, Option<&CellTimeOfBirth>, &mut Transform, &Velocity), Without<PendingDespawn>>,
-) {
-    for _ev in events.read() {
-        for (mut cell, time_of_birth, mut transform, velocity) in &mut cells {
-            // Set the cell's new age
-            if let Some(time_of_birth) = time_of_birth {
-                cell.age = state.editor_age.get_age() - time_of_birth.0;
-            } else {
-                cell.age = state.editor_age.get_age();
-            }
-
-            // println!("{}", state.editor_age.delta());
-
-            // Move the cell via its velocity
-            transform.translation += (velocity.0 * state.editor_age.delta()).extend(0.);
-        }
-    }
+pub const fn cell_editor_age_message_reader(mut _events: MessageReader<CellEditorAgeMessage>) {
+    // TODO
 }
 
 #[allow(clippy::needless_pass_by_value)]

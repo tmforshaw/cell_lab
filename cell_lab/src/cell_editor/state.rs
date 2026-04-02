@@ -2,15 +2,20 @@ use bevy::prelude::*;
 
 use crate::{
     WINDOW_SIZE,
-    cell_editor::{editor_age::CellEditorAge, events::SelectedCell, history::SplitHistory, ui_dialog::CellEditorUiDialogState},
-    cells::{CELL_STARTING_ENERGY, Cell, CellMaterial},
+    cell_editor::{
+        editor_age::CellEditorAge,
+        snapshot::{CellEditorSimulationState, CellHistoryCache},
+        ui_dialog::CellEditorUiDialogState,
+    },
+    cells::Cell,
     genomes::{Genome, GenomeBank, GenomeBankId, GenomeCollection, GenomeId},
     simulation::dish::{Dish, DishMarker},
 };
 
-const CELL_EDITOR_SIZE: Vec2 = WINDOW_SIZE;
-const CELL_EDITOR_CELL_SIZE_PER_MASS: f32 = 20.;
+pub const CELL_EDITOR_SIZE: Vec2 = WINDOW_SIZE;
+pub const CELL_EDITOR_CELL_SIZE_PER_MASS: f32 = 20.;
 const CELL_EDITOR_CELL_ENERGY_GAIN_RATE: f32 = 2.;
+const CELL_EDITOR_SIMULATION_DELTA_TIME: f32 = 0.02;
 
 #[derive(Resource)]
 pub struct CellEditorState {
@@ -18,10 +23,10 @@ pub struct CellEditorState {
     pub selected_genome: GenomeId,
     pub editor_age: CellEditorAge,
     pub dish: Dish,
-    pub history: SplitHistory,
     pub cell_size_per_mass: f32,
     pub cell_energy_gain_rate: f32,
     pub dialogs: CellEditorUiDialogState,
+    pub simulation_delta_time: f32,
 }
 
 impl Default for CellEditorState {
@@ -31,10 +36,10 @@ impl Default for CellEditorState {
             selected_genome: GenomeId::default(),
             editor_age: CellEditorAge::default(),
             dish: Dish::new(CELL_EDITOR_SIZE),
-            history: SplitHistory::default(),
             cell_size_per_mass: CELL_EDITOR_CELL_SIZE_PER_MASS,
             cell_energy_gain_rate: CELL_EDITOR_CELL_ENERGY_GAIN_RATE,
             dialogs: CellEditorUiDialogState::default(),
+            simulation_delta_time: CELL_EDITOR_SIMULATION_DELTA_TIME,
         }
     }
 }
@@ -62,35 +67,13 @@ impl CellEditorState {
 }
 
 #[allow(clippy::needless_pass_by_value)]
-pub fn init_cell_editor_mode(
-    mut commands: Commands,
-    genome_collection: Res<GenomeCollection>,
-    mut state: ResMut<CellEditorState>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<CellMaterial>>,
-) {
-    // TODO Maybe don't need this (Make an age change event instead)
-    // Reset the simulation age
-    state.editor_age = CellEditorAge::default();
+pub fn init_cell_editor_mode(mut commands: Commands, state: ResMut<CellEditorState>) {
+    // Insert the simulation resources
+    commands.insert_resource(CellHistoryCache::default());
+    commands.insert_resource(CellEditorSimulationState::default());
 
     // Spawn dish
     commands.spawn(state.dish.into_bundle());
-
-    // Create a bundle for the selected genome, make it selected, then spawn it
-    commands.spawn((
-        Cell::new_bundle(
-            CELL_STARTING_ENERGY,
-            state.selected_genome,
-            state.selected_genome_bank,
-            state.cell_size_per_mass,
-            Vec2::ZERO,
-            Vec2::ZERO,
-            &genome_collection,
-            &mut meshes,
-            &mut materials,
-        ),
-        SelectedCell,
-    ));
 }
 
 pub fn exit_cell_editor_mode(
@@ -99,6 +82,10 @@ pub fn exit_cell_editor_mode(
     cells: Query<Entity, With<Cell>>,
     mut state: ResMut<CellEditorState>,
 ) {
+    // Remove the simulation resources
+    commands.remove_resource::<CellHistoryCache>();
+    commands.remove_resource::<CellEditorSimulationState>();
+
     // Close all dialogs
     state.dialogs.close_all_dialogs();
 

@@ -7,6 +7,7 @@ use bevy_egui::{
 use crate::{
     cell_editor::{
         events::{CellEditorAgeMessage, CellEditorColourMessage, CellEditorSelectedGenomeMessage, CellEditorSplitAngleMessage},
+        simulation::CellEditorSimulationClearMessage,
         state::CellEditorState,
         ui_dialog::{default_genome_dialog, load_or_delete_dialog, save_or_overwrite_dialog},
     },
@@ -15,8 +16,9 @@ use crate::{
     ui::{SEPARATOR_SPACING, SUBSECTION_SPACING},
 };
 
-const CELL_EDITOR_WIDTH: f32 = 600.;
-const MAX_EDITOR_AGE: f32 = 25.;
+const CELL_EDITOR_RIGHT_PANEL_WIDTH: f32 = 500.;
+const CELL_EDITOR_SLIDER_WIDTH: f32 = CELL_EDITOR_RIGHT_PANEL_WIDTH * 0.55;
+const MAX_EDITOR_AGE: f32 = 30.;
 
 #[derive(Resource, Default)]
 pub struct CellEditorUiStyleApplied(bool);
@@ -34,6 +36,7 @@ pub fn cell_editor_ui_update(
     mut selected_genome_message_writer: MessageWriter<CellEditorSelectedGenomeMessage>,
     mut colour_message_writer: MessageWriter<CellEditorColourMessage>,
     mut split_angle_message_writer: MessageWriter<CellEditorSplitAngleMessage>,
+    mut simulation_cache_message_writer: MessageWriter<CellEditorSimulationClearMessage>,
 ) -> Result {
     let ctx = match egui_ctx.ctx_mut() {
         Ok(ctx) => ctx,
@@ -48,7 +51,8 @@ pub fn cell_editor_ui_update(
     // Right panel
     egui::SidePanel::right("cell_editor_panel")
         .resizable(false)
-        .min_width(CELL_EDITOR_WIDTH)
+        .min_width(CELL_EDITOR_RIGHT_PANEL_WIDTH)
+        .max_width(CELL_EDITOR_RIGHT_PANEL_WIDTH)
         .show(ctx, |ui| {
             // Genome selection
             ui.horizontal(|ui| {
@@ -96,6 +100,9 @@ pub fn cell_editor_ui_update(
                         state.get_selected_genome_bank_mut(&mut genome_collection).initial = state.selected_genome;
 
                         // Do an event
+
+                        // Clear the simulation cache
+                        simulation_cache_message_writer.write(CellEditorSimulationClearMessage);
                     }
                 }
 
@@ -122,6 +129,9 @@ pub fn cell_editor_ui_update(
                                 .changed()
                         {
                             // Cell type was changed
+
+                            // Clear the simulation cache
+                            simulation_cache_message_writer.write(CellEditorSimulationClearMessage);
                         }
                     });
             });
@@ -139,6 +149,9 @@ pub fn cell_editor_ui_update(
                 0,
             ) {
                 // Daughter 1 was changed
+
+                // Clear the simulation cache
+                simulation_cache_message_writer.write(CellEditorSimulationClearMessage);
             }
 
             // Daughter 2 parameters
@@ -150,6 +163,9 @@ pub fn cell_editor_ui_update(
                 1,
             ) {
                 // Daughter 2 was changed
+
+                // Clear the simulation cache
+                simulation_cache_message_writer.write(CellEditorSimulationClearMessage);
             }
 
             // Colour selection
@@ -160,6 +176,9 @@ pub fn cell_editor_ui_update(
                 if create_colour_edit_ui(ui, &mut state.get_selected_genome_mut(&mut genome_collection).colour) {
                     // Colour was changed
                     colour_message_writer.write(CellEditorColourMessage);
+
+                    // Clear the simulation cache
+                    simulation_cache_message_writer.write(CellEditorSimulationClearMessage);
                 }
             });
 
@@ -169,21 +188,33 @@ pub fn cell_editor_ui_update(
 
             // Select "use split age" or "use split energy"
             ui.horizontal(|ui| {
-                ui.radio_value(
-                    &mut state.get_selected_genome_mut(&mut genome_collection).split_type,
-                    CellSplitType::Energy,
-                    "Use Split Energy",
-                );
-                ui.radio_value(
-                    &mut state.get_selected_genome_mut(&mut genome_collection).split_type,
-                    CellSplitType::Age,
-                    "Use Split Age",
-                );
-                ui.radio_value(
-                    &mut state.get_selected_genome_mut(&mut genome_collection).split_type,
-                    CellSplitType::Never,
-                    "Never Split",
-                );
+                if ui
+                    .radio_value(
+                        &mut state.get_selected_genome_mut(&mut genome_collection).split_type,
+                        CellSplitType::Energy,
+                        "Use Split Energy",
+                    )
+                    .changed()
+                    || ui
+                        .radio_value(
+                            &mut state.get_selected_genome_mut(&mut genome_collection).split_type,
+                            CellSplitType::Age,
+                            "Use Split Age",
+                        )
+                        .changed()
+                    || ui
+                        .radio_value(
+                            &mut state.get_selected_genome_mut(&mut genome_collection).split_type,
+                            CellSplitType::Never,
+                            "Never Split",
+                        )
+                        .changed()
+                {
+                    // Split Type was changed
+
+                    // Clear the simulation cache
+                    simulation_cache_message_writer.write(CellEditorSimulationClearMessage);
+                }
             });
 
             // Show different UI depending on use_split_age
@@ -200,6 +231,9 @@ pub fn cell_editor_ui_update(
                             .changed()
                         {
                             // Split energy was changed
+
+                            // Clear the simulation cache
+                            simulation_cache_message_writer.write(CellEditorSimulationClearMessage);
                         }
                     });
                 }
@@ -215,6 +249,9 @@ pub fn cell_editor_ui_update(
                             .changed()
                         {
                             // Split age was changed
+
+                            // Clear the simulation cache
+                            simulation_cache_message_writer.write(CellEditorSimulationClearMessage);
                         }
                     });
                 }
@@ -232,6 +269,9 @@ pub fn cell_editor_ui_update(
                     .changed()
                 {
                     // Split fraction was changed
+
+                    // Clear the simulation cache
+                    simulation_cache_message_writer.write(CellEditorSimulationClearMessage);
                 }
             });
 
@@ -246,6 +286,9 @@ pub fn cell_editor_ui_update(
                     state.get_selected_genome_mut(&mut genome_collection).split_angle = -angle_degrees.to_radians();
 
                     split_angle_message_writer.write(CellEditorSplitAngleMessage);
+
+                    // Clear the simulation cache
+                    simulation_cache_message_writer.write(CellEditorSimulationClearMessage);
                 }
             });
 
@@ -262,6 +305,9 @@ pub fn cell_editor_ui_update(
                     .changed()
                 {
                     // Split force was changed
+
+                    // Clear the simulation cache
+                    simulation_cache_message_writer.write(CellEditorSimulationClearMessage);
                 }
             });
         });
@@ -293,11 +339,22 @@ pub fn cell_editor_ui_update(
     let selected_genome_bank = state.get_selected_genome_bank_mut(&mut genome_collection);
     save_or_overwrite_dialog(ctx, &mut state.dialogs, selected_genome_bank);
 
-    load_or_delete_dialog(ctx, &mut state.dialogs, selected_genome_bank);
+    load_or_delete_dialog(
+        ctx,
+        &mut state.dialogs,
+        selected_genome_bank,
+        &mut simulation_cache_message_writer,
+    );
 
     let selected_genome = state.get_selected_genome_mut(&mut genome_collection);
     let selected_genome_id = state.selected_genome;
-    default_genome_dialog(ctx, &mut state.dialogs, selected_genome, selected_genome_id);
+    default_genome_dialog(
+        ctx,
+        &mut state.dialogs,
+        selected_genome,
+        selected_genome_id,
+        &mut simulation_cache_message_writer,
+    );
 
     Ok(())
 }
@@ -309,7 +366,7 @@ pub fn set_cell_editor_ui_style(ctx: &mut Context, cell_editor_style_applied: &m
         for font_id in style.text_styles.values_mut() {
             font_id.size *= 1.5; // Scale all fonts
         }
-        style.spacing.slider_width = 400.;
+        style.spacing.slider_width = CELL_EDITOR_SLIDER_WIDTH;
 
         // Colors for sliders
         style.visuals.widgets.inactive.bg_fill = Color32::from_rgb(0, 180, 10);
