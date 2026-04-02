@@ -1,6 +1,16 @@
 use bevy::prelude::*;
+use bevy_egui::egui::{self, Context};
 
-#[derive(Resource, Default)]
+use crate::{
+    genomes::GenomeBank,
+    serialisation::{
+        delete_genome_bank_file, does_genome_bank_exist_in_folder, get_genome_banks_in_folder, read_genome_bank_file,
+        sanitise_filename, write_genome_bank_to_file,
+    },
+    ui::SEPARATOR_SPACING,
+};
+
+#[derive(Default)]
 pub struct CellEditorUiDialogState {
     save_dialog_open: bool,
     pub save_filename: String,
@@ -80,5 +90,181 @@ impl CellEditorUiDialogState {
             load_selected_file: self.load_selected_file,
             ..default()
         };
+    }
+}
+
+pub fn save_or_overwrite_dialog(ctx: &Context, dialogs: &mut CellEditorUiDialogState, selected_genome_bank: &mut GenomeBank) {
+    // If overwrite dialog is open, don't show save dialog
+    if dialogs.overwrite_dialog_is_open() {
+        egui::Window::new(format!("Overwrite '{}'", dialogs.save_filename))
+            .collapsible(false)
+            .resizable(false)
+            .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
+            .show(ctx, |ui| {
+                ui.horizontal(|ui| {
+                    // Confirm overwrite
+                    if ui.button("Confirm").clicked() {
+                        write_genome_bank_to_file(dialogs.save_filename.clone(), selected_genome_bank);
+
+                        // Exit the dialog
+                        dialogs.close_all_dialogs();
+                    }
+
+                    // Cancel overwrite
+                    if ui.button("Cancel").clicked() {
+                        // Exit the dialog
+                        dialogs.close_all_dialogs();
+                    }
+                });
+            });
+    } else {
+        // Render save dialog if it is open
+        if dialogs.save_dialog_is_open() {
+            egui::Window::new("Save Genome")
+                .collapsible(false)
+                .resizable(false)
+                .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
+                .show(ctx, |ui| {
+                    ui.horizontal(|ui| {
+                        ui.label("Name of genome: ");
+                        if ui.text_edit_singleline(&mut dialogs.save_filename).changed() {
+                            // Sanitise the name so it can be a filename
+                            dialogs.save_filename = sanitise_filename(&dialogs.save_filename);
+                        }
+
+                        ui.horizontal(|ui| {
+                            // Save genome
+                            if ui.button("Submit").clicked() {
+                                // Check if the file already exists
+                                if does_genome_bank_exist_in_folder(dialogs.save_filename.clone()) {
+                                    // Open the overwrite dialog
+                                    dialogs.open_overwrite_dialog();
+                                } else {
+                                    // Write genome to file
+                                    write_genome_bank_to_file(dialogs.save_filename.clone(), selected_genome_bank);
+
+                                    // Exit the dialog
+                                    dialogs.close_all_dialogs();
+                                }
+                            }
+
+                            // Cancel save
+                            if ui.button("Cancel").clicked() {
+                                // Exit the dialog
+                                dialogs.close_all_dialogs();
+                            }
+                        })
+                    });
+                });
+        }
+    }
+}
+
+pub fn load_or_delete_dialog(ctx: &Context, dialogs: &mut CellEditorUiDialogState, selected_genome_bank: &mut GenomeBank) {
+    // If delete dialog is open, don't show load dialog
+    if dialogs.delete_dialog_is_open() {
+        // If the delete file is specified
+        if let Some(delete_file) = dialogs.delete_file.clone() {
+            egui::Window::new(format!("Delete Genome '{delete_file}'"))
+                .collapsible(false)
+                .resizable(false)
+                .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
+                .show(ctx, |ui| {
+                    ui.horizontal(|ui| {
+                        // Confirm deletion
+                        if ui.button("Confirm").clicked() {
+                            delete_genome_bank_file(delete_file);
+
+                            // Set the selected file to be 0, unless there are no files left
+                            if let Some(files) = get_genome_banks_in_folder() {
+                                dialogs.load_selected_file = if files.is_empty() { None } else { Some(0) }
+                            }
+
+                            // Exit this dialog
+                            dialogs.close_delete_dialog();
+                        }
+
+                        // Cancel deletion
+                        if ui.button("Cancel").clicked() {
+                            // Exit this dialog
+                            dialogs.close_delete_dialog();
+                        }
+                    });
+                });
+        } else {
+            // Exit this dialog (Delete file was not specified)
+            dialogs.close_delete_dialog();
+        }
+    } else {
+        // Render load dialog if it is open
+        if dialogs.load_dialog_is_open() {
+            egui::Window::new("Load Genome")
+                .collapsible(false)
+                .resizable(false)
+                .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
+                .show(ctx, |ui| {
+                    if let Some(files) = get_genome_banks_in_folder()
+                        && !files.is_empty()
+                    {
+                        let selected_file = dialogs.load_selected_file.unwrap_or(0);
+                        dialogs.load_selected_file = Some(selected_file); // Update the selected file to show the selected value
+
+                        // List out all the selectable genomes in a list
+                        if files
+                            .iter()
+                            .enumerate()
+                            .map(|(i, file)| {
+                                let mut changed = false;
+
+                                ui.horizontal(|ui| {
+                                    // Show a selectable value
+                                    changed = ui.selectable_value(&mut dialogs.load_selected_file, Some(i), file).changed();
+
+                                    // Delete this genome
+                                    if ui.button("Delete").clicked() {
+                                        // Open a delete dialog for this file
+                                        dialogs.open_delete_dialog(files[i].clone());
+                                    }
+                                });
+
+                                changed
+                            })
+                            .fold(false, |acc, changed| acc | changed)
+                        {
+                            // Selected genome bank was changed
+                        }
+
+                        ui.add_space(SEPARATOR_SPACING);
+                        ui.separator();
+                        ui.add_space(SEPARATOR_SPACING);
+
+                        ui.horizontal(|ui| {
+                            // Load genome
+                            if ui.button("Load Genome").clicked() {
+                                if let Some(genome_bank) = read_genome_bank_file(&files[selected_file]) {
+                                    // Set the genome bank in GenomeCollection
+                                    *selected_genome_bank = genome_bank;
+                                }
+
+                                // Exit the dialog
+                                dialogs.close_all_dialogs();
+                            }
+
+                            // Cancel loading genome
+                            if ui.button("Cancel").clicked() {
+                                // Exit the dialog
+                                dialogs.close_all_dialogs();
+                            }
+                        });
+                    } else {
+                        ui.label("No genomes found...");
+
+                        // Close the load dialog
+                        if ui.button("Close Dialog").clicked() {
+                            dialogs.close_all_dialogs();
+                        }
+                    }
+                });
+        }
     }
 }

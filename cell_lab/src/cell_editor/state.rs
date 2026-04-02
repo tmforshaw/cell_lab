@@ -20,6 +20,7 @@ pub struct CellEditorState {
     pub history: SplitHistory,
     pub cell_size_per_mass: f32,
     pub cell_energy_gain_rate: f32,
+    pub dialogs: CellEditorUiDialogState,
 }
 
 impl Default for CellEditorState {
@@ -32,6 +33,7 @@ impl Default for CellEditorState {
             history: SplitHistory::default(),
             cell_size_per_mass: CELL_EDITOR_CELL_SIZE_PER_MASS,
             cell_energy_gain_rate: CELL_EDITOR_CELL_ENERGY_GAIN_RATE,
+            dialogs: CellEditorUiDialogState::default(),
         }
     }
 }
@@ -66,9 +68,6 @@ pub fn init_cell_editor_mode(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<CellMaterial>>,
 ) {
-    // Insert the CellEditorDialogState resource
-    commands.insert_resource(CellEditorUiDialogState::default());
-
     // TODO Maybe don't need this (Make an age change event instead)
     // Reset the simulation age
     state.editor_age = CellEditorAge::default();
@@ -93,9 +92,14 @@ pub fn init_cell_editor_mode(
     ));
 }
 
-pub fn exit_cell_editor_mode(mut commands: Commands, dishes: Query<Entity, With<DishMarker>>, cells: Query<Entity, With<Cell>>) {
-    // Remove the CellEditorDialogState resource
-    commands.remove_resource::<CellEditorUiDialogState>();
+pub fn exit_cell_editor_mode(
+    mut commands: Commands,
+    dishes: Query<Entity, With<DishMarker>>,
+    cells: Query<Entity, With<Cell>>,
+    mut state: ResMut<CellEditorState>,
+) {
+    // Close all dialogs
+    state.dialogs.close_all_dialogs();
 
     for entity in dishes {
         commands.entity(entity).despawn();

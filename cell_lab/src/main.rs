@@ -53,6 +53,8 @@ use crate::{
 // TODO Possible bug in simulation mode where cells that split don't get an energy check until the decay function is ran (May stay alive for a frame too long)
 // TODO Cell editor jitter when reversing split time (Possibly need to put a marker on cells that are in the process of splitting)
 // TODO Quadtree size would be wrong if simulation or cell editor dish changed size
+// TODO Add semi-sanitise filename where spaces are shown as spaces, but replaced with _ later on
+// TODO Message popup when trying to save empty filename
 
 pub mod cell_editor;
 pub mod cells;
