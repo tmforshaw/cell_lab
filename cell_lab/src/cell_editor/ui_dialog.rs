@@ -15,10 +15,12 @@ use crate::{
 pub struct CellEditorUiDialogState {
     save_dialog_open: bool,
     pub save_filename: String,
+    pub save_selected_genome: Option<usize>,
     overwrite_dialog_open: bool,
     save_filename_empty_dialog_open: bool,
     load_dialog_open: bool,
     pub load_selected_file: Option<usize>,
+    load_default_genome_dialog_open: bool,
     delete_dialog_open: bool,
     delete_file: Option<String>,
     default_genome_mode_dialog_open: bool,
@@ -43,6 +45,11 @@ impl CellEditorUiDialogState {
     #[must_use]
     pub const fn load_dialog_is_open(&self) -> bool {
         self.load_dialog_open
+    }
+
+    #[must_use]
+    pub const fn load_default_genome_dialog_is_open(&self) -> bool {
+        self.load_default_genome_dialog_open
     }
 
     #[must_use]
@@ -73,10 +80,11 @@ impl CellEditorUiDialogState {
     }
 
     pub fn open_save_filename_empty_dialog(&mut self) {
-        // Open save filename empty dialog, everything except save_filename gets cleared
+        // Open save filename empty dialog, everything except save_filename and selected genome gets cleared
         *self = Self {
             save_filename_empty_dialog_open: true,
             save_filename: self.save_filename.clone(),
+            save_selected_genome: self.save_selected_genome,
             ..default()
         };
     }
@@ -85,6 +93,16 @@ impl CellEditorUiDialogState {
         // Open load dialog, everything else gets cleared
         *self = Self {
             load_dialog_open: true,
+            ..default()
+        };
+    }
+
+    pub fn open_load_default_genome_dialog(&mut self) {
+        // Open load default genome dialog, closing load dialog, and keeping load selected file the same
+        *self = Self {
+            load_default_genome_dialog_open: true,
+            load_dialog_open: false,
+            load_selected_file: self.load_selected_file,
             ..default()
         };
     }
@@ -113,11 +131,22 @@ impl CellEditorUiDialogState {
     }
 
     pub fn close_save_filename_empty_dialog(&mut self) {
-        // Close save filename empty dialog, open the save dialog, keeping the selected filename the same
+        // Close save filename empty dialog, open the save dialog, keeping the selected filename and selected genome the same
         *self = Self {
             save_filename_empty_dialog_open: false,
             save_dialog_open: true,
             save_filename: self.save_filename.clone(),
+            save_selected_genome: self.save_selected_genome,
+            ..default()
+        };
+    }
+
+    pub fn close_load_default_genome_dialog(&mut self) {
+        // Close load default genome dialog, open the load dialog, keeping the selected file the same
+        *self = Self {
+            delete_dialog_open: false,
+            load_dialog_open: true,
+            load_selected_file: self.load_selected_file,
             ..default()
         };
     }
@@ -186,6 +215,20 @@ pub fn save_or_overwrite_dialog(ctx: &Context, dialogs: &mut CellEditorUiDialogS
                         if ui.text_edit_singleline(&mut dialogs.save_filename).changed() {
                             // Sanitise the name so it can be a filename
                             dialogs.save_filename = sanitise_filename(&dialogs.save_filename);
+
+                            // Check genomes in the genome folder to see if any match the file name
+                            if let Some(genomes) = get_genomes_in_folder()
+                                && let Some((i, _)) = genomes
+                                    .iter()
+                                    .enumerate()
+                                    .find(|&(_, genome)| genome == &dialogs.save_filename)
+                            {
+                                // Set this as the selected genome
+                                dialogs.save_selected_genome = Some(i);
+                            } else {
+                                // Clear the selected genome
+                                dialogs.save_selected_genome = None;
+                            }
                         }
 
                         ui.horizontal(|ui| {
@@ -212,8 +255,28 @@ pub fn save_or_overwrite_dialog(ctx: &Context, dialogs: &mut CellEditorUiDialogS
                                 // Exit the dialog
                                 dialogs.close_all_dialogs();
                             }
-                        })
+                        });
                     });
+
+                    // If there are genomes already saved
+                    if let Some(genomes) = get_genomes_in_folder() {
+                        // Iterate genomes and create a selectable value for each
+                        if genomes
+                            .iter()
+                            .enumerate()
+                            .map(|(i, genome)| {
+                                ui.selectable_value(&mut dialogs.save_selected_genome, Some(i), genome)
+                                    .changed()
+                            })
+                            .fold(false, |acc, changed| acc | changed)
+                        {
+                            // Genome was selected
+                            if let Some(genome_id) = dialogs.save_selected_genome {
+                                // This shouldn't ever not be true
+                                dialogs.save_filename = genomes[genome_id].clone();
+                            }
+                        }
+                    }
                 });
         }
     }
@@ -259,6 +322,32 @@ pub fn load_or_delete_dialog(
             // Exit this dialog (Delete file was not specified)
             dialogs.close_delete_dialog();
         }
+    // Load Default Genome dialog is open
+    } else if dialogs.load_default_genome_dialog_is_open() {
+        egui::Window::new("Overwrite Genome With Default Genome".to_string())
+            .collapsible(false)
+            .resizable(false)
+            .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
+            .show(ctx, |ui| {
+                ui.horizontal(|ui| {
+                    // Confirm overwrite
+                    if ui.button("Confirm").clicked() {
+                        *selected_genome = Genome::default();
+
+                        // Clear the simulation cache
+                        simulation_cache_message_writer.write(CellEditorSimulationClearMessage);
+
+                        // Exit all dialogs
+                        dialogs.close_all_dialogs();
+                    }
+
+                    // Cancel deletion
+                    if ui.button("Cancel").clicked() {
+                        // Exit this dialog
+                        dialogs.close_load_default_genome_dialog();
+                    }
+                });
+            });
     } else {
         // Render load dialog if it is open
         if dialogs.load_dialog_is_open() {
@@ -296,6 +385,17 @@ pub fn load_or_delete_dialog(
                             .fold(false, |acc, changed| acc | changed)
                         {
                             // Selected genome was changed
+                        }
+
+                        ui.add_space(SEPARATOR_SPACING);
+                        ui.separator();
+                        ui.add_space(SEPARATOR_SPACING);
+
+                        if ui.button("Load Default Genome").clicked() {
+                            // Load default genome was clicked
+
+                            // Confirm loading of default genome
+                            dialogs.open_load_default_genome_dialog();
                         }
 
                         ui.add_space(SEPARATOR_SPACING);
