@@ -62,7 +62,7 @@ pub fn draw_split_angle_arrow_as_child(
                 ShapeBuilder::with(&line)
                     .stroke((SPLIT_ARROW_COLOUR, SPLIT_ARROW_WIDTH))
                     .build(),
-                Transform::from_xyz(0., 0., 2.),
+                Transform::from_xyz(0., 0., 4.),
                 SplitAngleArrow,
             ));
         });

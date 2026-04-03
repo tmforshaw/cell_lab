@@ -155,7 +155,7 @@ fn main() {
                 add_selection_borders
                     .after(spawn_cells_from_simulation)
                     .after(remove_selection_borders),
-                draw_cell_info,
+                draw_cell_info.after(spawn_cells_from_simulation).after(add_selection_borders),
                 build_quadtree::<CellQuadTree, Cell>,
                 visualise_quadtree::<Entity, CellQuadTree, ShowCellQuadTree, CellQuadTreeDebug>,
             )
