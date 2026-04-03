@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use bevy::prelude::*;
 
 use crate::{
@@ -116,16 +118,29 @@ pub fn cell_editor_split_angle_message_reader(
 pub fn remove_selection_borders(
     mut commands: Commands,
     state: Res<CellEditorState>,
-    selected: Query<(Entity, &Cell), (With<SelectedCell>, Without<PendingDespawn>)>,
     selection: Query<(Entity, &ChildOf), (With<SelectionBorder>, Without<PendingDespawn>)>,
+    selected: Query<(Entity, &Cell), (With<SelectedCell>, Without<PendingDespawn>)>,
+    mut removed: RemovedComponents<SelectedCell>,
+    selection_border_cell: Query<&Cell, (Without<SelectedCell>, Without<PendingDespawn>)>,
 ) {
+    // Create HashMap of both the selected entities, and the entities whose SelectedCell Component was removed this frame
+    let selected_or_removed = selected
+        .iter()
+        .chain(
+            removed
+                .read()
+                .filter_map(|entity| selection_border_cell.get(entity).ok().map(|cell| (entity, cell))),
+        )
+        .collect::<HashMap<_, _>>();
+
+    // Combine selection borders with
     for (entity, parent) in selection {
         // If the parent's genome id is not the selected genome
-        if let Ok((parent, parent_cell)) = selected.get(parent.parent())
+        if let Some(&parent_cell) = selected_or_removed.get(&parent.parent())
             && parent_cell.genome_id != state.selected_genome
         {
             // Remove SelectedCell Marker From Parent
-            commands.entity(parent).remove::<SelectedCell>();
+            commands.entity(parent.parent()).remove::<SelectedCell>();
 
             // Despawn Selection Entity
             commands.entity(entity).insert(PendingDespawn);
@@ -138,28 +153,37 @@ pub fn add_selection_borders(
     mut commands: Commands,
     state: Res<CellEditorState>,
     mut materials: ResMut<Assets<SelectionCellMaterial>>,
+    added: Query<(Entity, &Cell, &Mesh2d), (Added<SelectedCell>, Without<PendingDespawn>)>,
     unselected: Query<(Entity, &Cell, &Mesh2d), (Without<SelectedCell>, Without<PendingDespawn>)>,
 ) {
-    // Add selection to unselected if necessary
-    for (entity, cell, mesh) in unselected {
+    // Add markers to unselected cells that need to be selected
+    for (entity, cell, _mesh) in unselected {
         // This cell should be selected
         if cell.genome_id == state.selected_genome {
-            let border_material = materials.add(SelectionCellMaterial {
-                colour: SELECTION_COLOUR.to_linear().to_vec4(),
-            });
-
             // Add SelectedCell Marker
             commands.entity(entity).insert(SelectedCell);
-
-            // Add Selection Mesh
-            commands.entity(entity).with_children(|parent| {
-                parent.spawn((
-                    mesh.clone(),
-                    MeshMaterial2d(border_material),
-                    Transform::from_xyz(0., 0., -0.1).with_scale(Vec3::splat(SELECTION_SCALE)),
-                    SelectionBorder,
-                ));
-            });
         }
+    }
+
+    // Add selection to unselected (or recently selected) cells if necessary
+    for (entity, _cell, mesh) in unselected
+        .iter()
+        // Only add selection mesh to cells who are the selected genome
+        .filter(|(_, cell, _)| cell.genome_id == state.selected_genome)
+        .chain(added)
+    {
+        let border_material = materials.add(SelectionCellMaterial {
+            colour: SELECTION_COLOUR.to_linear().to_vec4(),
+        });
+
+        // Add Selection Mesh
+        commands.entity(entity).with_children(|parent| {
+            parent.spawn((
+                mesh.clone(),
+                MeshMaterial2d(border_material),
+                Transform::from_xyz(0., 0., -0.1).with_scale(Vec3::splat(SELECTION_SCALE)),
+                SelectionBorder,
+            ));
+        });
     }
 }

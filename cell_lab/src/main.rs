@@ -26,8 +26,8 @@ use crate::{
         },
         logical_cell::clear_cells,
         simulation::{
-            CellEditorSimulationClearMessage, clear_simulation_cache_message_reader, simulate_to_editor_age,
-            spawn_cells_from_simulation,
+            CellEditorSimulationClearMessage, CellEditorSimulationStatus, clear_simulation_cache_message_reader,
+            simulate_to_editor_age, spawn_cells_from_simulation,
         },
         state::{CellEditorState, exit_cell_editor_mode, init_cell_editor_mode},
         ui::{CellEditorUiStyleApplied, cell_editor_ui_update},
@@ -62,8 +62,8 @@ pub const WINDOW_SIZE: Vec2 = Vec2::splat(1200.);
 // TODO Message popup when trying to save empty filename
 // TODO Add Load default genome bank button within the load dialog
 // TODO Switch UI from saying genome when it means genome bank
+// TODO Switch Genome -> GenomeMode, GenomeBank -> Genome, GenomeCollection -> GenomeBank
 // TODO Cell editor doesn't have cells dying from energy being too low
-// TODO Selected cell isn't marked in the editor
 // TODO Add names when saving file, so you can quickly name something the same as an existing genome
 
 pub mod cell_editor;
@@ -88,6 +88,7 @@ fn main() {
         .add_plugins(Material2dPlugin::<SelectionCellMaterial>::default())
         .add_plugins(Material2dPlugin::<ChemicalMaterial>::default())
         .init_state::<GameMode>()
+        .init_state::<CellEditorSimulationStatus>()
         .init_resource::<GenomeCollection>()
         .init_resource::<SimulationState>()
         .init_resource::<ChemicalTimer>()
@@ -147,14 +148,16 @@ fn main() {
                 cell_editor_selected_genome_message_reader,
                 cell_editor_colour_message_reader,
                 cell_editor_split_angle_message_reader,
-                clear_cells,
                 clear_simulation_cache_message_reader,
-                simulate_to_editor_age.after(clear_simulation_cache_message_reader),
-                spawn_cells_from_simulation.after(clear_cells).after(simulate_to_editor_age),
+                (
+                    clear_cells,
+                    simulate_to_editor_age.after(clear_simulation_cache_message_reader),
+                    spawn_cells_from_simulation.after(clear_cells).after(simulate_to_editor_age),
+                )
+                    .run_if(in_state(CellEditorSimulationStatus::NeedsRecompute)),
+                // Remove borders after spawning cells (If SimulationStatus needs recomputing)
                 remove_selection_borders.after(spawn_cells_from_simulation),
-                add_selection_borders
-                    .after(spawn_cells_from_simulation)
-                    .after(remove_selection_borders),
+                add_selection_borders.after(remove_selection_borders),
                 draw_cell_info.after(spawn_cells_from_simulation).after(add_selection_borders),
                 build_quadtree::<CellQuadTree, Cell>,
                 visualise_quadtree::<Entity, CellQuadTree, ShowCellQuadTree, CellQuadTreeDebug>,

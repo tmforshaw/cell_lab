@@ -7,7 +7,7 @@ use bevy_egui::{
 use crate::{
     cell_editor::{
         events::{CellEditorAgeMessage, CellEditorColourMessage, CellEditorSelectedGenomeMessage, CellEditorSplitAngleMessage},
-        simulation::CellEditorSimulationClearMessage,
+        simulation::{CellEditorSimulationClearMessage, CellEditorSimulationStatus},
         state::CellEditorState,
         ui_dialog::{default_genome_dialog, load_or_delete_dialog, save_or_overwrite_dialog},
     },
@@ -31,6 +31,7 @@ pub fn cell_editor_ui_update(
     mut egui_ctx: EguiContexts,
     mut genome_collection: ResMut<GenomeCollection>,
     mut state: ResMut<CellEditorState>,
+    mut sim_status: ResMut<NextState<CellEditorSimulationStatus>>,
     mut cell_editor_style_applied: ResMut<CellEditorUiStyleApplied>,
     mut age_message_writer: MessageWriter<CellEditorAgeMessage>,
     mut selected_genome_message_writer: MessageWriter<CellEditorSelectedGenomeMessage>,
@@ -329,6 +330,9 @@ pub fn cell_editor_ui_update(
                 {
                     // Age was changed
                     age_message_writer.write(CellEditorAgeMessage);
+
+                    // Mark the simulation as needing recomputing
+                    sim_status.set(CellEditorSimulationStatus::NeedsRecompute);
                 }
 
                 // Set the age even if it didnt change to stop editor_age from permanently showing as decreasing/increasing

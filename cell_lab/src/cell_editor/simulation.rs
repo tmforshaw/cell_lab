@@ -10,12 +10,20 @@ use crate::{
     genomes::{CellSplitType, GenomeCollection, daughters::DaughterData},
 };
 
+#[derive(States, Debug, Default, Clone, Copy, PartialEq, PartialOrd, Ord, Eq, Hash)]
+pub enum CellEditorSimulationStatus {
+    #[default]
+    NeedsRecompute,
+    Clean,
+}
+
 #[derive(Message, Debug, Clone, Copy)]
 pub struct CellEditorSimulationClearMessage;
 
 #[allow(clippy::needless_pass_by_value)]
 pub fn clear_simulation_cache_message_reader(
     events: MessageReader<CellEditorSimulationClearMessage>,
+    mut sim_status: ResMut<NextState<CellEditorSimulationStatus>>,
     mut sim: ResMut<CellEditorSimulationState>,
     mut cache: ResMut<CellHistoryCache>,
 ) {
@@ -23,6 +31,9 @@ pub fn clear_simulation_cache_message_reader(
     if !events.is_empty() {
         *sim = CellEditorSimulationState::default();
         cache.clear();
+
+        // Mark the simulation as needing recomputing
+        sim_status.set(CellEditorSimulationStatus::NeedsRecompute);
     }
 }
 
@@ -160,6 +171,7 @@ pub fn step_simulation(
 pub fn spawn_cells_from_simulation(
     mut commands: Commands,
     sim: Res<CellEditorSimulationState>,
+    mut sim_status: ResMut<NextState<CellEditorSimulationStatus>>,
     genome_collection: Res<GenomeCollection>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<CellMaterial>>,
@@ -174,4 +186,7 @@ pub fn spawn_cells_from_simulation(
             MeshMaterial2d(materials.add(CellMaterial::new(lc.cell.get_genome(&genome_collection).colour))),
         ));
     }
+
+    // Mark the simulation as clean
+    sim_status.set(CellEditorSimulationStatus::Clean);
 }
