@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     cells::CellMaterial,
-    genomes::{CellSplitType, DaughterData, GenomeCollection, GenomeId, GenomeMode, GenomeModeId},
+    genomes::{CellSplitType, DaughterData, GenomeBank, GenomeId, GenomeMode, GenomeModeId},
     spatial_partitioning::quadtree::QuadTreeData,
 };
 
@@ -67,7 +67,7 @@ impl Cell {
         size_per_mass: f32,
         velocity: Vec2,
         position: Vec2,
-        genome_collection: &GenomeCollection,
+        genome_bank: &GenomeBank,
         meshes: &mut Assets<Mesh>,
         materials: &mut Assets<CellMaterial>,
     ) -> CellBundle {
@@ -83,7 +83,7 @@ impl Cell {
             Velocity(velocity),
             Transform::from_translation(position.extend(1.)).with_scale(cell.get_size().extend(1.)),
             Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
-            MeshMaterial2d(materials.add(CellMaterial::new(cell.get_genome_mode(genome_collection).colour))),
+            MeshMaterial2d(materials.add(CellMaterial::new(cell.get_genome_mode(genome_bank).colour))),
         )
     }
 
@@ -97,7 +97,7 @@ impl Cell {
         velocity: Vec2,
         position: Vec2,
         rotation: f32,
-        genome_collection: &GenomeCollection,
+        genome_bank: &GenomeBank,
         meshes: &mut Assets<Mesh>,
         materials: &mut Assets<CellMaterial>,
     ) -> CellBundle {
@@ -115,7 +115,7 @@ impl Cell {
                 .with_scale(cell.get_size().extend(1.))
                 .with_rotation(Quat::from_rotation_z(rotation)),
             Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
-            MeshMaterial2d(materials.add(CellMaterial::new(cell.get_genome_mode(genome_collection).colour))),
+            MeshMaterial2d(materials.add(CellMaterial::new(cell.get_genome_mode(genome_bank).colour))),
         )
     }
 
@@ -129,7 +129,7 @@ impl Cell {
         size_per_mass: f32,
         velocity: Vec2,
         position: Vec2,
-        genome_collection: &GenomeCollection,
+        genome_bank: &GenomeBank,
         meshes: &mut Assets<Mesh>,
         materials: &mut Assets<CellMaterial>,
     ) -> CellBundle {
@@ -145,7 +145,7 @@ impl Cell {
             Velocity(velocity),
             Transform::from_translation(position.extend(1.)).with_scale(cell.get_size().extend(1.)),
             Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
-            MeshMaterial2d(materials.add(CellMaterial::new(cell.get_genome_mode(genome_collection).colour))),
+            MeshMaterial2d(materials.add(CellMaterial::new(cell.get_genome_mode(genome_bank).colour))),
         )
     }
 
@@ -160,7 +160,7 @@ impl Cell {
         velocity: Vec2,
         position: Vec2,
         rotation: f32,
-        genome_collection: &GenomeCollection,
+        genome_bank: &GenomeBank,
         meshes: &mut Assets<Mesh>,
         materials: &mut Assets<CellMaterial>,
     ) -> CellBundle {
@@ -178,13 +178,13 @@ impl Cell {
                 .with_scale(cell.get_size().extend(1.))
                 .with_rotation(Quat::from_rotation_z(rotation)),
             Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
-            MeshMaterial2d(materials.add(CellMaterial::new(cell.get_genome_mode(genome_collection).colour))),
+            MeshMaterial2d(materials.add(CellMaterial::new(cell.get_genome_mode(genome_bank).colour))),
         )
     }
 
     #[must_use]
-    pub fn get_genome_mode<'a>(&self, genome_collection: &'a GenomeCollection) -> &'a GenomeMode {
-        &genome_collection[self.genome_id][self.genome_mode_id]
+    pub fn get_genome_mode<'a>(&self, genome_bank: &'a GenomeBank) -> &'a GenomeMode {
+        &genome_bank[self.genome_id][self.genome_mode_id]
     }
 
     #[must_use]
@@ -202,13 +202,13 @@ impl Cell {
 
     pub fn split_into_daughter_bundles(
         &self,
-        genome_collection: &GenomeCollection,
+        genome_bank: &GenomeBank,
         transform: &Transform,
         velocity: &Velocity,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<CellMaterial>>,
     ) -> Option<(CellBundle, CellBundle)> {
-        let genome_mode = self.get_genome_mode(genome_collection);
+        let genome_mode = self.get_genome_mode(genome_bank);
 
         match genome_mode.split_type {
             CellSplitType::Age | CellSplitType::Energy => {
@@ -217,10 +217,10 @@ impl Cell {
                     || (genome_mode.split_type == CellSplitType::Energy && self.energy >= genome_mode.split_energy)
                 {
                     // Get the data for both daughters
-                    let (d1, d2) = DaughterData::get_from_parent(self, velocity, transform, genome_collection);
+                    let (d1, d2) = DaughterData::get_from_parent(self, velocity, transform, genome_bank);
 
-                    let d1_bundle = d1.into_cell_bundle(genome_collection, meshes, materials);
-                    let d2_bundle = d2.into_cell_bundle(genome_collection, meshes, materials);
+                    let d1_bundle = d1.into_cell_bundle(genome_bank, meshes, materials);
+                    let d2_bundle = d2.into_cell_bundle(genome_bank, meshes, materials);
 
                     // Return the bundles for the daughters
                     return Some((d1_bundle, d2_bundle));

@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use crate::{
     cells::{CELL_SPLIT_PADDING, Cell, CellMaterial, Velocity, cell::CellBundle},
-    genomes::GenomeCollection,
+    genomes::GenomeBank,
 };
 
 pub struct DaughterData {
@@ -15,13 +15,8 @@ pub struct DaughterData {
 
 impl DaughterData {
     #[must_use]
-    pub fn get_from_parent(
-        parent: &Cell,
-        velocity: &Velocity,
-        transform: &Transform,
-        genome_collection: &GenomeCollection,
-    ) -> (Self, Self) {
-        let parent_genome_mode = &genome_collection[parent.genome_id][parent.genome_mode_id];
+    pub fn get_from_parent(parent: &Cell, velocity: &Velocity, transform: &Transform, genome_bank: &GenomeBank) -> (Self, Self) {
+        let parent_genome_mode = &genome_bank[parent.genome_id][parent.genome_mode_id];
 
         // Split energy depending on split fraction
         let d1_energy = parent.energy * parent_genome_mode.split_fraction;
@@ -113,7 +108,7 @@ impl DaughterData {
 
     pub fn into_cell_bundle(
         &self,
-        genome_collection: &GenomeCollection,
+        genome_bank: &GenomeBank,
         meshes: &mut Assets<Mesh>,
         materials: &mut Assets<CellMaterial>,
     ) -> CellBundle {
@@ -122,7 +117,7 @@ impl DaughterData {
             Velocity(self.velocity),
             self.transform,
             Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
-            MeshMaterial2d(materials.add(CellMaterial::new(self.cell.get_genome_mode(genome_collection).colour))),
+            MeshMaterial2d(materials.add(CellMaterial::new(self.cell.get_genome_mode(genome_bank).colour))),
         )
     }
 }

@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::{
     WINDOW_SIZE,
     cells::{CELL_MAX_VELOCITY, CELL_STARTING_ENERGY, Cell, CellMaterial, STARTING_CELL_NUM},
-    genomes::{GenomeId, GenomeCollection, GenomeModeId},
+    genomes::{GenomeBank, GenomeId, GenomeModeId},
     helpers::random_vec2,
     simulation::{
         chemical::Chemical,
@@ -39,7 +39,7 @@ impl SimulationState {
 #[allow(clippy::needless_pass_by_value)]
 pub fn init_simulation_mode(
     mut commands: Commands,
-    genome_collection: Res<GenomeCollection>,
+    genome_bank: Res<GenomeBank>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<CellMaterial>>,
     state: Res<SimulationState>,
@@ -59,7 +59,7 @@ pub fn init_simulation_mode(
             state.cell_size_per_mass,
             random_vec2(Vec2::splat(CELL_MAX_VELOCITY)),
             random_vec2(state.dish.size / 2.),
-            &genome_collection,
+            &genome_bank,
             &mut meshes,
             &mut materials,
         ));

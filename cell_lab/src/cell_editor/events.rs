@@ -9,7 +9,7 @@ use crate::{
     },
     cells::{Cell, CellMaterial, SelectionCellMaterial},
     despawning::PendingDespawn,
-    genomes::GenomeCollection,
+    genomes::GenomeBank,
 };
 
 pub const SELECTION_COLOUR: Color = Color::linear_rgb(1.0, 1.0, 0.0);
@@ -72,7 +72,7 @@ pub fn cell_editor_selected_genome_mode_message_reader(
 #[allow(clippy::needless_pass_by_value)]
 pub fn cell_editor_colour_message_reader(
     events: MessageReader<CellEditorColourMessage>,
-    genome_collection: Res<GenomeCollection>,
+    genome_bank: Res<GenomeBank>,
     mut selected_materials: Query<&mut MeshMaterial2d<CellMaterial>, (With<SelectedCell>, Without<PendingDespawn>)>,
     state: Res<CellEditorState>,
     mut materials: ResMut<Assets<CellMaterial>>,
@@ -80,11 +80,7 @@ pub fn cell_editor_colour_message_reader(
     if !events.is_empty() {
         for material in &mut selected_materials {
             if let Some(mat) = materials.get_mut(&material.0) {
-                mat.colour = state
-                    .get_selected_genome_mode(&genome_collection)
-                    .colour
-                    .to_linear()
-                    .to_vec4();
+                mat.colour = state.get_selected_genome_mode(&genome_bank).colour.to_linear().to_vec4();
             }
         }
     }
@@ -94,7 +90,7 @@ pub fn cell_editor_colour_message_reader(
 pub fn cell_editor_split_angle_message_reader(
     mut commands: Commands,
     events: MessageReader<CellEditorSplitAngleMessage>,
-    genome_collection: Res<GenomeCollection>,
+    genome_bank: Res<GenomeBank>,
     state: Res<CellEditorState>,
     arrows: Query<(Entity, &ChildOf), (With<SplitAngleArrow>, Without<PendingDespawn>)>,
     selected_entities: Query<Entity, (With<SelectedCell>, Without<PendingDespawn>)>,
@@ -110,7 +106,7 @@ pub fn cell_editor_split_angle_message_reader(
 
         // Spawn the arrows back in with their new angles
         for (entity, cell) in selected_cells {
-            draw_split_angle_arrow_as_child(&mut commands, &genome_collection, &state, entity, cell);
+            draw_split_angle_arrow_as_child(&mut commands, &genome_bank, &state, entity, cell);
         }
     }
 }

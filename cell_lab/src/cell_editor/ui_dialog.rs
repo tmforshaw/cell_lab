@@ -262,7 +262,7 @@ pub fn load_or_delete_dialog(
                             // Load genome
                             if ui.button("Load Genome").clicked() {
                                 if let Some(genome) = read_genome_file(&files[selected_file]) {
-                                    // Set the genome in GenomeCollection
+                                    // Set the genome in GenomeBank
                                     *selected_genome = genome;
 
                                     // Clear the simulation cache

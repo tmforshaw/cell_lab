@@ -5,7 +5,7 @@ use crate::{
     cells::{CELL_ENERGY_DECAY, CELL_MAX_ENERGY, CELL_MAX_VELOCITY, CELL_MIN_ENERGY, Cell, CellMaterial, Velocity},
     despawning::PendingDespawn,
     game_mode::GameMode,
-    genomes::GenomeCollection,
+    genomes::GenomeBank,
     helpers::random_vec2,
     simulation::{
         chemical::{
@@ -122,14 +122,14 @@ pub fn cells_absorb_chemical(
 #[allow(clippy::needless_pass_by_value)]
 pub fn cells_do_meiosis(
     mut commands: Commands,
-    genome_collection: Res<GenomeCollection>,
+    genome_bank: Res<GenomeBank>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<CellMaterial>>,
     cells: Query<(Entity, &mut Cell, &Transform, &Velocity), Without<PendingDespawn>>,
 ) {
     for (entity, parent, transform, velocity) in cells {
         if let Some((d1_bundle, d2_bundle)) =
-            parent.split_into_daughter_bundles(&genome_collection, transform, velocity, &mut meshes, &mut materials)
+            parent.split_into_daughter_bundles(&genome_bank, transform, velocity, &mut meshes, &mut materials)
         {
             // Spawn the daughters
             commands.spawn(d1_bundle);

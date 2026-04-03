@@ -36,7 +36,7 @@ use crate::{
     collision::systems::collision_system,
     despawning::apply_pending_despawns,
     game_mode::GameMode,
-    genomes::genome::GenomeCollection,
+    genomes::genome::GenomeBank,
     input::{
         cell_editor_mode_keyboard_event_reader, mode_independent_keyboard_event_reader, simulation_mode_keyboard_event_reader,
     },
@@ -61,7 +61,6 @@ pub const WINDOW_SIZE: Vec2 = Vec2::splat(1200.);
 // TODO Add semi-sanitise filename where spaces are shown as spaces, but replaced with _ later on
 // TODO Message popup when trying to save empty filename
 // TODO Add Load default genome bank button within the load dialog
-// TODO Switch GenomeCollection -> GenomeBank
 // TODO Cell editor doesn't have cells dying from energy being too low
 // TODO Add names when saving file, so you can quickly name something the same as an existing genome
 
@@ -88,7 +87,7 @@ fn main() {
         .add_plugins(Material2dPlugin::<ChemicalMaterial>::default())
         .init_state::<GameMode>()
         .init_state::<CellEditorSimulationStatus>()
-        .init_resource::<GenomeCollection>()
+        .init_resource::<GenomeBank>()
         .init_resource::<SimulationState>()
         .init_resource::<ChemicalTimer>()
         .init_resource::<CellEditorUiStyleApplied>()

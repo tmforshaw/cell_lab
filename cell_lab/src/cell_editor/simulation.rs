@@ -7,7 +7,7 @@ use crate::{
         state::CellEditorState,
     },
     cells::{CELL_MAX_ENERGY, CellMaterial, Velocity, cell::CellBundle},
-    genomes::{CellSplitType, GenomeCollection, daughters::DaughterData},
+    genomes::{CellSplitType, GenomeBank, daughters::DaughterData},
 };
 
 #[derive(States, Debug, Default, Clone, Copy, PartialEq, PartialOrd, Ord, Eq, Hash)]
@@ -42,7 +42,7 @@ pub fn simulate_to_editor_age(
     mut sim: ResMut<CellEditorSimulationState>,
     state: Res<CellEditorState>,
     mut cache: ResMut<CellHistoryCache>,
-    genome_collection: Res<GenomeCollection>,
+    genome_mode: Res<GenomeBank>,
 ) {
     let target_time = state.editor_age.get_age();
     let dt = state.simulation_delta_time;
@@ -52,7 +52,7 @@ pub fn simulate_to_editor_age(
         sim.cells = snapshot.cells.clone();
         sim.current_time = snapshot.time;
     } else {
-        sim.cells = vec![create_root_logical_cell(&state, &genome_collection)];
+        sim.cells = vec![create_root_logical_cell(&state, &genome_mode)];
         sim.current_time = 0.0;
     }
 
@@ -65,7 +65,7 @@ pub fn simulate_to_editor_age(
             current_time,
             state.cell_energy_gain_rate,
             state.dish.size,
-            &genome_collection,
+            &genome_mode,
         );
 
         sim.current_time += dt;
@@ -85,7 +85,7 @@ pub fn step_simulation(
     current_time: f32,
     cell_energy_gain_rate: f32,
     editor_size: Vec2,
-    genome_collection: &GenomeCollection,
+    genome_bank: &GenomeBank,
 ) {
     // Update age, energy, and size
     for lc in cells.iter_mut() {
@@ -128,7 +128,7 @@ pub fn step_simulation(
     let mut new_cells = Vec::new();
     let mut i = 0;
     while i < cells.len() {
-        let genome_mode = cells[i].cell.get_genome_mode(genome_collection);
+        let genome_mode = cells[i].cell.get_genome_mode(genome_bank);
 
         if match genome_mode.split_type {
             CellSplitType::Energy => cells[i].cell.energy >= genome_mode.split_energy,
@@ -139,7 +139,7 @@ pub fn step_simulation(
             let parent = cells.swap_remove(i);
 
             // Get data for daughters
-            let (d1, d2) = DaughterData::get_from_parent(&parent.cell, &parent.velocity, &parent.transform, genome_collection);
+            let (d1, d2) = DaughterData::get_from_parent(&parent.cell, &parent.velocity, &parent.transform, genome_bank);
 
             let time_of_birth = current_time;
 
@@ -172,7 +172,7 @@ pub fn spawn_cells_from_simulation(
     mut commands: Commands,
     sim: Res<CellEditorSimulationState>,
     mut sim_status: ResMut<NextState<CellEditorSimulationStatus>>,
-    genome_collection: Res<GenomeCollection>,
+    genome_bank: Res<GenomeBank>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<CellMaterial>>,
 ) {
@@ -183,7 +183,7 @@ pub fn spawn_cells_from_simulation(
             lc.velocity.clone(),
             lc.transform,
             Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
-            MeshMaterial2d(materials.add(CellMaterial::new(lc.cell.get_genome_mode(&genome_collection).colour))),
+            MeshMaterial2d(materials.add(CellMaterial::new(lc.cell.get_genome_mode(&genome_bank).colour))),
         ));
     }
 

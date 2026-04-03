@@ -5,7 +5,7 @@ use crate::{
     cell_editor::{events::SelectedCell, state::CellEditorState},
     cells::Cell,
     despawning::PendingDespawn,
-    genomes::GenomeCollection,
+    genomes::GenomeBank,
 };
 
 const SPLIT_ARROW_WIDTH: f32 = 0.05;
@@ -19,14 +19,14 @@ pub struct SplitAngleArrow;
 #[allow(clippy::needless_pass_by_value, clippy::type_complexity)]
 pub fn draw_cell_info(
     mut commands: Commands,
-    genome_collection: Res<GenomeCollection>,
+    genome_bank: Res<GenomeBank>,
     state: Res<CellEditorState>,
     cells: Query<(Entity, &Cell), (Added<SelectedCell>, Without<PendingDespawn>)>,
 ) {
     for (entity, cell) in cells {
         // TODO Move split angle arrow to show split fraction
         // Draw the split angle
-        draw_split_angle_arrow_as_child(&mut commands, &genome_collection, &state, entity, cell);
+        draw_split_angle_arrow_as_child(&mut commands, &genome_bank, &state, entity, cell);
 
         // TODO Draw split direction
     }
@@ -34,14 +34,14 @@ pub fn draw_cell_info(
 
 pub fn draw_split_angle_arrow_as_child(
     commands: &mut Commands,
-    genome_collection: &GenomeCollection,
+    genome_bank: &GenomeBank,
     state: &Res<CellEditorState>,
     entity: Entity,
     cell: &Cell,
 ) {
     // Calculate the length and direction for the split angle
     let dir = Vec2::Y.rotate(Vec2::from_angle(
-        state.get_selected_genome(genome_collection)[cell.genome_mode_id].split_angle,
+        state.get_selected_genome(genome_bank)[cell.genome_mode_id].split_angle,
     ));
 
     let start = -dir / 2.;

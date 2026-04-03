@@ -5,7 +5,7 @@ use crate::{
     cells::{CELL_STARTING_ENERGY, Cell, Velocity},
     collision::systems::resolve_cell_collision,
     despawning::PendingDespawn,
-    genomes::GenomeCollection,
+    genomes::GenomeBank,
     spatial_partitioning::{
         cell_quadtree::{CELL_QUADTREE_MAX_CAPACITY_PER_NODE, CELL_QUADTREE_MAX_DEPTH},
         quadtree::QuadTree,
@@ -28,11 +28,11 @@ pub fn clear_cells(mut commands: Commands, cells: Query<Entity, (With<Cell>, Wit
 }
 
 #[must_use]
-pub fn create_root_logical_cell(state: &CellEditorState, genome_collection: &GenomeCollection) -> LogicalCell {
+pub fn create_root_logical_cell(state: &CellEditorState, genome_bank: &GenomeBank) -> LogicalCell {
     let cell = Cell {
         energy: CELL_STARTING_ENERGY,
         age: 0.0,
-        genome_mode_id: state.get_selected_genome(genome_collection).initial,
+        genome_mode_id: state.get_selected_genome(genome_bank).initial,
         genome_id: state.selected_genome,
         size_per_mass: CELL_EDITOR_CELL_SIZE_PER_MASS,
     };

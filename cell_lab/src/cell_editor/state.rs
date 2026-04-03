@@ -8,7 +8,7 @@ use crate::{
         ui_dialog::CellEditorUiDialogState,
     },
     cells::Cell,
-    genomes::{Genome, GenomeCollection, GenomeId, GenomeMode, GenomeModeId},
+    genomes::{Genome, GenomeBank, GenomeId, GenomeMode, GenomeModeId},
     simulation::dish::{Dish, DishMarker},
 };
 
@@ -46,23 +46,23 @@ impl Default for CellEditorState {
 
 impl CellEditorState {
     #[must_use]
-    pub fn get_selected_genome_mode<'a>(&self, genome_collection: &'a GenomeCollection) -> &'a GenomeMode {
-        &genome_collection[self.selected_genome][self.selected_genome_mode]
+    pub fn get_selected_genome_mode<'a>(&self, genome_bank: &'a GenomeBank) -> &'a GenomeMode {
+        &genome_bank[self.selected_genome][self.selected_genome_mode]
     }
 
     #[must_use]
-    pub fn get_selected_genome_mode_mut<'a>(&mut self, genome_collection: &'a mut GenomeCollection) -> &'a mut GenomeMode {
-        &mut genome_collection[self.selected_genome][self.selected_genome_mode]
+    pub fn get_selected_genome_mode_mut<'a>(&mut self, genome_bank: &'a mut GenomeBank) -> &'a mut GenomeMode {
+        &mut genome_bank[self.selected_genome][self.selected_genome_mode]
     }
 
     #[must_use]
-    pub fn get_selected_genome<'a>(&self, genome_collection: &'a GenomeCollection) -> &'a Genome {
-        &genome_collection[self.selected_genome]
+    pub fn get_selected_genome<'a>(&self, genome_bank: &'a GenomeBank) -> &'a Genome {
+        &genome_bank[self.selected_genome]
     }
 
     #[must_use]
-    pub fn get_selected_genome_mut<'a>(&mut self, genome_collection: &'a mut GenomeCollection) -> &'a mut Genome {
-        &mut genome_collection[self.selected_genome]
+    pub fn get_selected_genome_mut<'a>(&mut self, genome_bank: &'a mut GenomeBank) -> &'a mut Genome {
+        &mut genome_bank[self.selected_genome]
     }
 }
 

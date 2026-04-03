@@ -45,28 +45,28 @@ impl IndexMut<GenomeModeId> for Genome {
 generate_enum!(GenomeId, B, GENOME_MAX_NUM, 16);
 
 #[derive(Resource)]
-pub struct GenomeCollection {
-    genome_collection: [Genome; GENOME_MAX_NUM],
+pub struct GenomeBank {
+    genomes: [Genome; GENOME_MAX_NUM],
 }
 
-impl Default for GenomeCollection {
+impl Default for GenomeBank {
     fn default() -> Self {
         Self {
-            genome_collection: std::array::from_fn(|_| Genome::default()),
+            genomes: std::array::from_fn(|_| Genome::default()),
         }
     }
 }
 
-impl Index<GenomeId> for GenomeCollection {
+impl Index<GenomeId> for GenomeBank {
     type Output = Genome;
 
     fn index(&self, index: GenomeId) -> &Self::Output {
-        &self.genome_collection[Into::<usize>::into(index)]
+        &self.genomes[Into::<usize>::into(index)]
     }
 }
 
-impl IndexMut<GenomeId> for GenomeCollection {
+impl IndexMut<GenomeId> for GenomeBank {
     fn index_mut(&mut self, index: GenomeId) -> &mut Self::Output {
-        &mut self.genome_collection[Into::<usize>::into(index)]
+        &mut self.genomes[Into::<usize>::into(index)]
     }
 }
