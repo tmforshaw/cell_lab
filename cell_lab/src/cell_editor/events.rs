@@ -22,13 +22,13 @@ pub struct SelectedCell;
 pub struct SelectionBorder;
 
 #[derive(Message, Debug, Clone)]
-pub struct CellEditorInitialGenomeMessage;
+pub struct CellEditorInitialGenomeModeMessage;
 
 #[derive(Message, Debug, Clone)]
 pub struct CellEditorAgeMessage;
 
 #[derive(Message, Debug, Clone)]
-pub struct CellEditorSelectedGenomeMessage;
+pub struct CellEditorSelectedGenomeModeMessage;
 
 #[derive(Message, Debug, Clone)]
 pub struct CellEditorColourMessage;
@@ -37,10 +37,7 @@ pub struct CellEditorColourMessage;
 pub struct CellEditorSplitAngleMessage;
 
 #[allow(clippy::needless_pass_by_value)]
-pub fn cell_editor_initial_genome_message_reader(
-    events: MessageReader<CellEditorInitialGenomeMessage>,
-    // state: Res<CellEditorState>,
-) {
+pub fn cell_editor_initial_genome_mode_message_reader(events: MessageReader<CellEditorInitialGenomeModeMessage>) {
     if !events.is_empty() {
         // Do something
     }
@@ -52,8 +49,8 @@ pub const fn cell_editor_age_message_reader(mut _events: MessageReader<CellEdito
 }
 
 #[allow(clippy::needless_pass_by_value)]
-pub fn cell_editor_selected_genome_message_reader(
-    events: MessageReader<CellEditorSelectedGenomeMessage>,
+pub fn cell_editor_selected_genome_mode_message_reader(
+    events: MessageReader<CellEditorSelectedGenomeModeMessage>,
     mut commands: Commands,
     selected_entities: Query<Entity, (With<SelectedCell>, Without<PendingDespawn>)>,
     state: Res<CellEditorState>,
@@ -65,7 +62,7 @@ pub fn cell_editor_selected_genome_message_reader(
         }
 
         for (entity, cell) in cells_with_entity {
-            if cell.genome_id == state.selected_genome {
+            if cell.genome_mode_id == state.selected_genome_mode {
                 commands.entity(entity).insert(SelectedCell);
             }
         }
@@ -83,7 +80,11 @@ pub fn cell_editor_colour_message_reader(
     if !events.is_empty() {
         for material in &mut selected_materials {
             if let Some(mat) = materials.get_mut(&material.0) {
-                mat.colour = state.get_selected_genome(&genome_collection).colour.to_linear().to_vec4();
+                mat.colour = state
+                    .get_selected_genome_mode(&genome_collection)
+                    .colour
+                    .to_linear()
+                    .to_vec4();
             }
         }
     }
@@ -135,9 +136,9 @@ pub fn remove_selection_borders(
 
     // Combine selection borders with
     for (entity, parent) in selection {
-        // If the parent's genome id is not the selected genome
+        // If the parent's genome mode id is not the selected genome mode
         if let Some(&parent_cell) = selected_or_removed.get(&parent.parent())
-            && parent_cell.genome_id != state.selected_genome
+            && parent_cell.genome_mode_id != state.selected_genome_mode
         {
             // Remove SelectedCell Marker From Parent
             commands.entity(parent.parent()).remove::<SelectedCell>();
@@ -159,7 +160,7 @@ pub fn add_selection_borders(
     // Add markers to unselected cells that need to be selected
     for (entity, cell, _mesh) in unselected {
         // This cell should be selected
-        if cell.genome_id == state.selected_genome {
+        if cell.genome_mode_id == state.selected_genome_mode {
             // Add SelectedCell Marker
             commands.entity(entity).insert(SelectedCell);
         }
@@ -168,8 +169,8 @@ pub fn add_selection_borders(
     // Add selection to unselected (or recently selected) cells if necessary
     for (entity, _cell, mesh) in unselected
         .iter()
-        // Only add selection mesh to cells who are the selected genome
-        .filter(|(_, cell, _)| cell.genome_id == state.selected_genome)
+        // Only add selection mesh to cells who are the selected genome mode
+        .filter(|(_, cell, _)| cell.genome_mode_id == state.selected_genome_mode)
         .chain(added)
     {
         let border_material = materials.add(SelectionCellMaterial {

@@ -6,13 +6,15 @@ use bevy_egui::{
 
 use crate::{
     cell_editor::{
-        events::{CellEditorAgeMessage, CellEditorColourMessage, CellEditorSelectedGenomeMessage, CellEditorSplitAngleMessage},
+        events::{
+            CellEditorAgeMessage, CellEditorColourMessage, CellEditorSelectedGenomeModeMessage, CellEditorSplitAngleMessage,
+        },
         simulation::{CellEditorSimulationClearMessage, CellEditorSimulationStatus},
         state::CellEditorState,
-        ui_dialog::{default_genome_dialog, load_or_delete_dialog, save_or_overwrite_dialog},
+        ui_dialog::{default_genome_mode_dialog, load_or_delete_dialog, save_or_overwrite_dialog},
     },
     cells::{CELL_MAX_ENERGY, CELL_MAX_SPLIT_AGE},
-    genomes::{CellSplitType, CellType, GenomeCollection, GenomeId},
+    genomes::{CellSplitType, CellType, GenomeCollection, GenomeModeId},
     ui::{SEPARATOR_SPACING, SUBSECTION_SPACING},
 };
 
@@ -34,7 +36,7 @@ pub fn cell_editor_ui_update(
     mut sim_status: ResMut<NextState<CellEditorSimulationStatus>>,
     mut cell_editor_style_applied: ResMut<CellEditorUiStyleApplied>,
     mut age_message_writer: MessageWriter<CellEditorAgeMessage>,
-    mut selected_genome_message_writer: MessageWriter<CellEditorSelectedGenomeMessage>,
+    mut selected_genome_mode_message_writer: MessageWriter<CellEditorSelectedGenomeModeMessage>,
     mut colour_message_writer: MessageWriter<CellEditorColourMessage>,
     mut split_angle_message_writer: MessageWriter<CellEditorSplitAngleMessage>,
     mut simulation_cache_message_writer: MessageWriter<CellEditorSimulationClearMessage>,
@@ -55,16 +57,16 @@ pub fn cell_editor_ui_update(
         .min_width(CELL_EDITOR_RIGHT_PANEL_WIDTH)
         .max_width(CELL_EDITOR_RIGHT_PANEL_WIDTH)
         .show(ctx, |ui| {
-            // Genome selection
+            // Genome Mode selection
             ui.horizontal(|ui| {
-                ui.heading("Cell Editor"); // left-aligned
+                ui.heading("Cell Editor");
 
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     ui.label("Mode: ");
 
-                    if create_mode_combo_box(&mut state.selected_genome, ui, "selected_mode") {
-                        // Selected genome was changed
-                        selected_genome_message_writer.write(CellEditorSelectedGenomeMessage);
+                    if create_mode_combo_box(&mut state.selected_genome_mode, ui, "selected_mode") {
+                        // Selected genome mode was changed
+                        selected_genome_mode_message_writer.write(CellEditorSelectedGenomeModeMessage);
                     }
                 })
             });
@@ -82,9 +84,9 @@ pub fn cell_editor_ui_update(
                     state.dialogs.open_load_dialog();
                 }
 
-                // Default Genome button
+                // Default Genome Mode button
                 if ui.button("Replace Mode With Default").clicked() {
-                    state.dialogs.open_default_genome_dialog();
+                    state.dialogs.open_default_genome_mode_dialog();
                 }
             });
 
@@ -93,12 +95,12 @@ pub fn cell_editor_ui_update(
             ui.add_space(SEPARATOR_SPACING);
 
             ui.horizontal(|ui| {
-                let mut checked = state.selected_genome == state.get_selected_genome_bank(&genome_collection).initial;
-                if ui.checkbox(&mut checked, "Initial Genome").changed() {
-                    // Initial genome checkbox was clicked
-                    if state.get_selected_genome_bank(&genome_collection).initial != state.selected_genome {
-                        // Initial genome has actually changed
-                        state.get_selected_genome_bank_mut(&mut genome_collection).initial = state.selected_genome;
+                let mut checked = state.selected_genome_mode == state.get_selected_genome_bank(&genome_collection).initial;
+                if ui.checkbox(&mut checked, "Initial Genome Mode").changed() {
+                    // Initial genome mode checkbox was clicked
+                    if state.get_selected_genome_bank(&genome_collection).initial != state.selected_genome_mode {
+                        // Initial genome mode has actually changed
+                        state.get_selected_genome_bank_mut(&mut genome_collection).initial = state.selected_genome_mode;
 
                         // Do an event
 
@@ -112,18 +114,18 @@ pub fn cell_editor_ui_update(
                 // Cell type selection
                 ui.label("Cell Type:");
                 ComboBox::from_id_salt("cell_type")
-                    .selected_text(format!("{}", state.get_selected_genome(&genome_collection).cell_type))
+                    .selected_text(format!("{}", state.get_selected_genome_mode(&genome_collection).cell_type))
                     .show_ui(ui, |ui| {
                         if ui
                             .selectable_value(
-                                &mut state.get_selected_genome_mut(&mut genome_collection).cell_type,
+                                &mut state.get_selected_genome_mode_mut(&mut genome_collection).cell_type,
                                 CellType::Phagocyte,
                                 CellType::Phagocyte.to_string(),
                             )
                             .changed()
                             || ui
                                 .selectable_value(
-                                    &mut state.get_selected_genome_mut(&mut genome_collection).cell_type,
+                                    &mut state.get_selected_genome_mode_mut(&mut genome_collection).cell_type,
                                     CellType::Photocyte,
                                     CellType::Photocyte.to_string(),
                                 )
@@ -142,10 +144,10 @@ pub fn cell_editor_ui_update(
             ui.add_space(SEPARATOR_SPACING);
 
             // Daughter 1 parameters
-            let genome_collection_mut = state.get_selected_genome_mut(&mut genome_collection);
+            let genome_collection_mut = state.get_selected_genome_mode_mut(&mut genome_collection);
             if create_daughter_subsection(
                 ui,
-                &mut genome_collection_mut.daughter_genomes.0,
+                &mut genome_collection_mut.daughter_genome_modes.0,
                 &mut genome_collection_mut.daughter_angles.0,
                 0,
             ) {
@@ -156,10 +158,10 @@ pub fn cell_editor_ui_update(
             }
 
             // Daughter 2 parameters
-            let genome_collection_mut = state.get_selected_genome_mut(&mut genome_collection);
+            let genome_collection_mut = state.get_selected_genome_mode_mut(&mut genome_collection);
             if create_daughter_subsection(
                 ui,
-                &mut genome_collection_mut.daughter_genomes.1,
+                &mut genome_collection_mut.daughter_genome_modes.1,
                 &mut genome_collection_mut.daughter_angles.1,
                 1,
             ) {
@@ -174,7 +176,7 @@ pub fn cell_editor_ui_update(
                 ui.label("Colour: ");
 
                 // Create a colour picker
-                if create_colour_edit_ui(ui, &mut state.get_selected_genome_mut(&mut genome_collection).colour) {
+                if create_colour_edit_ui(ui, &mut state.get_selected_genome_mode_mut(&mut genome_collection).colour) {
                     // Colour was changed
                     colour_message_writer.write(CellEditorColourMessage);
 
@@ -191,21 +193,21 @@ pub fn cell_editor_ui_update(
             ui.horizontal(|ui| {
                 if ui
                     .radio_value(
-                        &mut state.get_selected_genome_mut(&mut genome_collection).split_type,
+                        &mut state.get_selected_genome_mode_mut(&mut genome_collection).split_type,
                         CellSplitType::Energy,
                         "Use Split Energy",
                     )
                     .changed()
                     || ui
                         .radio_value(
-                            &mut state.get_selected_genome_mut(&mut genome_collection).split_type,
+                            &mut state.get_selected_genome_mode_mut(&mut genome_collection).split_type,
                             CellSplitType::Age,
                             "Use Split Age",
                         )
                         .changed()
                     || ui
                         .radio_value(
-                            &mut state.get_selected_genome_mut(&mut genome_collection).split_type,
+                            &mut state.get_selected_genome_mode_mut(&mut genome_collection).split_type,
                             CellSplitType::Never,
                             "Never Split",
                         )
@@ -219,14 +221,14 @@ pub fn cell_editor_ui_update(
             });
 
             // Show different UI depending on use_split_age
-            match state.get_selected_genome(&genome_collection).split_type {
+            match state.get_selected_genome_mode(&genome_collection).split_type {
                 CellSplitType::Energy => {
                     // Split energy parameter
                     ui.horizontal(|ui| {
                         ui.label("Split Energy: ");
                         if ui
                             .add(egui::Slider::new(
-                                &mut state.get_selected_genome_mut(&mut genome_collection).split_energy,
+                                &mut state.get_selected_genome_mode_mut(&mut genome_collection).split_energy,
                                 0.0..=CELL_MAX_ENERGY,
                             ))
                             .changed()
@@ -244,7 +246,7 @@ pub fn cell_editor_ui_update(
                         ui.label("Split Age: ");
                         if ui
                             .add(egui::Slider::new(
-                                &mut state.get_selected_genome_mut(&mut genome_collection).split_age,
+                                &mut state.get_selected_genome_mode_mut(&mut genome_collection).split_age,
                                 0.0..=CELL_MAX_SPLIT_AGE,
                             ))
                             .changed()
@@ -264,7 +266,7 @@ pub fn cell_editor_ui_update(
                 ui.label("Split Fraction: ");
                 if ui
                     .add(egui::Slider::new(
-                        &mut state.get_selected_genome_mut(&mut genome_collection).split_fraction,
+                        &mut state.get_selected_genome_mode_mut(&mut genome_collection).split_fraction,
                         0.0..=1.0,
                     ))
                     .changed()
@@ -279,12 +281,12 @@ pub fn cell_editor_ui_update(
             ui.add_space(SUBSECTION_SPACING);
 
             // Split angle parameter
-            let mut angle_degrees = -state.get_selected_genome(&genome_collection).split_angle.to_degrees();
+            let mut angle_degrees = -state.get_selected_genome_mode(&genome_collection).split_angle.to_degrees();
             ui.horizontal(|ui| {
                 ui.label("Split Angle: ");
                 if ui.add(egui::Slider::new(&mut angle_degrees, (0.)..=360.)).changed() {
                     // Split angle was changed
-                    state.get_selected_genome_mut(&mut genome_collection).split_angle = -angle_degrees.to_radians();
+                    state.get_selected_genome_mode_mut(&mut genome_collection).split_angle = -angle_degrees.to_radians();
 
                     split_angle_message_writer.write(CellEditorSplitAngleMessage);
 
@@ -300,7 +302,7 @@ pub fn cell_editor_ui_update(
                 ui.label("Split Force: ");
                 if ui
                     .add(egui::Slider::new(
-                        &mut state.get_selected_genome_mut(&mut genome_collection).split_force,
+                        &mut state.get_selected_genome_mode_mut(&mut genome_collection).split_force,
                         (0.)..=50.,
                     ))
                     .changed()
@@ -350,13 +352,13 @@ pub fn cell_editor_ui_update(
         &mut simulation_cache_message_writer,
     );
 
-    let selected_genome = state.get_selected_genome_mut(&mut genome_collection);
-    let selected_genome_id = state.selected_genome;
-    default_genome_dialog(
+    let selected_genome_mode = state.get_selected_genome_mode_mut(&mut genome_collection);
+    let selected_genome_mode_id = state.selected_genome_mode;
+    default_genome_mode_dialog(
         ctx,
         &mut state.dialogs,
-        selected_genome,
-        selected_genome_id,
+        selected_genome_mode,
+        selected_genome_mode_id,
         &mut simulation_cache_message_writer,
     );
 
@@ -393,39 +395,39 @@ pub fn set_cell_editor_ui_style(ctx: &mut Context, cell_editor_style_applied: &m
 }
 
 #[must_use]
-pub fn create_mode_combo_box(selected_genome: &mut GenomeId, ui: &mut Ui, id: impl std::hash::Hash) -> bool {
+pub fn create_mode_combo_box(selected_genome_mode: &mut GenomeModeId, ui: &mut Ui, id: impl std::hash::Hash) -> bool {
     let mut changed = false;
 
     // TODO There must be a better way to do this
     ComboBox::from_id_salt(id)
-        .selected_text(format!("{selected_genome}"))
+        .selected_text(format!("{selected_genome_mode}"))
         .show_ui(ui, |ui| {
             changed = ui
-                .selectable_value(selected_genome, GenomeId::M1, GenomeId::M1.to_string())
+                .selectable_value(selected_genome_mode, GenomeModeId::M1, GenomeModeId::M1.to_string())
                 .changed()
                 || ui
-                    .selectable_value(selected_genome, GenomeId::M2, GenomeId::M2.to_string())
+                    .selectable_value(selected_genome_mode, GenomeModeId::M2, GenomeModeId::M2.to_string())
                     .changed()
                 || ui
-                    .selectable_value(selected_genome, GenomeId::M3, GenomeId::M3.to_string())
+                    .selectable_value(selected_genome_mode, GenomeModeId::M3, GenomeModeId::M3.to_string())
                     .changed()
                 || ui
-                    .selectable_value(selected_genome, GenomeId::M4, GenomeId::M4.to_string())
+                    .selectable_value(selected_genome_mode, GenomeModeId::M4, GenomeModeId::M4.to_string())
                     .changed()
                 || ui
-                    .selectable_value(selected_genome, GenomeId::M5, GenomeId::M5.to_string())
+                    .selectable_value(selected_genome_mode, GenomeModeId::M5, GenomeModeId::M5.to_string())
                     .changed()
                 || ui
-                    .selectable_value(selected_genome, GenomeId::M6, GenomeId::M6.to_string())
+                    .selectable_value(selected_genome_mode, GenomeModeId::M6, GenomeModeId::M6.to_string())
                     .changed()
                 || ui
-                    .selectable_value(selected_genome, GenomeId::M7, GenomeId::M7.to_string())
+                    .selectable_value(selected_genome_mode, GenomeModeId::M7, GenomeModeId::M7.to_string())
                     .changed()
                 || ui
-                    .selectable_value(selected_genome, GenomeId::M8, GenomeId::M8.to_string())
+                    .selectable_value(selected_genome_mode, GenomeModeId::M8, GenomeModeId::M8.to_string())
                     .changed()
                 || ui
-                    .selectable_value(selected_genome, GenomeId::M9, GenomeId::M9.to_string())
+                    .selectable_value(selected_genome_mode, GenomeModeId::M9, GenomeModeId::M9.to_string())
                     .changed();
         });
 
@@ -435,7 +437,7 @@ pub fn create_mode_combo_box(selected_genome: &mut GenomeId, ui: &mut Ui, id: im
 #[must_use]
 pub fn create_daughter_subsection(
     ui: &mut Ui,
-    daughter_genome: &mut GenomeId,
+    daughter_genome_mode: &mut GenomeModeId,
     daughter_angle: &mut f32,
     daughter_index: usize,
 ) -> bool {
@@ -446,7 +448,7 @@ pub fn create_daughter_subsection(
     ui.add_space(SUBSECTION_SPACING);
     ui.horizontal(|ui| {
         ui.label("Mode: ");
-        changed = create_mode_combo_box(daughter_genome, ui, format!("daughter_{daughter_index}_mode"));
+        changed = create_mode_combo_box(daughter_genome_mode, ui, format!("daughter_{daughter_index}_mode"));
     });
 
     let mut angle_degrees = -daughter_angle.to_degrees();

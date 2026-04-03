@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use cell_lab_macros::generate_enum;
 use serde::{Deserialize, Serialize};
 
-const GENOME_INDEX_COLOUR_OFFSET: f32 = 120.;
+const GENOME_MODE_INDEX_COLOUR_OFFSET: f32 = 120.;
 
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq, PartialOrd, Ord, Eq, Serialize, Deserialize)]
 pub enum CellType {
@@ -33,8 +33,8 @@ pub enum CellSplitType {
 }
 
 #[derive(Component, Debug, Clone, Serialize, Deserialize)]
-pub struct Genome {
-    pub id: GenomeId,
+pub struct GenomeMode {
+    pub id: GenomeModeId,
     pub cell_type: CellType,
     pub colour: Color,
     pub split_type: CellSplitType,
@@ -43,25 +43,25 @@ pub struct Genome {
     pub split_fraction: f32,
     pub split_angle: f32,
     pub split_force: f32,
-    pub daughter_genomes: (GenomeId, GenomeId),
+    pub daughter_genome_modes: (GenomeModeId, GenomeModeId),
     pub daughter_angles: (f32, f32),
 }
 
-impl Genome {
+impl GenomeMode {
     #[must_use]
-    pub fn new(id: GenomeId) -> Self {
+    pub fn new(id: GenomeModeId) -> Self {
         Self {
             id,
-            daughter_genomes: (id, id),
+            daughter_genome_modes: (id, id),
             ..default()
         }
     }
 }
 
-impl Default for Genome {
+impl Default for GenomeMode {
     fn default() -> Self {
         Self {
-            id: GenomeId::default(),
+            id: GenomeModeId::default(),
             cell_type: CellType::default(),
             colour: Color::default(),
             split_type: CellSplitType::default(),
@@ -70,19 +70,19 @@ impl Default for Genome {
             split_fraction: 0.5,
             split_angle: 0.,
             split_force: 15.,
-            daughter_genomes: Default::default(),
+            daughter_genome_modes: Default::default(),
             daughter_angles: (0., 0.),
         }
     }
 }
 
-generate_enum!(GenomeId, M, GENOME_MAX_NUM, 9);
+generate_enum!(GenomeModeId, M, GENOME_MODE_MAX_NUM, 9);
 
 #[must_use]
-pub fn colour_from_genome_id(genome_id: GenomeId) -> Color {
+pub fn colour_from_genome_mode_id(genome_mode_id: GenomeModeId) -> Color {
     Color::hsv(
-        (Into::<usize>::into(genome_id) as f32 / GENOME_MAX_NUM as f32)
-            .mul_add(360.0, GENOME_INDEX_COLOUR_OFFSET)
+        (Into::<usize>::into(genome_mode_id) as f32 / GENOME_MODE_MAX_NUM as f32)
+            .mul_add(360.0, GENOME_MODE_INDEX_COLOUR_OFFSET)
             .rem_euclid(360.),
         0.8,
         0.9,

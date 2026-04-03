@@ -19,10 +19,10 @@ use crate::{
     cell_editor::{
         drawing::draw_cell_info,
         events::{
-            CellEditorAgeMessage, CellEditorColourMessage, CellEditorInitialGenomeMessage, CellEditorSelectedGenomeMessage,
-            CellEditorSplitAngleMessage, add_selection_borders, cell_editor_age_message_reader,
-            cell_editor_colour_message_reader, cell_editor_initial_genome_message_reader,
-            cell_editor_selected_genome_message_reader, cell_editor_split_angle_message_reader, remove_selection_borders,
+            CellEditorAgeMessage, CellEditorColourMessage, CellEditorInitialGenomeModeMessage,
+            CellEditorSelectedGenomeModeMessage, CellEditorSplitAngleMessage, add_selection_borders,
+            cell_editor_age_message_reader, cell_editor_colour_message_reader, cell_editor_initial_genome_mode_message_reader,
+            cell_editor_selected_genome_mode_message_reader, cell_editor_split_angle_message_reader, remove_selection_borders,
         },
         logical_cell::clear_cells,
         simulation::{
@@ -61,8 +61,7 @@ pub const WINDOW_SIZE: Vec2 = Vec2::splat(1200.);
 // TODO Add semi-sanitise filename where spaces are shown as spaces, but replaced with _ later on
 // TODO Message popup when trying to save empty filename
 // TODO Add Load default genome bank button within the load dialog
-// TODO Switch UI from saying genome when it means genome bank
-// TODO Switch Genome -> GenomeMode, GenomeBank -> Genome, GenomeCollection -> GenomeBank
+// TODO Switch GenomeBank -> Genome, GenomeCollection -> GenomeBank
 // TODO Cell editor doesn't have cells dying from energy being too low
 // TODO Add names when saving file, so you can quickly name something the same as an existing genome
 
@@ -98,9 +97,9 @@ fn main() {
         .init_resource::<ShowCellQuadTree>()
         .init_resource::<ChemicalQuadTree>()
         .init_resource::<ShowChemicalQuadTree>()
-        .add_message::<CellEditorInitialGenomeMessage>()
+        .add_message::<CellEditorInitialGenomeModeMessage>()
         .add_message::<CellEditorAgeMessage>()
-        .add_message::<CellEditorSelectedGenomeMessage>()
+        .add_message::<CellEditorSelectedGenomeModeMessage>()
         .add_message::<CellEditorColourMessage>()
         .add_message::<CellEditorSplitAngleMessage>()
         .add_message::<CellEditorSimulationClearMessage>()
@@ -143,9 +142,9 @@ fn main() {
             Update,
             (
                 cell_editor_mode_keyboard_event_reader,
-                cell_editor_initial_genome_message_reader,
+                cell_editor_initial_genome_mode_message_reader,
                 cell_editor_age_message_reader,
-                cell_editor_selected_genome_message_reader,
+                cell_editor_selected_genome_mode_message_reader,
                 cell_editor_colour_message_reader,
                 cell_editor_split_angle_message_reader,
                 clear_simulation_cache_message_reader,

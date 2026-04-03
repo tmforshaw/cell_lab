@@ -128,11 +128,11 @@ pub fn step_simulation(
     let mut new_cells = Vec::new();
     let mut i = 0;
     while i < cells.len() {
-        let genome = cells[i].cell.get_genome(genome_collection);
+        let genome_mode = cells[i].cell.get_genome_mode(genome_collection);
 
-        if match genome.split_type {
-            CellSplitType::Energy => cells[i].cell.energy >= genome.split_energy,
-            CellSplitType::Age => cells[i].cell.age >= genome.split_age,
+        if match genome_mode.split_type {
+            CellSplitType::Energy => cells[i].cell.energy >= genome_mode.split_energy,
+            CellSplitType::Age => cells[i].cell.age >= genome_mode.split_age,
             CellSplitType::Never => false,
         } {
             // Remove parent from cells Vec
@@ -183,7 +183,7 @@ pub fn spawn_cells_from_simulation(
             lc.velocity.clone(),
             lc.transform,
             Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
-            MeshMaterial2d(materials.add(CellMaterial::new(lc.cell.get_genome(&genome_collection).colour))),
+            MeshMaterial2d(materials.add(CellMaterial::new(lc.cell.get_genome_mode(&genome_collection).colour))),
         ));
     }
 

@@ -8,7 +8,7 @@ use crate::{
         ui_dialog::CellEditorUiDialogState,
     },
     cells::Cell,
-    genomes::{Genome, GenomeBank, GenomeBankId, GenomeCollection, GenomeId},
+    genomes::{GenomeBank, GenomeBankId, GenomeCollection, GenomeMode, GenomeModeId},
     simulation::dish::{Dish, DishMarker},
 };
 
@@ -20,7 +20,7 @@ const CELL_EDITOR_SIMULATION_DELTA_TIME: f32 = 0.02;
 #[derive(Resource)]
 pub struct CellEditorState {
     pub selected_genome_bank: GenomeBankId,
-    pub selected_genome: GenomeId,
+    pub selected_genome_mode: GenomeModeId,
     pub editor_age: CellEditorAge,
     pub dish: Dish,
     pub cell_size_per_mass: f32,
@@ -33,7 +33,7 @@ impl Default for CellEditorState {
     fn default() -> Self {
         Self {
             selected_genome_bank: GenomeBankId::default(),
-            selected_genome: GenomeId::default(),
+            selected_genome_mode: GenomeModeId::default(),
             editor_age: CellEditorAge::default(),
             dish: Dish::new(CELL_EDITOR_SIZE),
             cell_size_per_mass: CELL_EDITOR_CELL_SIZE_PER_MASS,
@@ -46,13 +46,13 @@ impl Default for CellEditorState {
 
 impl CellEditorState {
     #[must_use]
-    pub fn get_selected_genome<'a>(&self, genome_collection: &'a GenomeCollection) -> &'a Genome {
-        &genome_collection[self.selected_genome_bank][self.selected_genome]
+    pub fn get_selected_genome_mode<'a>(&self, genome_collection: &'a GenomeCollection) -> &'a GenomeMode {
+        &genome_collection[self.selected_genome_bank][self.selected_genome_mode]
     }
 
     #[must_use]
-    pub fn get_selected_genome_mut<'a>(&mut self, genome_collection: &'a mut GenomeCollection) -> &'a mut Genome {
-        &mut genome_collection[self.selected_genome_bank][self.selected_genome]
+    pub fn get_selected_genome_mode_mut<'a>(&mut self, genome_collection: &'a mut GenomeCollection) -> &'a mut GenomeMode {
+        &mut genome_collection[self.selected_genome_bank][self.selected_genome_mode]
     }
 
     #[must_use]

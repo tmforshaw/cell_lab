@@ -3,7 +3,7 @@ use bevy_egui::egui::{self, Context};
 
 use crate::{
     cell_editor::simulation::CellEditorSimulationClearMessage,
-    genomes::{Genome, GenomeBank, GenomeId, genome::colour_from_genome_id},
+    genomes::{GenomeBank, GenomeMode, GenomeModeId, genome_mode::colour_from_genome_mode_id},
     serialisation::{
         delete_genome_bank_file, does_genome_bank_exist_in_folder, get_genome_banks_in_folder, read_genome_bank_file,
         sanitise_filename, write_genome_bank_to_file,
@@ -20,7 +20,7 @@ pub struct CellEditorUiDialogState {
     pub load_selected_file: Option<usize>,
     delete_dialog_open: bool,
     delete_file: Option<String>,
-    default_genome_dialog_open: bool,
+    default_genome_mode_dialog_open: bool,
 }
 
 impl CellEditorUiDialogState {
@@ -45,8 +45,8 @@ impl CellEditorUiDialogState {
     }
 
     #[must_use]
-    pub const fn default_genome_dialog_is_open(&self) -> bool {
-        self.default_genome_dialog_open
+    pub const fn default_genome_mode_dialog_is_open(&self) -> bool {
+        self.default_genome_mode_dialog_open
     }
 
     pub fn open_save_dialog(&mut self) {
@@ -85,10 +85,10 @@ impl CellEditorUiDialogState {
         };
     }
 
-    pub fn open_default_genome_dialog(&mut self) {
-        // Open default genome dialog, everything else gets cleared
+    pub fn open_default_genome_mode_dialog(&mut self) {
+        // Open default genome mode dialog, everything else gets cleared
         *self = Self {
-            default_genome_dialog_open: true,
+            default_genome_mode_dialog_open: true,
             ..default()
         };
     }
@@ -292,15 +292,15 @@ pub fn load_or_delete_dialog(
     }
 }
 
-pub fn default_genome_dialog(
+pub fn default_genome_mode_dialog(
     ctx: &Context,
     dialogs: &mut CellEditorUiDialogState,
-    selected_genome: &mut Genome,
-    selected_genome_id: GenomeId,
+    selected_genome_mode: &mut GenomeMode,
+    selected_genome_mode_id: GenomeModeId,
     simulation_cache_message_writer: &mut MessageWriter<CellEditorSimulationClearMessage>,
 ) {
-    // Render default genome dialog if it is open
-    if dialogs.default_genome_dialog_is_open() {
+    // Render default genome mode dialog if it is open
+    if dialogs.default_genome_mode_dialog_is_open() {
         egui::Window::new("Replace Current Mode With Default")
             .collapsible(false)
             .resizable(false)
@@ -309,9 +309,9 @@ pub fn default_genome_dialog(
                 ui.horizontal(|ui| {
                     // Confirm overwrite of genome
                     if ui.button("Confirm").clicked() {
-                        // Make a default genome, with the correct colour
-                        *selected_genome = Genome::new(selected_genome_id);
-                        selected_genome.colour = colour_from_genome_id(selected_genome_id);
+                        // Make a default genome mode, with the correct colour
+                        *selected_genome_mode = GenomeMode::new(selected_genome_mode_id);
+                        selected_genome_mode.colour = colour_from_genome_mode_id(selected_genome_mode_id);
 
                         // Clear the simulation cache
                         simulation_cache_message_writer.write(CellEditorSimulationClearMessage);

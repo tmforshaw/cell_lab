@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::{
     WINDOW_SIZE,
     cells::{CELL_MAX_VELOCITY, CELL_STARTING_ENERGY, Cell, CellMaterial, STARTING_CELL_NUM},
-    genomes::{GenomeBankId, GenomeCollection, GenomeId},
+    genomes::{GenomeBankId, GenomeCollection, GenomeModeId},
     helpers::random_vec2,
     simulation::{
         chemical::Chemical,
@@ -54,7 +54,7 @@ pub fn init_simulation_mode(
     for _ in 0..STARTING_CELL_NUM {
         commands.spawn(Cell::new_bundle(
             CELL_STARTING_ENERGY,
-            GenomeId::default(),
+            GenomeModeId::default(),
             GenomeBankId::default(),
             state.cell_size_per_mass,
             random_vec2(Vec2::splat(CELL_MAX_VELOCITY)),

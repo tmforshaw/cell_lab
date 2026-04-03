@@ -5,39 +5,39 @@ use std::ops::{Index, IndexMut};
 
 use cell_lab_macros::generate_enum;
 
-use crate::genomes::{GENOME_MAX_NUM, Genome, GenomeId, genome::colour_from_genome_id};
+use crate::genomes::{GENOME_MODE_MAX_NUM, GenomeMode, GenomeModeId, genome_mode::colour_from_genome_mode_id};
 
 #[derive(Serialize, Deserialize)]
 pub struct GenomeBank {
-    pub initial: GenomeId,
-    bank: [Genome; GENOME_MAX_NUM],
+    pub initial: GenomeModeId,
+    bank: [GenomeMode; GENOME_MODE_MAX_NUM],
 }
 
 impl Default for GenomeBank {
     fn default() -> Self {
         Self {
-            initial: GenomeId::default(),
+            initial: GenomeModeId::default(),
             bank: std::array::from_fn(|i| {
-                let mut genome = Genome::new(i.into());
+                let mut genome_mode = GenomeMode::new(i.into());
 
-                // Select a visually distinct colour for each genome
-                genome.colour = colour_from_genome_id(i.into());
-                genome
+                // Select a visually distinct colour for each genome mode
+                genome_mode.colour = colour_from_genome_mode_id(i.into());
+                genome_mode
             }),
         }
     }
 }
 
-impl Index<GenomeId> for GenomeBank {
-    type Output = Genome;
+impl Index<GenomeModeId> for GenomeBank {
+    type Output = GenomeMode;
 
-    fn index(&self, index: GenomeId) -> &Self::Output {
+    fn index(&self, index: GenomeModeId) -> &Self::Output {
         &self.bank[Into::<usize>::into(index)]
     }
 }
 
-impl IndexMut<GenomeId> for GenomeBank {
-    fn index_mut(&mut self, index: GenomeId) -> &mut Self::Output {
+impl IndexMut<GenomeModeId> for GenomeBank {
+    fn index_mut(&mut self, index: GenomeModeId) -> &mut Self::Output {
         &mut self.bank[Into::<usize>::into(index)]
     }
 }
