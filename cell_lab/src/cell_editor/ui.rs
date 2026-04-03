@@ -95,12 +95,12 @@ pub fn cell_editor_ui_update(
             ui.add_space(SEPARATOR_SPACING);
 
             ui.horizontal(|ui| {
-                let mut checked = state.selected_genome_mode == state.get_selected_genome_bank(&genome_collection).initial;
+                let mut checked = state.selected_genome_mode == state.get_selected_genome(&genome_collection).initial;
                 if ui.checkbox(&mut checked, "Initial Genome Mode").changed() {
                     // Initial genome mode checkbox was clicked
-                    if state.get_selected_genome_bank(&genome_collection).initial != state.selected_genome_mode {
+                    if state.get_selected_genome(&genome_collection).initial != state.selected_genome_mode {
                         // Initial genome mode has actually changed
-                        state.get_selected_genome_bank_mut(&mut genome_collection).initial = state.selected_genome_mode;
+                        state.get_selected_genome_mut(&mut genome_collection).initial = state.selected_genome_mode;
 
                         // Do an event
 
@@ -342,15 +342,10 @@ pub fn cell_editor_ui_update(
             });
         });
 
-    let selected_genome_bank = state.get_selected_genome_bank_mut(&mut genome_collection);
-    save_or_overwrite_dialog(ctx, &mut state.dialogs, selected_genome_bank);
+    let selected_genome = state.get_selected_genome_mut(&mut genome_collection);
+    save_or_overwrite_dialog(ctx, &mut state.dialogs, selected_genome);
 
-    load_or_delete_dialog(
-        ctx,
-        &mut state.dialogs,
-        selected_genome_bank,
-        &mut simulation_cache_message_writer,
-    );
+    load_or_delete_dialog(ctx, &mut state.dialogs, selected_genome, &mut simulation_cache_message_writer);
 
     let selected_genome_mode = state.get_selected_genome_mode_mut(&mut genome_collection);
     let selected_genome_mode_id = state.selected_genome_mode;

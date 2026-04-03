@@ -21,13 +21,13 @@ impl DaughterData {
         transform: &Transform,
         genome_collection: &GenomeCollection,
     ) -> (Self, Self) {
-        let parent_genome_mode = &genome_collection[parent.genome_bank_id][parent.genome_mode_id];
+        let parent_genome_mode = &genome_collection[parent.genome_id][parent.genome_mode_id];
 
         // Split energy depending on split fraction
         let d1_energy = parent.energy * parent_genome_mode.split_fraction;
         let d2_energy = parent.energy - d1_energy;
 
-        // Set genome_mode_id according to genome bank
+        // Set daughter genome_mode_id according to genome mode
         let d1_genome_mode_id = parent_genome_mode.daughter_genome_modes.0;
         let d2_genome_mode_id = parent_genome_mode.daughter_genome_modes.1;
 
@@ -63,14 +63,14 @@ impl DaughterData {
                 energy: d1_energy,
                 age: 0.0,
                 genome_mode_id: d1_genome_mode_id,
-                genome_bank_id: parent.genome_bank_id,
+                genome_id: parent.genome_id,
                 size_per_mass: parent.size_per_mass,
             },
             Cell {
                 energy: d2_energy,
                 age: 0.0,
                 genome_mode_id: d2_genome_mode_id,
-                genome_bank_id: parent.genome_bank_id,
+                genome_id: parent.genome_id,
                 size_per_mass: parent.size_per_mass,
             },
         );

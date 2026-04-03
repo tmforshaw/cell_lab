@@ -41,7 +41,7 @@ pub fn draw_split_angle_arrow_as_child(
 ) {
     // Calculate the length and direction for the split angle
     let dir = Vec2::Y.rotate(Vec2::from_angle(
-        state.get_selected_genome_bank(genome_collection)[cell.genome_mode_id].split_angle,
+        state.get_selected_genome(genome_collection)[cell.genome_mode_id].split_angle,
     ));
 
     let start = -dir / 2.;

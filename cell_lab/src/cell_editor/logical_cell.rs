@@ -32,8 +32,8 @@ pub fn create_root_logical_cell(state: &CellEditorState, genome_collection: &Gen
     let cell = Cell {
         energy: CELL_STARTING_ENERGY,
         age: 0.0,
-        genome_mode_id: state.get_selected_genome_bank(genome_collection).initial,
-        genome_bank_id: state.selected_genome_bank,
+        genome_mode_id: state.get_selected_genome(genome_collection).initial,
+        genome_id: state.selected_genome,
         size_per_mass: CELL_EDITOR_CELL_SIZE_PER_MASS,
     };
 

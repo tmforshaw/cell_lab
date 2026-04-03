@@ -3,10 +3,10 @@ use bevy_egui::egui::{self, Context};
 
 use crate::{
     cell_editor::simulation::CellEditorSimulationClearMessage,
-    genomes::{GenomeBank, GenomeMode, GenomeModeId, genome_mode::colour_from_genome_mode_id},
+    genomes::{Genome, GenomeMode, GenomeModeId, genome_mode::colour_from_genome_mode_id},
     serialisation::{
-        delete_genome_bank_file, does_genome_bank_exist_in_folder, get_genome_banks_in_folder, read_genome_bank_file,
-        sanitise_filename, write_genome_bank_to_file,
+        delete_genome_file, does_genome_exist_in_folder, get_genomes_in_folder, read_genome_file, sanitise_filename,
+        write_genome_to_file,
     },
     ui::SEPARATOR_SPACING,
 };
@@ -108,7 +108,7 @@ impl CellEditorUiDialogState {
     }
 }
 
-pub fn save_or_overwrite_dialog(ctx: &Context, dialogs: &mut CellEditorUiDialogState, selected_genome_bank: &mut GenomeBank) {
+pub fn save_or_overwrite_dialog(ctx: &Context, dialogs: &mut CellEditorUiDialogState, selected_genome: &mut Genome) {
     // If overwrite dialog is open, don't show save dialog
     if dialogs.overwrite_dialog_is_open() {
         egui::Window::new(format!("Overwrite '{}'", dialogs.save_filename))
@@ -119,7 +119,7 @@ pub fn save_or_overwrite_dialog(ctx: &Context, dialogs: &mut CellEditorUiDialogS
                 ui.horizontal(|ui| {
                     // Confirm overwrite
                     if ui.button("Confirm").clicked() {
-                        write_genome_bank_to_file(dialogs.save_filename.clone(), selected_genome_bank);
+                        write_genome_to_file(dialogs.save_filename.clone(), selected_genome);
 
                         // Exit the dialog
                         dialogs.close_all_dialogs();
@@ -151,12 +151,12 @@ pub fn save_or_overwrite_dialog(ctx: &Context, dialogs: &mut CellEditorUiDialogS
                             // Save genome
                             if ui.button("Submit").clicked() {
                                 // Check if the file already exists
-                                if does_genome_bank_exist_in_folder(dialogs.save_filename.clone()) {
+                                if does_genome_exist_in_folder(dialogs.save_filename.clone()) {
                                     // Open the overwrite dialog
                                     dialogs.open_overwrite_dialog();
                                 } else {
                                     // Write genome to file
-                                    write_genome_bank_to_file(dialogs.save_filename.clone(), selected_genome_bank);
+                                    write_genome_to_file(dialogs.save_filename.clone(), selected_genome);
 
                                     // Exit the dialog
                                     dialogs.close_all_dialogs();
@@ -178,7 +178,7 @@ pub fn save_or_overwrite_dialog(ctx: &Context, dialogs: &mut CellEditorUiDialogS
 pub fn load_or_delete_dialog(
     ctx: &Context,
     dialogs: &mut CellEditorUiDialogState,
-    selected_genome_bank: &mut GenomeBank,
+    selected_genome: &mut Genome,
     simulation_cache_message_writer: &mut MessageWriter<CellEditorSimulationClearMessage>,
 ) {
     // If delete dialog is open, don't show load dialog
@@ -193,10 +193,10 @@ pub fn load_or_delete_dialog(
                     ui.horizontal(|ui| {
                         // Confirm deletion
                         if ui.button("Confirm").clicked() {
-                            delete_genome_bank_file(delete_file);
+                            delete_genome_file(delete_file);
 
                             // Set the selected file to be 0, unless there are no files left
-                            if let Some(files) = get_genome_banks_in_folder() {
+                            if let Some(files) = get_genomes_in_folder() {
                                 dialogs.load_selected_file = if files.is_empty() { None } else { Some(0) }
                             }
 
@@ -223,7 +223,7 @@ pub fn load_or_delete_dialog(
                 .resizable(false)
                 .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
                 .show(ctx, |ui| {
-                    if let Some(files) = get_genome_banks_in_folder()
+                    if let Some(files) = get_genomes_in_folder()
                         && !files.is_empty()
                     {
                         let selected_file = dialogs.load_selected_file.unwrap_or(0);
@@ -251,7 +251,7 @@ pub fn load_or_delete_dialog(
                             })
                             .fold(false, |acc, changed| acc | changed)
                         {
-                            // Selected genome bank was changed
+                            // Selected genome was changed
                         }
 
                         ui.add_space(SEPARATOR_SPACING);
@@ -261,9 +261,9 @@ pub fn load_or_delete_dialog(
                         ui.horizontal(|ui| {
                             // Load genome
                             if ui.button("Load Genome").clicked() {
-                                if let Some(genome_bank) = read_genome_bank_file(&files[selected_file]) {
-                                    // Set the genome bank in GenomeCollection
-                                    *selected_genome_bank = genome_bank;
+                                if let Some(genome) = read_genome_file(&files[selected_file]) {
+                                    // Set the genome in GenomeCollection
+                                    *selected_genome = genome;
 
                                     // Clear the simulation cache
                                     simulation_cache_message_writer.write(CellEditorSimulationClearMessage);

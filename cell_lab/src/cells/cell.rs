@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     cells::CellMaterial,
-    genomes::{CellSplitType, DaughterData, GenomeBankId, GenomeCollection, GenomeMode, GenomeModeId},
+    genomes::{CellSplitType, DaughterData, GenomeCollection, GenomeId, GenomeMode, GenomeModeId},
     spatial_partitioning::quadtree::QuadTreeData,
 };
 
@@ -53,7 +53,7 @@ pub struct Cell {
     pub energy: f32,
     pub age: f32,
     pub genome_mode_id: GenomeModeId,
-    pub genome_bank_id: GenomeBankId,
+    pub genome_id: GenomeId,
     pub size_per_mass: f32,
 }
 
@@ -63,7 +63,7 @@ impl Cell {
     pub fn new_bundle(
         energy: f32,
         genome_mode_id: GenomeModeId,
-        genome_bank_id: GenomeBankId,
+        genome_id: GenomeId,
         size_per_mass: f32,
         velocity: Vec2,
         position: Vec2,
@@ -75,7 +75,7 @@ impl Cell {
             energy,
             age: 0.,
             genome_mode_id,
-            genome_bank_id,
+            genome_id,
             size_per_mass,
         };
         CellBundle::new(
@@ -92,7 +92,7 @@ impl Cell {
     pub fn new_bundle_with_rotation(
         energy: f32,
         genome_mode_id: GenomeModeId,
-        genome_bank_id: GenomeBankId,
+        genome_id: GenomeId,
         size_per_mass: f32,
         velocity: Vec2,
         position: Vec2,
@@ -105,7 +105,7 @@ impl Cell {
             energy,
             age: 0.,
             genome_mode_id,
-            genome_bank_id,
+            genome_id,
             size_per_mass,
         };
         CellBundle::new(
@@ -125,7 +125,7 @@ impl Cell {
         energy: f32,
         age: f32,
         genome_mode_id: GenomeModeId,
-        genome_bank_id: GenomeBankId,
+        genome_id: GenomeId,
         size_per_mass: f32,
         velocity: Vec2,
         position: Vec2,
@@ -137,7 +137,7 @@ impl Cell {
             energy,
             age,
             genome_mode_id,
-            genome_bank_id,
+            genome_id,
             size_per_mass,
         };
         CellBundle::new(
@@ -155,7 +155,7 @@ impl Cell {
         energy: f32,
         age: f32,
         genome_mode_id: GenomeModeId,
-        genome_bank_id: GenomeBankId,
+        genome_id: GenomeId,
         size_per_mass: f32,
         velocity: Vec2,
         position: Vec2,
@@ -168,7 +168,7 @@ impl Cell {
             energy,
             age,
             genome_mode_id,
-            genome_bank_id,
+            genome_id,
             size_per_mass,
         };
         CellBundle::new(
@@ -184,7 +184,7 @@ impl Cell {
 
     #[must_use]
     pub fn get_genome_mode<'a>(&self, genome_collection: &'a GenomeCollection) -> &'a GenomeMode {
-        &genome_collection[self.genome_bank_id][self.genome_mode_id]
+        &genome_collection[self.genome_id][self.genome_mode_id]
     }
 
     #[must_use]

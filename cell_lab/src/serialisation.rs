@@ -6,9 +6,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::genomes::GenomeBank;
+use crate::genomes::Genome;
 
-const GENOME_BANK_FILE_EXT: &str = "genome";
+const GENOME_FILE_EXT: &str = "genome";
 
 #[must_use]
 pub fn sanitise_filename(input: &str) -> String {
@@ -58,24 +58,22 @@ fn get_data_dir() -> Option<String> {
     Some(path.to_string_lossy().into_owned())
 }
 
-pub fn write_genome_bank_to_file<S: AsRef<str>>(filename: S, genome_bank: &GenomeBank) {
+pub fn write_genome_to_file<S: AsRef<str>>(filename: S, genome: &Genome) {
     // Get the data folder
     if let Some(data_dir) = get_data_dir() {
-        let path = Path::new(&data_dir)
-            .join(filename.as_ref())
-            .with_extension(GENOME_BANK_FILE_EXT);
+        let path = Path::new(&data_dir).join(filename.as_ref()).with_extension(GENOME_FILE_EXT);
 
         // Create the file from the path
         match File::create(&path) {
             Ok(mut file) => {
                 // Serialise the content into a slice
-                match postcard::to_allocvec(&genome_bank) {
+                match postcard::to_allocvec(&genome) {
                     Ok(content) => {
                         // Write to the file
                         match file.write(&content) {
                             Ok(_byte_length) => {}
                             Err(e) => {
-                                eprintln!("Could not write serialised genome bank to file: {e}");
+                                eprintln!("Could not write serialised genome to file: {e}");
                             }
                         }
                     }
@@ -85,15 +83,15 @@ pub fn write_genome_bank_to_file<S: AsRef<str>>(filename: S, genome_bank: &Genom
                 }
             }
             Err(e) => {
-                eprintln!("Could not serialise genome bank for file '{}':\n\t{e}", filename.as_ref());
+                eprintln!("Could not serialise genome for file '{}':\n\t{e}", filename.as_ref());
             }
         }
     } else {
-        eprintln!("Could not find genome banks directory");
+        eprintln!("Could not find genomes directory");
     }
 }
 
-pub fn get_genome_banks_in_folder() -> Option<Vec<String>> {
+pub fn get_genomes_in_folder() -> Option<Vec<String>> {
     // Get the data folder
     let files = if let Some(data_dir) = get_data_dir() {
         match fs::read_dir(data_dir) {
@@ -104,17 +102,17 @@ pub fn get_genome_banks_in_folder() -> Option<Vec<String>> {
                         .path()
                         .extension()
                         .and_then(|ext| ext.to_str())
-                        .is_some_and(|ext| ext == GENOME_BANK_FILE_EXT)
+                        .is_some_and(|ext| ext == GENOME_FILE_EXT)
                 })
                 .filter_map(|entry| entry.path().file_stem().and_then(OsStr::to_str).map(ToString::to_string))
                 .collect::<Vec<_>>(),
             Err(e) => {
-                eprintln!("Could not iterate over entries in genone banks directory:\n\t{e}");
+                eprintln!("Could not iterate over entries in genones directory:\n\t{e}");
                 return None;
             }
         }
     } else {
-        eprintln!("Could not find genome banks directory");
+        eprintln!("Could not find genomes directory");
 
         return None;
     };
@@ -122,29 +120,27 @@ pub fn get_genome_banks_in_folder() -> Option<Vec<String>> {
     Some(files)
 }
 
-pub fn does_genome_bank_exist_in_folder<S: AsRef<str>>(filename: S) -> bool {
-    let Some(files) = get_genome_banks_in_folder() else {
+pub fn does_genome_exist_in_folder<S: AsRef<str>>(filename: S) -> bool {
+    let Some(files) = get_genomes_in_folder() else {
         return false;
     };
 
     files.contains(&filename.as_ref().to_string())
 }
 
-pub fn read_genome_bank_file<S: AsRef<str>>(filename: S) -> Option<GenomeBank> {
+pub fn read_genome_file<S: AsRef<str>>(filename: S) -> Option<Genome> {
     // Get the data folder
-    let genome_bank = if let Some(data_dir) = get_data_dir() {
-        // Get the path to the genome bank file
-        let path = Path::new(&data_dir)
-            .join(filename.as_ref())
-            .with_extension(GENOME_BANK_FILE_EXT);
+    let genome = if let Some(data_dir) = get_data_dir() {
+        // Get the path to the genome file
+        let path = Path::new(&data_dir).join(filename.as_ref()).with_extension(GENOME_FILE_EXT);
 
         // Read the file at data_dir
         match fs::read(&path) {
-            // Parse the contents into a GenomeBank
+            // Parse the contents into a Genome
             Ok(content) => match postcard::from_bytes(&content) {
-                Ok(genome_bank) => genome_bank,
+                Ok(genome) => genome,
                 Err(e) => {
-                    eprintln!("Could not deserialise genome bank '{data_dir}'\n\t{e}");
+                    eprintln!("Could not deserialise genome '{data_dir}'\n\t{e}");
                     return None;
                 }
             },
@@ -154,27 +150,25 @@ pub fn read_genome_bank_file<S: AsRef<str>>(filename: S) -> Option<GenomeBank> {
             }
         }
     } else {
-        eprintln!("Could not find genome banks directory");
+        eprintln!("Could not find genomes directory");
 
         return None;
     };
 
-    Some(genome_bank)
+    Some(genome)
 }
 
-pub fn delete_genome_bank_file<S: AsRef<str>>(filename: S) {
+pub fn delete_genome_file<S: AsRef<str>>(filename: S) {
     // Get the data folder
     if let Some(data_dir) = get_data_dir() {
-        // Get the path to the genome bank file
-        let path = Path::new(&data_dir)
-            .join(filename.as_ref())
-            .with_extension(GENOME_BANK_FILE_EXT);
+        // Get the path to the genome file
+        let path = Path::new(&data_dir).join(filename.as_ref()).with_extension(GENOME_FILE_EXT);
 
         // Remove the file from disk
         if let Err(e) = fs::remove_file(&path) {
             eprintln!("Could not remove file at '{data_dir}\n\t{e}");
         }
     } else {
-        eprintln!("Could not find genome banks directory");
+        eprintln!("Could not find genomes directory");
     }
 }
