@@ -33,14 +33,14 @@ use crate::{
     cells::{Cell, CellMaterial, SelectionCellMaterial},
     collision::systems::collision_system,
     despawning::apply_pending_despawns,
-    game_mode::GameMode,
+    game::{game_mode::GameMode, game_parameters::GameParameters},
     genomes::genome::GenomeBank,
     input::{
         cell_editor_mode_keyboard_event_reader, mode_independent_keyboard_event_reader, simulation_mode_keyboard_event_reader,
     },
     simulation::{
         chemical::{Chemical, ChemicalMaterial, ChemicalTimer},
-        state::{SimulationState, exit_simulation_mode, init_simulation_mode},
+        state::{exit_simulation_mode, init_simulation_mode},
         systems::{
             bound_cells, cell_decay, cells_absorb_chemical, cells_do_meiosis, increment_cell_age, move_cells, spawn_chemicals,
         },
@@ -48,17 +48,16 @@ use crate::{
     spatial_partitioning::{
         cell_quadtree::{CellQuadTree, CellQuadTreeDebug, ShowCellQuadTree},
         chemical_quadtree::{ChemicalQuadTree, ChemicalQuadTreeDebug, ShowChemicalQuadTree},
+        quadtree::QuadTreeTrait,
         systems::{build_quadtree, visualise_quadtree},
     },
 };
-
-pub const WINDOW_SIZE: Vec2 = Vec2::splat(1200.);
 
 pub mod cell_editor;
 pub mod cells;
 pub mod collision;
 pub mod despawning;
-pub mod game_mode;
+pub mod game;
 pub mod genomes;
 pub mod helpers;
 pub mod input;
@@ -68,9 +67,11 @@ pub mod spatial_partitioning;
 pub mod ui;
 
 // TODO need to show that cell spawned even if it dies instantly (When splitting into a tiny cell)
-// TODO move constants into adjustable parameters at runtime
 
 fn main() {
+    let param = GameParameters::default();
+    let game_mode = GameMode::default();
+
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(EguiPlugin::default())
@@ -78,16 +79,16 @@ fn main() {
         .add_plugins(Material2dPlugin::<CellMaterial>::default())
         .add_plugins(Material2dPlugin::<SelectionCellMaterial>::default())
         .add_plugins(Material2dPlugin::<ChemicalMaterial>::default())
-        .init_state::<GameMode>()
+        .insert_resource(CellQuadTree::new_from_parameters(&param, &game_mode))
+        .insert_resource(ChemicalQuadTree::new_from_parameters(&param, &game_mode))
+        .insert_resource(ChemicalTimer::new_from_parameters(&param))
+        .insert_resource(GenomeBank::new_from_parameters(&param))
+        .insert_resource(param)
+        .insert_state(game_mode)
         .init_state::<CellEditorSimulationStatus>()
-        .init_resource::<GenomeBank>()
-        .init_resource::<SimulationState>()
-        .init_resource::<ChemicalTimer>()
         .init_resource::<CellEditorUiStyleApplied>()
         .init_resource::<CellEditorState>()
-        .init_resource::<CellQuadTree>()
         .init_resource::<ShowCellQuadTree>()
-        .init_resource::<ChemicalQuadTree>()
         .init_resource::<ShowChemicalQuadTree>()
         .add_message::<CellEditorInitialGenomeModeMessage>()
         .add_message::<CellEditorSelectedGenomeModeMessage>()
@@ -142,7 +143,6 @@ fn main() {
                     spawn_cells_from_simulation.after(clear_cells).after(simulate_to_editor_age),
                 )
                     .run_if(in_state(CellEditorSimulationStatus::NeedsRecompute)),
-                // Remove borders after spawning cells (If SimulationStatus needs recomputing)
                 remove_selection_borders.after(spawn_cells_from_simulation),
                 add_selection_borders.after(remove_selection_borders),
                 build_quadtree::<CellQuadTree, Cell>,
@@ -162,6 +162,7 @@ fn main() {
 }
 
 // Spawn cells and chemicals
+#[allow(clippy::needless_pass_by_value)]
 fn setup(mut commands: Commands) {
     // 2D camera
     commands.spawn(Camera2d);

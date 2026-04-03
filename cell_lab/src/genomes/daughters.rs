@@ -3,7 +3,8 @@ use std::f32::consts::PI;
 use bevy::prelude::*;
 
 use crate::{
-    cells::{CELL_SPLIT_PADDING, Cell, CellMaterial, Velocity, cell::CellBundle},
+    cells::{Cell, CellMaterial, Velocity, cell::CellBundle},
+    game::{game_mode::GameMode, game_parameters::GameParameters},
     genomes::GenomeBank,
 };
 
@@ -15,7 +16,14 @@ pub struct DaughterData {
 
 impl DaughterData {
     #[must_use]
-    pub fn get_from_parent(parent: &Cell, velocity: &Velocity, transform: &Transform, genome_bank: &GenomeBank) -> (Self, Self) {
+    pub fn get_from_parent(
+        parent: &Cell,
+        velocity: &Velocity,
+        transform: &Transform,
+        param: &GameParameters,
+        game_mode: &GameMode,
+        genome_bank: &GenomeBank,
+    ) -> (Self, Self) {
         let parent_genome_mode = &genome_bank[parent.genome_id][parent.genome_mode_id];
 
         // Split energy depending on split fraction
@@ -46,11 +54,13 @@ impl DaughterData {
 
         // Offset the daughters by their width (plus a little bit of padding)
         let d1_position = transform.translation.xy()
-            + (transform.scale.xy() * parent_genome_mode.split_fraction) / 2. * d1_new_velocity.normalize() * CELL_SPLIT_PADDING;
+            + (transform.scale.xy() * parent_genome_mode.split_fraction) / 2.
+                * d1_new_velocity.normalize()
+                * param.cell_parameters.split_padding;
         let d2_position = transform.translation.xy()
             + (transform.scale.xy() * (1. - parent_genome_mode.split_fraction)) / 2.
                 * d2_new_velocity.normalize()
-                * CELL_SPLIT_PADDING;
+                * param.cell_parameters.split_padding;
 
         // Convert this information into Cells for the daughters
         let (d1_cell, d2_cell) = (
@@ -59,20 +69,18 @@ impl DaughterData {
                 age: 0.0,
                 genome_mode_id: d1_genome_mode_id,
                 genome_id: parent.genome_id,
-                size_per_mass: parent.size_per_mass,
             },
             Cell {
                 energy: d2_energy,
                 age: 0.0,
                 genome_mode_id: d2_genome_mode_id,
                 genome_id: parent.genome_id,
-                size_per_mass: parent.size_per_mass,
             },
         );
 
         // Get the scale of the cells
-        let d1_scale = d1_cell.get_size();
-        let d2_scale = d2_cell.get_size();
+        let d1_scale = d1_cell.get_size(param, game_mode);
+        let d2_scale = d2_cell.get_size(param, game_mode);
 
         let parent_rotation_z = transform.rotation.to_euler(EulerRot::XYZ).2;
 

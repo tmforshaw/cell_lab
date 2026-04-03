@@ -1,8 +1,5 @@
 use bevy::prelude::*;
 
-// Dish parameters
-const DISH_COLOUR: Color = Color::linear_rgb(0.2, 0.2, 0.2);
-
 #[derive(Component)]
 pub struct DishMarker;
 
@@ -24,19 +21,15 @@ impl DishBundle {
 
 pub struct Dish {
     pub size: Vec2,
+    pub colour: Color,
 }
 
 impl Dish {
     #[must_use]
-    pub const fn new(size: Vec2) -> Self {
-        Self { size }
-    }
-
-    #[must_use]
-    pub fn into_bundle(&self) -> DishBundle {
+    pub fn new_bundle(size: Vec2, colour: Color) -> DishBundle {
         DishBundle::new(Sprite {
-            color: DISH_COLOUR,
-            custom_size: Some(self.size),
+            color: colour,
+            custom_size: Some(size),
             ..default()
         })
     }

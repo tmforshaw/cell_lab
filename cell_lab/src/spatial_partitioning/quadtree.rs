@@ -8,7 +8,10 @@ use bevy::{
     prelude::*,
 };
 
-use crate::collision::systems::aabb_contains_point;
+use crate::{
+    collision::systems::aabb_contains_point,
+    game::{game_mode::GameMode, game_parameters::GameParameters},
+};
 
 pub struct QuadTreeNode<Id: Copy> {
     bounds: Aabb2d,
@@ -85,8 +88,8 @@ impl<Id: Copy> QuadTreeNode<Id> {
     }
 }
 
-pub struct QuadTree<I: Copy> {
-    pub root: QuadTreeNode<I>,
+pub struct QuadTree<Id: Copy> {
+    pub root: QuadTreeNode<Id>,
     pub max_depth: usize,
     pub node_capacity: usize,
 }
@@ -158,7 +161,9 @@ impl<Id: Copy> QuadTree<Id> {
 }
 
 pub trait QuadTreeTrait<Id: Copy>: Deref<Target = QuadTree<Id>> + DerefMut<Target = QuadTree<Id>> {
-    fn get_colour(&self) -> Color;
+    fn get_colour(&self, param: &GameParameters, game_mode: &GameMode) -> Color;
+
+    fn new_from_parameters(param: &GameParameters, game_mode: &GameMode) -> Self;
 }
 
 pub fn spawn_quadtree_line<D: Component + Default>(commands: &mut Commands, pos: Vec2, size: Vec2, colour: Color) {

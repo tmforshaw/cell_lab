@@ -1,15 +1,18 @@
-const EDITOR_AGE_EPSILON: f32 = 0.02;
-
 #[derive(Default, Debug, Copy, Clone)]
 pub struct CellEditorAge {
     age: f32,
     prev_age: Option<f32>,
+    age_epsilon: f32,
 }
 
 impl CellEditorAge {
     #[must_use]
-    pub const fn new(age: f32) -> Self {
-        Self { age, prev_age: None }
+    pub const fn new(age: f32, age_epsilon: f32) -> Self {
+        Self {
+            age,
+            prev_age: None,
+            age_epsilon,
+        }
     }
 
     #[must_use]
@@ -18,18 +21,18 @@ impl CellEditorAge {
             let delta = self.age - prev_age;
 
             // Clamp small values
-            if delta.abs() < EDITOR_AGE_EPSILON { 0.0 } else { delta }
+            if delta.abs() < self.age_epsilon { 0.0 } else { delta }
         })
     }
 
     #[must_use]
     pub fn is_increasing(&self) -> bool {
-        self.delta() > EDITOR_AGE_EPSILON
+        self.delta() > self.age_epsilon
     }
 
     #[must_use]
     pub fn is_decreasing(&self) -> bool {
-        self.delta() < -EDITOR_AGE_EPSILON
+        self.delta() < -self.age_epsilon
     }
 
     #[must_use]

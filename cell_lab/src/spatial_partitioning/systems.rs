@@ -4,12 +4,15 @@ use bevy::{math::bounding::BoundingVolume, prelude::*};
 
 use crate::{
     despawning::PendingDespawn,
+    game::{game_mode::GameMode, game_parameters::GameParameters},
     spatial_partitioning::quadtree::{QuadTreeData, QuadTreeTrait, spawn_quadtree_line},
 };
 
 #[allow(clippy::needless_pass_by_value)]
 pub fn visualise_quadtree<Id, T, S, D>(
     mut commands: Commands,
+    param: Res<GameParameters>,
+    game_mode: Res<State<GameMode>>,
     quadtree: Res<T>,
     show_quadtree: Res<S>,
     query_existing: Query<Entity, (With<D>, Without<PendingDespawn>)>,
@@ -29,7 +32,7 @@ pub fn visualise_quadtree<Id, T, S, D>(
         // Collect all node bounds
         let rects = (*quadtree).collect_bounds();
 
-        let colour = quadtree.get_colour();
+        let colour = quadtree.get_colour(&param, &game_mode);
         let line_thickness = 8.0;
 
         // Spawn sprites for each line
@@ -75,9 +78,11 @@ pub fn visualise_quadtree<Id, T, S, D>(
     }
 }
 
-#[allow(clippy::type_complexity)]
-pub fn build_quadtree<T: QuadTreeTrait<Entity> + Resource + Default, Item: Component + QuadTreeData>(
+#[allow(clippy::type_complexity, clippy::needless_pass_by_value)]
+pub fn build_quadtree<T: QuadTreeTrait<Entity> + Resource, Item: Component + QuadTreeData>(
     mut quadtree: ResMut<T>,
+    param: Res<GameParameters>,
+    game_mode: Res<State<GameMode>>,
     items: Query<(Entity, &Transform), (With<Item>, Without<PendingDespawn>)>,
 ) {
     // Turn query into Vec of entities and transforms
@@ -87,6 +92,6 @@ pub fn build_quadtree<T: QuadTreeTrait<Entity> + Resource + Default, Item: Compo
     }
 
     // Build the quadtree
-    *quadtree = T::default();
+    *quadtree = T::new_from_parameters(&param, &game_mode);
     (*quadtree).build(&entities_and_transforms);
 }

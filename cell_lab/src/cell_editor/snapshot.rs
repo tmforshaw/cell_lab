@@ -1,9 +1,6 @@
 use bevy::prelude::*;
 
-use crate::cell_editor::{logical_cell::LogicalCell, state::CELL_EDITOR_SIMULATION_DELTA_TIME};
-
-// Have the interval be N frames of simulation
-pub const SNAPSHOT_INTERVAL: f32 = CELL_EDITOR_SIMULATION_DELTA_TIME * 10.0;
+use crate::{cell_editor::logical_cell::LogicalCell, game::game_parameters::GameParameters};
 
 #[derive(Clone)]
 pub struct CellsSnapshot {
@@ -34,15 +31,17 @@ impl CellHistoryCache {
     }
 
     #[must_use]
-    pub fn should_store_snapshot(&self, time: f32) -> bool {
-        self.snapshots.last().is_none_or(|last| time - last.time >= SNAPSHOT_INTERVAL)
+    pub fn should_store_snapshot(&self, time: f32, param: &GameParameters) -> bool {
+        self.snapshots
+            .last()
+            .is_none_or(|last| time - last.time >= param.cell_editor_mode.simulation_parameters.get_snapshot_interval())
     }
 
-    pub fn trim(&mut self) {
-        const MAX_SNAPSHOTS: usize = 64;
+    pub fn trim(&mut self, param: &GameParameters) {
+        let max_snapshots = param.cell_editor_mode.simulation_parameters.max_snapshot_num;
 
-        if self.snapshots.len() > MAX_SNAPSHOTS {
-            let excess = self.snapshots.len() - MAX_SNAPSHOTS;
+        if self.snapshots.len() > max_snapshots {
+            let excess = self.snapshots.len() - max_snapshots;
             self.snapshots.drain(0..excess);
         }
     }

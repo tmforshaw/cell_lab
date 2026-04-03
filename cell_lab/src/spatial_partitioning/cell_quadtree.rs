@@ -2,28 +2,17 @@ use std::ops::{Deref, DerefMut};
 
 use bevy::prelude::*;
 
-use crate::{WINDOW_SIZE, spatial_partitioning::quadtree::QuadTree};
+use crate::{
+    game::{game_mode::GameMode, game_parameters::GameParameters},
+    spatial_partitioning::quadtree::QuadTree,
+};
 
 use super::quadtree::QuadTreeTrait;
-
-const CELL_QUADTREE_SIZE: Vec2 = WINDOW_SIZE;
-pub const CELL_QUADTREE_MAX_DEPTH: usize = 6;
-pub const CELL_QUADTREE_MAX_CAPACITY_PER_NODE: usize = 8;
-const CELL_QUADTREE_COLOUR: Color = Color::linear_rgba(0., 0., 1., 0.5);
 
 #[derive(Resource)]
 pub struct CellQuadTree(pub QuadTree<Entity>);
 
-impl Default for CellQuadTree {
-    fn default() -> Self {
-        Self(QuadTree::new(
-            Vec2::ZERO,
-            CELL_QUADTREE_SIZE,
-            CELL_QUADTREE_MAX_DEPTH,
-            CELL_QUADTREE_MAX_CAPACITY_PER_NODE,
-        ))
-    }
-}
+impl CellQuadTree {}
 
 impl Deref for CellQuadTree {
     type Target = QuadTree<Entity>;
@@ -40,8 +29,28 @@ impl DerefMut for CellQuadTree {
 }
 
 impl QuadTreeTrait<Entity> for CellQuadTree {
-    fn get_colour(&self) -> Color {
-        CELL_QUADTREE_COLOUR
+    fn get_colour(&self, param: &GameParameters, game_mode: &GameMode) -> Color {
+        match game_mode {
+            GameMode::Simulation => param.simulation_mode.cell_quadtree.draw_colour,
+            GameMode::CellEditor => param.cell_editor_mode.cell_quadtree.draw_colour,
+        }
+    }
+
+    fn new_from_parameters(param: &GameParameters, game_mode: &GameMode) -> Self {
+        Self(match game_mode {
+            GameMode::Simulation => QuadTree::new(
+                Vec2::ZERO,
+                param.simulation_mode.dish_parameters.size,
+                param.simulation_mode.cell_quadtree.max_depth,
+                param.simulation_mode.cell_quadtree.max_capacity_per_node,
+            ),
+            GameMode::CellEditor => QuadTree::new(
+                Vec2::ZERO,
+                param.cell_editor_mode.dish_parameters.size,
+                param.cell_editor_mode.cell_quadtree.max_depth,
+                param.cell_editor_mode.cell_quadtree.max_capacity_per_node,
+            ),
+        })
     }
 }
 

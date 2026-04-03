@@ -1,64 +1,35 @@
 use bevy::prelude::*;
 
 use crate::{
-    WINDOW_SIZE,
-    cells::{CELL_MAX_VELOCITY, CELL_STARTING_ENERGY, Cell, CellMaterial, STARTING_CELL_NUM},
+    cells::{Cell, CellMaterial},
+    game::{game_mode::GameMode, game_parameters::GameParameters},
     genomes::{GenomeBank, GenomeId, GenomeModeId},
     helpers::random_vec2,
-    simulation::{
-        chemical::Chemical,
-        dish::{Dish, DishMarker},
-    },
+    simulation::{chemical::Chemical, dish::DishMarker},
 };
-
-const SIMULATION_SIZE: Vec2 = WINDOW_SIZE;
-const SIMULATION_CELL_SIZE_PER_MASS: f32 = 10.;
-
-#[derive(Resource)]
-pub struct SimulationState {
-    pub dish: Dish,
-    pub cell_size_per_mass: f32,
-}
-
-impl Default for SimulationState {
-    fn default() -> Self {
-        Self {
-            dish: Dish::new(SIMULATION_SIZE),
-            cell_size_per_mass: SIMULATION_CELL_SIZE_PER_MASS,
-        }
-    }
-}
-
-impl SimulationState {
-    #[must_use]
-    pub fn new(dish: Dish) -> Self {
-        Self { dish, ..default() }
-    }
-}
 
 #[allow(clippy::needless_pass_by_value)]
 pub fn init_simulation_mode(
     mut commands: Commands,
+    param: Res<GameParameters>,
+    game_mode: Res<State<GameMode>>,
     genome_bank: Res<GenomeBank>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<CellMaterial>>,
-    state: Res<SimulationState>,
 ) {
-    // Insert the state resource
-    commands.insert_resource(SimulationState::default());
-
     // Show dish
-    commands.spawn(state.dish.into_bundle());
+    commands.spawn(param.simulation_mode.dish_parameters.get_dish_bundle());
 
     // Spawn cells
-    for _ in 0..STARTING_CELL_NUM {
+    for _ in 0..param.simulation_mode.starting_cell_num {
         commands.spawn(Cell::new_bundle(
-            CELL_STARTING_ENERGY,
+            param.cell_parameters.starting_energy,
             GenomeModeId::default(),
             GenomeId::default(),
-            state.cell_size_per_mass,
-            random_vec2(Vec2::splat(CELL_MAX_VELOCITY)),
-            random_vec2(state.dish.size / 2.),
+            &param,
+            &game_mode,
+            random_vec2(Vec2::splat(param.cell_parameters.max_velocity)),
+            random_vec2(param.simulation_mode.dish_parameters.size / 2.),
             &genome_bank,
             &mut meshes,
             &mut materials,

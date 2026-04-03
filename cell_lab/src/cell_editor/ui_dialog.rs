@@ -3,13 +3,13 @@ use bevy_egui::egui::{self, Context};
 
 use crate::{
     cell_editor::simulation::CellEditorSimulationClearMessage,
+    game::game_parameters::GameParameters,
     genomes::{Genome, GenomeMode, GenomeModeId, genome_mode::colour_from_genome_mode_id},
     helpers::SemiSanitisedString,
     serialisation::{
         delete_genome_file, does_genome_exist_in_folder, get_genomes_in_folder, get_genomes_in_folder_underscore_to_spaces,
         read_genome_file, semi_sanitise_filename, write_genome_to_file,
     },
-    ui::SEPARATOR_SPACING,
 };
 
 #[derive(Default)]
@@ -287,6 +287,7 @@ pub fn load_or_delete_dialog(
     ctx: &Context,
     dialogs: &mut CellEditorUiDialogState,
     selected_genome: &mut Genome,
+    param: &GameParameters,
     simulation_cache_message_writer: &mut MessageWriter<CellEditorSimulationClearMessage>,
 ) {
     // If delete dialog is open, don't show load dialog
@@ -333,7 +334,7 @@ pub fn load_or_delete_dialog(
                 ui.horizontal(|ui| {
                     // Confirm overwrite
                     if ui.button("Confirm").clicked() {
-                        *selected_genome = Genome::default();
+                        *selected_genome = Genome::new_from_parameters(param);
 
                         // Clear the simulation cache
                         simulation_cache_message_writer.write(CellEditorSimulationClearMessage);
@@ -390,9 +391,9 @@ pub fn load_or_delete_dialog(
                             // Selected genome was changed
                         }
 
-                        ui.add_space(SEPARATOR_SPACING);
+                        ui.add_space(param.ui_parameters.separator_spacing);
                         ui.separator();
-                        ui.add_space(SEPARATOR_SPACING);
+                        ui.add_space(param.ui_parameters.separator_spacing);
 
                         if ui.button("Load Default Genome").clicked() {
                             // Load default genome was clicked
@@ -401,9 +402,9 @@ pub fn load_or_delete_dialog(
                             dialogs.open_load_default_genome_dialog();
                         }
 
-                        ui.add_space(SEPARATOR_SPACING);
+                        ui.add_space(param.ui_parameters.separator_spacing);
                         ui.separator();
-                        ui.add_space(SEPARATOR_SPACING);
+                        ui.add_space(param.ui_parameters.separator_spacing);
 
                         ui.horizontal(|ui| {
                             // Load genome
@@ -444,6 +445,7 @@ pub fn default_genome_mode_dialog(
     dialogs: &mut CellEditorUiDialogState,
     selected_genome_mode: &mut GenomeMode,
     selected_genome_mode_id: GenomeModeId,
+    param: &GameParameters,
     simulation_cache_message_writer: &mut MessageWriter<CellEditorSimulationClearMessage>,
 ) {
     // Render default genome mode dialog if it is open
@@ -458,7 +460,7 @@ pub fn default_genome_mode_dialog(
                     if ui.button("Confirm").clicked() {
                         // Make a default genome mode, with the correct colour
                         *selected_genome_mode = GenomeMode::new(selected_genome_mode_id);
-                        selected_genome_mode.colour = colour_from_genome_mode_id(selected_genome_mode_id);
+                        selected_genome_mode.colour = colour_from_genome_mode_id(selected_genome_mode_id, param);
 
                         // Clear the simulation cache
                         simulation_cache_message_writer.write(CellEditorSimulationClearMessage);

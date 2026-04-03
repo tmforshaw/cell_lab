@@ -1,13 +1,6 @@
 use bevy::{prelude::*, render::render_resource::AsBindGroup, shader::ShaderRef, sprite_render::Material2d};
 
-use crate::spatial_partitioning::quadtree::QuadTreeData;
-
-// Chemical parameters
-pub const CHEMICAL_SIZE: f32 = 10.;
-pub const CHEMICAL_ENERGY: f32 = 10.;
-pub const CHEMICAL_SPAWN_RATE: f32 = 100.;
-pub const CHEMICAL_MAX_NUM: usize = 400;
-pub const CHEMICAL_COLOUR: Color = Color::linear_rgba(0.5, 0.1, 0.1, 0.75);
+use crate::{game::game_parameters::GameParameters, spatial_partitioning::quadtree::QuadTreeData};
 
 #[derive(Component)]
 pub struct Chemical {
@@ -17,9 +10,13 @@ pub struct Chemical {
 #[derive(Resource)]
 pub struct ChemicalTimer(pub Timer);
 
-impl Default for ChemicalTimer {
-    fn default() -> Self {
-        Self(Timer::from_seconds(1. / CHEMICAL_SPAWN_RATE, TimerMode::Repeating))
+impl ChemicalTimer {
+    #[must_use]
+    pub fn new_from_parameters(param: &GameParameters) -> Self {
+        Self(Timer::from_seconds(
+            1. / param.simulation_mode.chemical_parameters.spawn_rate,
+            TimerMode::Repeating,
+        ))
     }
 }
 

@@ -4,7 +4,7 @@ use bevy::{
 };
 
 use crate::{
-    game_mode::GameMode,
+    game::game_mode::GameMode,
     spatial_partitioning::{cell_quadtree::ShowCellQuadTree, chemical_quadtree::ShowChemicalQuadTree},
 };
 

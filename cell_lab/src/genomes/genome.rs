@@ -5,7 +5,10 @@ use std::ops::{Index, IndexMut};
 
 use cell_lab_macros::generate_enum;
 
-use crate::genomes::{GENOME_MODE_MAX_NUM, GenomeMode, GenomeModeId, genome_mode::colour_from_genome_mode_id};
+use crate::{
+    game::game_parameters::GameParameters,
+    genomes::{GENOME_MODE_MAX_NUM, GenomeMode, GenomeModeId, genome_mode::colour_from_genome_mode_id},
+};
 
 #[derive(Serialize, Deserialize)]
 pub struct Genome {
@@ -13,15 +16,16 @@ pub struct Genome {
     modes: [GenomeMode; GENOME_MODE_MAX_NUM],
 }
 
-impl Default for Genome {
-    fn default() -> Self {
+impl Genome {
+    #[must_use]
+    pub fn new_from_parameters(param: &GameParameters) -> Self {
         Self {
             initial: GenomeModeId::default(),
             modes: std::array::from_fn(|i| {
                 let mut genome_mode = GenomeMode::new(i.into());
 
                 // Select a visually distinct colour for each genome mode
-                genome_mode.colour = colour_from_genome_mode_id(i.into());
+                genome_mode.colour = colour_from_genome_mode_id(i.into(), param);
                 genome_mode
             }),
         }
@@ -49,10 +53,11 @@ pub struct GenomeBank {
     genomes: [Genome; GENOME_MAX_NUM],
 }
 
-impl Default for GenomeBank {
-    fn default() -> Self {
+impl GenomeBank {
+    #[must_use]
+    pub fn new_from_parameters(param: &GameParameters) -> Self {
         Self {
-            genomes: std::array::from_fn(|_| Genome::default()),
+            genomes: std::array::from_fn(|_| Genome::new_from_parameters(param)),
         }
     }
 }

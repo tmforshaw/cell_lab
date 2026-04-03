@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use cell_lab_macros::generate_enum;
 use serde::{Deserialize, Serialize};
 
-const GENOME_MODE_INDEX_COLOUR_OFFSET: f32 = 120.;
+use crate::game::game_parameters::GameParameters;
 
 #[derive(Component, Debug, Default, Clone, Copy, PartialEq, PartialOrd, Ord, Eq, Serialize, Deserialize)]
 pub enum CellType {
@@ -79,10 +79,10 @@ impl Default for GenomeMode {
 generate_enum!(GenomeModeId, M, GENOME_MODE_MAX_NUM, 9);
 
 #[must_use]
-pub fn colour_from_genome_mode_id(genome_mode_id: GenomeModeId) -> Color {
+pub fn colour_from_genome_mode_id(genome_mode_id: GenomeModeId, param: &GameParameters) -> Color {
     Color::hsv(
         (Into::<usize>::into(genome_mode_id) as f32 / GENOME_MODE_MAX_NUM as f32)
-            .mul_add(360.0, GENOME_MODE_INDEX_COLOUR_OFFSET)
+            .mul_add(360.0, param.genome_mode_colour_offset)
             .rem_euclid(360.),
         0.8,
         0.9,

@@ -6,11 +6,9 @@ use crate::{
     cell_editor::state::CellEditorState,
     cells::{Cell, CellMaterial, SelectionCellMaterial},
     despawning::PendingDespawn,
+    game::game_parameters::GameParameters,
     genomes::GenomeBank,
 };
-
-pub const SELECTION_COLOUR: Color = Color::linear_rgb(1.0, 1.0, 0.0);
-pub const SELECTION_SCALE: f32 = 1.05;
 
 #[derive(Component)]
 pub struct SelectedCell;
@@ -110,6 +108,7 @@ pub fn remove_selection_borders(
 pub fn add_selection_borders(
     mut commands: Commands,
     state: Res<CellEditorState>,
+    param: Res<GameParameters>,
     mut selection_materials: ResMut<Assets<SelectionCellMaterial>>,
     mut cell_materials: ResMut<Assets<CellMaterial>>,
     added: Query<(Entity, &Cell, &Mesh2d, &MeshMaterial2d<CellMaterial>), (Added<SelectedCell>, Without<PendingDespawn>)>,
@@ -141,9 +140,9 @@ pub fn add_selection_borders(
             parent.spawn((
                 cell_mesh.clone(),
                 MeshMaterial2d(selection_materials.add(SelectionCellMaterial {
-                    colour: SELECTION_COLOUR.to_linear().to_vec4(),
+                    colour: param.selection_parameters.colour.to_linear().to_vec4(),
                 })),
-                Transform::from_xyz(0., 0., -0.1).with_scale(Vec3::splat(SELECTION_SCALE)),
+                Transform::from_xyz(0., 0., -0.1).with_scale(Vec3::splat(param.selection_parameters.scale)),
                 SelectionBorder,
             ));
         });

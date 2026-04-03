@@ -1,12 +1,11 @@
 use bevy::{math::bounding::Aabb2d, prelude::*};
 
 use crate::{
-    cells::{CELL_MAX_VELOCITY, Cell, Velocity},
+    cells::{Cell, Velocity},
     despawning::PendingDespawn,
+    game::game_parameters::GameParameters,
     spatial_partitioning::cell_quadtree::CellQuadTree,
 };
-
-const IMPULSE_STRENGTH_SCALE_FACTOR: f32 = 10.;
 
 #[must_use]
 pub fn aabb_contains_point(aabb: &Aabb2d, p: Vec2) -> bool {
@@ -20,6 +19,7 @@ pub fn resolve_cell_collision(
     cell2_cell: &Cell,
     cell2_transform: &mut Transform,
     cell2_velocity: &mut Velocity,
+    param: &GameParameters,
 ) {
     // Get the displacement and combined radius for the cells
     let displacement = (cell1_transform.translation - cell2_transform.translation).xy();
@@ -29,8 +29,8 @@ pub fn resolve_cell_collision(
     // Cells are overlapping
     if distance < combined_radius {
         // Utilise mass to get a conservation of momentum-style correction
-        let cell1_mass = cell1.get_mass();
-        let cell2_mass = cell2_cell.get_mass();
+        let cell1_mass = cell1.get_mass(param);
+        let cell2_mass = cell2_cell.get_mass(param);
         let combined_mass = cell1_mass + cell2_mass;
 
         // Get the mass ratios to perform momentum conservation (Use other cell's mass to give correct result)
@@ -49,15 +49,15 @@ pub fn resolve_cell_collision(
         cell2_transform.translation -= correction * cell2_mass_ratio;
 
         // Define the impulse strength based on the overlap amount
-        let impulse_strength = overlap * IMPULSE_STRENGTH_SCALE_FACTOR;
+        let impulse_strength = overlap * param.collision_impulse_scale;
 
         // Add impulse velocities to the cells
         cell1_velocity.0 += dir * impulse_strength * cell1_mass_ratio;
         cell2_velocity.0 -= dir * impulse_strength * cell2_mass_ratio;
 
         // Clamp the total velocity
-        cell1_velocity.0 = cell1_velocity.0.clamp_length_max(CELL_MAX_VELOCITY);
-        cell2_velocity.0 = cell2_velocity.0.clamp_length_max(CELL_MAX_VELOCITY);
+        cell1_velocity.0 = cell1_velocity.0.clamp_length_max(param.cell_parameters.max_velocity);
+        cell2_velocity.0 = cell2_velocity.0.clamp_length_max(param.cell_parameters.max_velocity);
 
         // Check to see if cells are overlapping still, then apply some momentum in the normal direction
         let new_displacement = cell1_transform.translation - cell2_transform.translation;
@@ -74,15 +74,15 @@ pub fn resolve_cell_collision(
             cell2_transform.translation -= correction * cell2_mass_ratio;
 
             // Calculate additional velocity in the normal direction
-            let new_impulse_strength = new_overlap * IMPULSE_STRENGTH_SCALE_FACTOR;
+            let new_impulse_strength = new_overlap * param.collision_impulse_scale;
 
             // Add addditional impulse velocities to the cells
             cell1_velocity.0 += normal_dir * new_impulse_strength * cell1_mass_ratio;
             cell2_velocity.0 -= normal_dir * new_impulse_strength * cell2_mass_ratio;
 
             // Clamp the total velocity
-            cell1_velocity.0 = cell1_velocity.0.clamp_length_max(CELL_MAX_VELOCITY);
-            cell2_velocity.0 = cell2_velocity.0.clamp_length_max(CELL_MAX_VELOCITY);
+            cell1_velocity.0 = cell1_velocity.0.clamp_length_max(param.cell_parameters.max_velocity);
+            cell2_velocity.0 = cell2_velocity.0.clamp_length_max(param.cell_parameters.max_velocity);
         }
     }
 }
@@ -90,6 +90,7 @@ pub fn resolve_cell_collision(
 #[allow(clippy::needless_pass_by_value)]
 pub fn collision_system(
     cell_quadtree: Res<CellQuadTree>,
+    param: Res<GameParameters>,
     mut cells: Query<(Entity, &Cell, &mut Transform, &mut Velocity), Without<PendingDespawn>>,
 ) {
     // Create a read-only Vec so that the collision resolution can borrow 'cells' mutably
@@ -131,6 +132,7 @@ pub fn collision_system(
                     cell2,
                     &mut cell2_transform,
                     &mut cell2_velocity,
+                    &param,
                 );
             }
         }

@@ -1,7 +1,6 @@
 use bevy::prelude::*;
 
 use crate::{
-    WINDOW_SIZE,
     cell_editor::{
         editor_age::CellEditorAge,
         simulation::CellEditorSimulationStatus,
@@ -9,48 +8,17 @@ use crate::{
         ui_dialog::CellEditorUiDialogState,
     },
     cells::Cell,
+    game::game_parameters::GameParameters,
     genomes::{Genome, GenomeBank, GenomeId, GenomeMode, GenomeModeId},
-    simulation::dish::{Dish, DishMarker},
+    simulation::dish::DishMarker,
 };
 
-pub const CELL_EDITOR_SIZE: Vec2 = WINDOW_SIZE;
-
-// Cell Parameters
-pub const CELL_EDITOR_CELL_SIZE_PER_MASS: f32 = 50.;
-const CELL_EDITOR_CELL_ENERGY_GAIN_RATE: f32 = 1.5;
-const CELL_EDITOR_CELL_ENERGY_DECAY_RATE: f32 = 0.5;
-
-// Simulation Parameters
-const CELL_EDITOR_SIMULATION_RATE: f32 = 60.;
-pub const CELL_EDITOR_SIMULATION_DELTA_TIME: f32 = 1. / CELL_EDITOR_SIMULATION_RATE;
-
-#[derive(Resource)]
+#[derive(Resource, Default)]
 pub struct CellEditorState {
     pub selected_genome_mode: GenomeModeId,
     pub selected_genome: GenomeId,
     pub editor_age: CellEditorAge,
-    pub dish: Dish,
-    pub cell_size_per_mass: f32,
-    pub cell_energy_gain_rate: f32,
-    pub cell_energy_decay_rate: f32,
     pub dialogs: CellEditorUiDialogState,
-    pub simulation_delta_time: f32,
-}
-
-impl Default for CellEditorState {
-    fn default() -> Self {
-        Self {
-            selected_genome_mode: GenomeModeId::default(),
-            selected_genome: GenomeId::default(),
-            editor_age: CellEditorAge::default(),
-            dish: Dish::new(CELL_EDITOR_SIZE),
-            cell_size_per_mass: CELL_EDITOR_CELL_SIZE_PER_MASS,
-            cell_energy_gain_rate: CELL_EDITOR_CELL_ENERGY_GAIN_RATE,
-            cell_energy_decay_rate: CELL_EDITOR_CELL_ENERGY_DECAY_RATE,
-            dialogs: CellEditorUiDialogState::default(),
-            simulation_delta_time: CELL_EDITOR_SIMULATION_DELTA_TIME,
-        }
-    }
 }
 
 impl CellEditorState {
@@ -76,7 +44,7 @@ impl CellEditorState {
 }
 
 #[allow(clippy::needless_pass_by_value)]
-pub fn init_cell_editor_mode(mut commands: Commands, state: ResMut<CellEditorState>) {
+pub fn init_cell_editor_mode(mut commands: Commands, param: Res<GameParameters>) {
     // Insert the simulation resources
     commands.insert_resource(CellHistoryCache::default());
     commands.insert_resource(CellEditorSimulationState::default());
@@ -85,7 +53,7 @@ pub fn init_cell_editor_mode(mut commands: Commands, state: ResMut<CellEditorSta
     commands.set_state(CellEditorSimulationStatus::NeedsRecompute);
 
     // Spawn dish
-    commands.spawn(state.dish.into_bundle());
+    commands.spawn(param.cell_editor_mode.dish_parameters.get_dish_bundle());
 }
 
 pub fn exit_cell_editor_mode(

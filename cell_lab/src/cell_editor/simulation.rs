@@ -6,7 +6,8 @@ use crate::{
         snapshot::{CellEditorSimulationState, CellHistoryCache},
         state::CellEditorState,
     },
-    cells::{CELL_MAX_ENERGY, CELL_MIN_ENERGY, CellMaterial, Velocity, cell::CellBundle},
+    cells::{CellMaterial, Velocity, cell::CellBundle},
+    game::{game_mode::GameMode, game_parameters::GameParameters},
     genomes::{CellSplitType, GenomeBank, daughters::DaughterData},
 };
 
@@ -41,41 +42,35 @@ pub fn clear_simulation_cache_message_reader(
 pub fn simulate_to_editor_age(
     mut sim: ResMut<CellEditorSimulationState>,
     state: Res<CellEditorState>,
+    param: Res<GameParameters>,
+    game_mode: Res<State<GameMode>>,
     mut cache: ResMut<CellHistoryCache>,
-    genome_mode: Res<GenomeBank>,
+    genome_bank: Res<GenomeBank>,
 ) {
     let target_time = state.editor_age.get_age();
-    let dt = state.simulation_delta_time;
+    let dt = param.cell_editor_mode.simulation_parameters.delta_time;
 
     // Load best snapshot, or reset
     if let Some(snapshot) = cache.get_closest_past_snapshot(target_time) {
         sim.cells = snapshot.cells.clone();
         sim.current_time = snapshot.time;
     } else {
-        sim.cells = vec![create_root_logical_cell(&state, &genome_mode)];
+        sim.cells = vec![create_root_logical_cell(&state, &param, &game_mode, &genome_bank)];
         sim.current_time = 0.0;
     }
 
     // Simulate forward from the selected time
     while sim.current_time < target_time {
         let current_time = sim.current_time;
-        step_simulation(
-            &mut sim.cells,
-            dt,
-            current_time,
-            state.cell_energy_gain_rate,
-            state.cell_energy_decay_rate,
-            state.dish.size,
-            &genome_mode,
-        );
+        step_simulation(&mut sim.cells, dt, current_time, &param, &game_mode, &genome_bank);
 
         sim.current_time += dt;
 
         // Cache snapshot if needed
-        if cache.should_store_snapshot(sim.current_time) {
+        if cache.should_store_snapshot(sim.current_time, &param) {
             cache.insert(&sim.cells, sim.current_time);
 
-            cache.trim();
+            cache.trim(&param);
         }
     }
 }
@@ -84,9 +79,8 @@ pub fn step_simulation(
     cells: &mut Vec<LogicalCell>,
     dt: f32,
     current_time: f32,
-    cell_energy_gain_rate: f32,
-    cell_energy_decay_rate: f32,
-    editor_size: Vec2,
+    param: &GameParameters,
+    game_mode: &GameMode,
     genome_bank: &GenomeBank,
 ) {
     // Update age, energy, and size
@@ -96,11 +90,12 @@ pub fn step_simulation(
         lc.cell.age = current_time - lc.time_of_birth;
 
         // Cell will die from lack of energy
-        if lc.cell.energy <= CELL_MIN_ENERGY {
+        if lc.cell.energy <= param.cell_parameters.min_energy {
             cells.swap_remove(i);
         } else {
-            lc.cell.energy += ((cell_energy_gain_rate - cell_energy_decay_rate) * dt).min(CELL_MAX_ENERGY);
-            lc.transform.scale = lc.cell.get_size().extend(1.);
+            lc.cell.energy += ((param.cell_editor_mode.cell_energy_gain_rate - param.cell_energy_decay_rate) * dt)
+                .min(param.cell_parameters.max_energy);
+            lc.transform.scale = lc.cell.get_size(param, game_mode).extend(1.);
 
             i += 1; // Only advance if nothing was removed
         }
@@ -113,9 +108,9 @@ pub fn step_simulation(
 
         let pos = &mut lc.transform.translation;
         let vel = &mut lc.velocity.0;
-        let cell_size = lc.cell.get_size() * 0.5;
+        let cell_size = lc.cell.get_size(param, game_mode) * 0.5;
 
-        let half_bounds_size = editor_size * 0.5;
+        let half_bounds_size = param.cell_editor_mode.dish_parameters.size * 0.5;
 
         // Editor bounds reflect velocity
 
@@ -133,7 +128,7 @@ pub fn step_simulation(
     }
 
     // Resolve Collisions
-    resolve_logical_cell_collision(cells, editor_size);
+    resolve_logical_cell_collision(cells, param, game_mode);
 
     // Splitting
     let mut new_cells = Vec::new();
@@ -150,7 +145,14 @@ pub fn step_simulation(
             let parent = cells.swap_remove(i);
 
             // Get data for daughters
-            let (d1, d2) = DaughterData::get_from_parent(&parent.cell, &parent.velocity, &parent.transform, genome_bank);
+            let (d1, d2) = DaughterData::get_from_parent(
+                &parent.cell,
+                &parent.velocity,
+                &parent.transform,
+                param,
+                game_mode,
+                genome_bank,
+            );
 
             let time_of_birth = current_time;
 

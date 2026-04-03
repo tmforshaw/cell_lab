@@ -12,26 +12,21 @@ use crate::{
         state::CellEditorState,
         ui_dialog::{default_genome_mode_dialog, load_or_delete_dialog, save_or_overwrite_dialog},
     },
-    cells::{CELL_MAX_ENERGY, CELL_MAX_SPLIT_AGE},
+    game::game_parameters::GameParameters,
     genomes::{CellSplitType, CellType, GenomeBank, GenomeModeId},
-    ui::{SEPARATOR_SPACING, SUBSECTION_SPACING},
 };
-
-const CELL_EDITOR_RIGHT_PANEL_WIDTH: f32 = 500.;
-const CELL_EDITOR_SLIDER_WIDTH: f32 = CELL_EDITOR_RIGHT_PANEL_WIDTH * 0.55;
-const MAX_EDITOR_AGE: f32 = 30.;
 
 #[derive(Resource, Default)]
 pub struct CellEditorUiStyleApplied(bool);
 
-#[allow(clippy::too_many_lines)]
-#[allow(clippy::too_many_arguments)]
+#[allow(clippy::too_many_lines, clippy::too_many_arguments, clippy::needless_pass_by_value)]
 /// # Errors
 /// Returns an error if egui ui context cannot be found
 pub fn cell_editor_ui_update(
     mut egui_ctx: EguiContexts,
     mut genome_bank: ResMut<GenomeBank>,
     mut state: ResMut<CellEditorState>,
+    param: Res<GameParameters>,
     mut sim_status: ResMut<NextState<CellEditorSimulationStatus>>,
     mut cell_editor_style_applied: ResMut<CellEditorUiStyleApplied>,
     mut selected_genome_mode_message_writer: MessageWriter<CellEditorSelectedGenomeModeMessage>,
@@ -46,13 +41,13 @@ pub fn cell_editor_ui_update(
     };
 
     // Set the cell editor UI style
-    set_cell_editor_ui_style(ctx, &mut cell_editor_style_applied.0);
+    set_cell_editor_ui_style(ctx, &mut cell_editor_style_applied.0, &param);
 
     // Right panel
     egui::SidePanel::right("cell_editor_panel")
         .resizable(false)
-        .min_width(CELL_EDITOR_RIGHT_PANEL_WIDTH)
-        .max_width(CELL_EDITOR_RIGHT_PANEL_WIDTH)
+        .min_width(param.ui_parameters.cell_editor_panel_width)
+        .max_width(param.ui_parameters.cell_editor_panel_width)
         .show(ctx, |ui| {
             // Genome Mode selection
             ui.horizontal(|ui| {
@@ -68,7 +63,7 @@ pub fn cell_editor_ui_update(
                 })
             });
 
-            ui.add_space(SUBSECTION_SPACING);
+            ui.add_space(param.ui_parameters.separator_spacing);
 
             ui.horizontal(|ui| {
                 // Save button
@@ -87,9 +82,9 @@ pub fn cell_editor_ui_update(
                 }
             });
 
-            ui.add_space(SEPARATOR_SPACING);
+            ui.add_space(param.ui_parameters.separator_spacing);
             ui.separator();
-            ui.add_space(SEPARATOR_SPACING);
+            ui.add_space(param.ui_parameters.separator_spacing);
 
             ui.horizontal(|ui| {
                 let mut checked = state.selected_genome_mode == state.get_selected_genome(&genome_bank).initial;
@@ -106,7 +101,7 @@ pub fn cell_editor_ui_update(
                     }
                 }
 
-                ui.add_space(SUBSECTION_SPACING);
+                ui.add_space(param.ui_parameters.subsection_spacing);
 
                 // Cell type selection
                 ui.label("Cell Type:");
@@ -136,9 +131,9 @@ pub fn cell_editor_ui_update(
                     });
             });
 
-            ui.add_space(SEPARATOR_SPACING);
+            ui.add_space(param.ui_parameters.separator_spacing);
             ui.separator();
-            ui.add_space(SEPARATOR_SPACING);
+            ui.add_space(param.ui_parameters.separator_spacing);
 
             // Daughter 1 parameters
             let genome_mode_mut = state.get_selected_genome_mode_mut(&mut genome_bank);
@@ -147,6 +142,7 @@ pub fn cell_editor_ui_update(
                 &mut genome_mode_mut.daughter_genome_modes.0,
                 &mut genome_mode_mut.daughter_angles.0,
                 0,
+                &param,
             ) {
                 // Daughter 1 was changed
 
@@ -161,6 +157,7 @@ pub fn cell_editor_ui_update(
                 &mut genome_mode_mut.daughter_genome_modes.1,
                 &mut genome_mode_mut.daughter_angles.1,
                 1,
+                &param,
             ) {
                 // Daughter 2 was changed
 
@@ -182,9 +179,9 @@ pub fn cell_editor_ui_update(
                 }
             });
 
-            ui.add_space(SEPARATOR_SPACING);
+            ui.add_space(param.ui_parameters.separator_spacing);
             ui.separator();
-            ui.add_space(SEPARATOR_SPACING);
+            ui.add_space(param.ui_parameters.separator_spacing);
 
             // Select "use split age" or "use split energy"
             ui.horizontal(|ui| {
@@ -226,7 +223,7 @@ pub fn cell_editor_ui_update(
                         if ui
                             .add(egui::Slider::new(
                                 &mut state.get_selected_genome_mode_mut(&mut genome_bank).split_energy,
-                                0.0..=CELL_MAX_ENERGY,
+                                0.0..=param.cell_parameters.max_energy,
                             ))
                             .changed()
                         {
@@ -244,7 +241,7 @@ pub fn cell_editor_ui_update(
                         if ui
                             .add(egui::Slider::new(
                                 &mut state.get_selected_genome_mode_mut(&mut genome_bank).split_age,
-                                0.0..=CELL_MAX_SPLIT_AGE,
+                                0.0..=param.cell_parameters.max_split_age,
                             ))
                             .changed()
                         {
@@ -275,7 +272,7 @@ pub fn cell_editor_ui_update(
                 }
             });
 
-            ui.add_space(SUBSECTION_SPACING);
+            ui.add_space(param.ui_parameters.subsection_spacing);
 
             // Split angle parameter
             let mut angle_degrees = -state.get_selected_genome_mode(&genome_bank).split_angle.to_degrees();
@@ -290,7 +287,7 @@ pub fn cell_editor_ui_update(
                 }
             });
 
-            ui.add_space(SUBSECTION_SPACING);
+            ui.add_space(param.ui_parameters.subsection_spacing);
 
             // Split force parameter
             ui.horizontal(|ui| {
@@ -322,7 +319,7 @@ pub fn cell_editor_ui_update(
 
                 let mut age = state.editor_age.get_age();
                 if ui
-                    .add(egui::Slider::new(&mut age, 0.0..=MAX_EDITOR_AGE).show_value(true))
+                    .add(egui::Slider::new(&mut age, 0.0..=param.cell_editor_mode.max_editor_age).show_value(true))
                     .changed()
                 {
                     // Age was changed
@@ -339,7 +336,13 @@ pub fn cell_editor_ui_update(
     let selected_genome = state.get_selected_genome_mut(&mut genome_bank);
     save_or_overwrite_dialog(ctx, &mut state.dialogs, selected_genome);
 
-    load_or_delete_dialog(ctx, &mut state.dialogs, selected_genome, &mut simulation_cache_message_writer);
+    load_or_delete_dialog(
+        ctx,
+        &mut state.dialogs,
+        selected_genome,
+        &param,
+        &mut simulation_cache_message_writer,
+    );
 
     let selected_genome_mode = state.get_selected_genome_mode_mut(&mut genome_bank);
     let selected_genome_mode_id = state.selected_genome_mode;
@@ -348,20 +351,21 @@ pub fn cell_editor_ui_update(
         &mut state.dialogs,
         selected_genome_mode,
         selected_genome_mode_id,
+        &param,
         &mut simulation_cache_message_writer,
     );
 
     Ok(())
 }
 
-pub fn set_cell_editor_ui_style(ctx: &mut Context, cell_editor_style_applied: &mut bool) {
+pub fn set_cell_editor_ui_style(ctx: &mut Context, cell_editor_style_applied: &mut bool, param: &GameParameters) {
     // Set the styles
     if !*cell_editor_style_applied {
         let mut style = (*ctx.style()).clone();
         for font_id in style.text_styles.values_mut() {
             font_id.size *= 1.5; // Scale all fonts
         }
-        style.spacing.slider_width = CELL_EDITOR_SLIDER_WIDTH;
+        style.spacing.slider_width = param.ui_parameters.get_cell_editor_slider_width();
 
         // Colors for sliders
         style.visuals.widgets.inactive.bg_fill = Color32::from_rgb(0, 180, 10);
@@ -408,12 +412,13 @@ pub fn create_daughter_subsection(
     daughter_genome_mode: &mut GenomeModeId,
     daughter_angle: &mut f32,
     daughter_index: usize,
+    param: &GameParameters,
 ) -> bool {
     let mut changed = false;
 
     // Daughter parameters
     ui.label(format!("Daughter {}: ", daughter_index + 1));
-    ui.add_space(SUBSECTION_SPACING);
+    ui.add_space(param.ui_parameters.subsection_spacing);
     ui.horizontal(|ui| {
         ui.label("Mode: ");
         changed = create_mode_combo_box(daughter_genome_mode, ui, format!("daughter_{daughter_index}_mode"));
@@ -431,9 +436,9 @@ pub fn create_daughter_subsection(
     });
 
     // Add Separator
-    ui.add_space(SEPARATOR_SPACING);
+    ui.add_space(param.ui_parameters.separator_spacing);
     ui.separator();
-    ui.add_space(SEPARATOR_SPACING);
+    ui.add_space(param.ui_parameters.separator_spacing);
 
     changed
 }
