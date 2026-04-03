@@ -61,7 +61,6 @@ pub const WINDOW_SIZE: Vec2 = Vec2::splat(1200.);
 // TODO Add semi-sanitise filename where spaces are shown as spaces, but replaced with _ later on
 // TODO Message popup when trying to save empty filename
 // TODO Add Load default genome bank button within the load dialog
-// TODO Cell editor doesn't have cells dying from energy being too low
 // TODO Add names when saving file, so you can quickly name something the same as an existing genome
 
 pub mod cell_editor;
