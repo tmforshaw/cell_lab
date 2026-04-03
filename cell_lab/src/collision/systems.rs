@@ -52,8 +52,38 @@ pub fn resolve_cell_collision(
         let impulse_strength = overlap * IMPULSE_STRENGTH_SCALE_FACTOR;
 
         // Add impulse velocities to the cells
-        cell1_velocity.0 += (dir * impulse_strength * cell1_mass_ratio).clamp_length_max(CELL_MAX_VELOCITY);
-        cell2_velocity.0 -= (dir * impulse_strength * cell2_mass_ratio).clamp_length_max(CELL_MAX_VELOCITY);
+        cell1_velocity.0 += dir * impulse_strength * cell1_mass_ratio;
+        cell2_velocity.0 -= dir * impulse_strength * cell2_mass_ratio;
+
+        // Clamp the total velocity
+        cell1_velocity.0 = cell1_velocity.0.clamp_length_max(CELL_MAX_VELOCITY);
+        cell2_velocity.0 = cell2_velocity.0.clamp_length_max(CELL_MAX_VELOCITY);
+
+        // Check to see if cells are overlapping still, then apply some momentum in the normal direction
+        let new_displacement = cell1_transform.translation - cell2_transform.translation;
+        let new_overlap = combined_radius - new_displacement.length();
+        if new_overlap > 0.0 {
+            // Get the perpendicular direction w.r.t the vector between both cells
+            let normal_dir = new_displacement.normalize().cross(Vec3::Z).xy();
+
+            // Correct the position in the normal direction, with the new overlap as the magnitude
+            let correction = (normal_dir * new_overlap).extend(0.);
+
+            // Additional positional correction of the cells
+            cell1_transform.translation += correction * cell1_mass_ratio;
+            cell2_transform.translation -= correction * cell2_mass_ratio;
+
+            // Calculate additional velocity in the normal direction
+            let new_impulse_strength = new_overlap * IMPULSE_STRENGTH_SCALE_FACTOR;
+
+            // Add addditional impulse velocities to the cells
+            cell1_velocity.0 += normal_dir * new_impulse_strength * cell1_mass_ratio;
+            cell2_velocity.0 -= normal_dir * new_impulse_strength * cell2_mass_ratio;
+
+            // Clamp the total velocity
+            cell1_velocity.0 = cell1_velocity.0.clamp_length_max(CELL_MAX_VELOCITY);
+            cell2_velocity.0 = cell2_velocity.0.clamp_length_max(CELL_MAX_VELOCITY);
+        }
     }
 }
 

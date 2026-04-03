@@ -1,6 +1,9 @@
 use bevy::prelude::*;
 
-use crate::cell_editor::logical_cell::LogicalCell;
+use crate::cell_editor::{logical_cell::LogicalCell, state::CELL_EDITOR_SIMULATION_DELTA_TIME};
+
+// Have the interval be N frames of simulation
+pub const SNAPSHOT_INTERVAL: f32 = CELL_EDITOR_SIMULATION_DELTA_TIME * 10.0;
 
 #[derive(Clone)]
 pub struct CellsSnapshot {
@@ -32,8 +35,6 @@ impl CellHistoryCache {
 
     #[must_use]
     pub fn should_store_snapshot(&self, time: f32) -> bool {
-        const SNAPSHOT_INTERVAL: f32 = 0.5;
-
         self.snapshots.last().is_none_or(|last| time - last.time >= SNAPSHOT_INTERVAL)
     }
 

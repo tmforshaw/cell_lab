@@ -68,6 +68,7 @@ pub mod spatial_partitioning;
 pub mod ui;
 
 // TODO need to show that cell spawned even if it dies instantly (When splitting into a tiny cell)
+// TODO move constants into adjustable parameters at runtime
 
 fn main() {
     App::new()

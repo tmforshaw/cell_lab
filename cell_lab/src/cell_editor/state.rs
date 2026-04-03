@@ -14,10 +14,15 @@ use crate::{
 };
 
 pub const CELL_EDITOR_SIZE: Vec2 = WINDOW_SIZE;
+
+// Cell Parameters
 pub const CELL_EDITOR_CELL_SIZE_PER_MASS: f32 = 50.;
 const CELL_EDITOR_CELL_ENERGY_GAIN_RATE: f32 = 1.5;
 const CELL_EDITOR_CELL_ENERGY_DECAY_RATE: f32 = 0.5;
-const CELL_EDITOR_SIMULATION_DELTA_TIME: f32 = 0.02;
+
+// Simulation Parameters
+const CELL_EDITOR_SIMULATION_RATE: f32 = 60.;
+pub const CELL_EDITOR_SIMULATION_DELTA_TIME: f32 = 1. / CELL_EDITOR_SIMULATION_RATE;
 
 #[derive(Resource)]
 pub struct CellEditorState {
