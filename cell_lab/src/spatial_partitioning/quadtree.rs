@@ -94,8 +94,10 @@ pub struct QuadTree<I: Copy> {
 impl<Id: Copy> QuadTree<Id> {
     #[must_use]
     pub fn new(centre: Vec2, size: Vec2, max_depth: usize, max_capacity_per_node: usize) -> Self {
+        let squared_size = Vec2::splat(size.x.max(size.y));
+
         Self {
-            root: QuadTreeNode::new(Aabb2d::new(centre, size * 0.5), 0),
+            root: QuadTreeNode::new(Aabb2d::new(centre, squared_size * 0.5), 0),
             max_depth,
             node_capacity: max_capacity_per_node,
         }
