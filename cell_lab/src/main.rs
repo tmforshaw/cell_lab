@@ -64,6 +64,7 @@ pub const WINDOW_SIZE: Vec2 = Vec2::splat(1200.);
 // TODO Add Load default genome bank button within the load dialog
 // TODO Switch UI from saying genome when it means genome bank
 // TODO Cell editor doesn't have cells dying from energy being too low
+// TODO Selected cell isn't marked in the editor
 
 pub mod cell_editor;
 pub mod cells;
@@ -150,8 +151,10 @@ fn main() {
                 clear_simulation_cache_message_reader,
                 simulate_to_editor_age.after(clear_simulation_cache_message_reader),
                 spawn_cells_from_simulation.after(clear_cells).after(simulate_to_editor_age),
-                remove_selection_borders,
-                add_selection_borders,
+                remove_selection_borders.after(spawn_cells_from_simulation),
+                add_selection_borders
+                    .after(spawn_cells_from_simulation)
+                    .after(remove_selection_borders),
                 draw_cell_info,
                 build_quadtree::<CellQuadTree, Cell>,
                 visualise_quadtree::<Entity, CellQuadTree, ShowCellQuadTree, CellQuadTreeDebug>,

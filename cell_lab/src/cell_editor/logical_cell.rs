@@ -4,6 +4,7 @@ use crate::{
     cell_editor::state::{CELL_EDITOR_CELL_SIZE_PER_MASS, CellEditorState},
     cells::{CELL_STARTING_ENERGY, Cell, Velocity},
     collision::systems::resolve_cell_collision,
+    despawning::PendingDespawn,
     genomes::GenomeCollection,
     spatial_partitioning::{
         cell_quadtree::{CELL_QUADTREE_MAX_CAPACITY_PER_NODE, CELL_QUADTREE_MAX_DEPTH},
@@ -20,9 +21,9 @@ pub struct LogicalCell {
     pub velocity: Velocity,
     pub time_of_birth: f32,
 }
-pub fn clear_cells(mut commands: Commands, cells: Query<Entity, With<Cell>>) {
+pub fn clear_cells(mut commands: Commands, cells: Query<Entity, (With<Cell>, Without<PendingDespawn>)>) {
     for cell in cells {
-        commands.entity(cell).despawn();
+        commands.entity(cell).insert(PendingDespawn);
     }
 }
 

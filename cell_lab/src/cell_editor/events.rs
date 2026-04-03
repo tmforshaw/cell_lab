@@ -112,42 +112,54 @@ pub fn cell_editor_split_angle_message_reader(
     }
 }
 
-#[allow(clippy::type_complexity)]
-pub fn add_selection_borders(
+#[allow(clippy::type_complexity, clippy::needless_pass_by_value)]
+pub fn remove_selection_borders(
     mut commands: Commands,
-    mut materials: ResMut<Assets<SelectionCellMaterial>>,
-    query: Query<(Entity, &Mesh2d), (Added<SelectedCell>, Without<PendingDespawn>)>,
+    state: Res<CellEditorState>,
+    selected: Query<(Entity, &Cell), (With<SelectedCell>, Without<PendingDespawn>)>,
+    selection: Query<(Entity, &ChildOf), (With<SelectionBorder>, Without<PendingDespawn>)>,
 ) {
-    for (entity, mesh) in query.iter() {
-        let border_material = materials.add(SelectionCellMaterial {
-            colour: SELECTION_COLOUR.to_linear().to_vec4(),
-        });
+    for (entity, parent) in selection {
+        // If the parent's genome id is not the selected genome
+        if let Ok((parent, parent_cell)) = selected.get(parent.parent())
+            && parent_cell.genome_id != state.selected_genome
+        {
+            // Remove SelectedCell Marker From Parent
+            commands.entity(parent).remove::<SelectedCell>();
 
-        commands.entity(entity).with_children(|parent| {
-            parent.spawn((
-                mesh.clone(),
-                MeshMaterial2d(border_material),
-                Transform::from_xyz(0., 0., -0.1).with_scale(Vec3::splat(SELECTION_SCALE)),
-                SelectionBorder,
-            ));
-        });
+            // Despawn Selection Entity
+            commands.entity(entity).insert(PendingDespawn);
+        }
     }
 }
 
-#[allow(clippy::needless_pass_by_value)]
-pub fn remove_selection_borders(
+#[allow(clippy::type_complexity, clippy::needless_pass_by_value)]
+pub fn add_selection_borders(
     mut commands: Commands,
-    mut removed_selections: RemovedComponents<SelectedCell>,
-    children_query: Query<&Children, Without<PendingDespawn>>,
-    border_query: Query<(), (With<SelectionBorder>, Without<PendingDespawn>)>,
+    state: Res<CellEditorState>,
+    mut materials: ResMut<Assets<SelectionCellMaterial>>,
+    unselected: Query<(Entity, &Cell, &Mesh2d), (Without<SelectedCell>, Without<PendingDespawn>)>,
 ) {
-    for entity in removed_selections.read() {
-        if let Ok(children) = children_query.get(entity) {
-            for &child in children {
-                if border_query.get(child).is_ok() {
-                    commands.entity(child).insert(PendingDespawn);
-                }
-            }
+    // Add selection to unselected if necessary
+    for (entity, cell, mesh) in unselected {
+        // This cell should be selected
+        if cell.genome_id == state.selected_genome {
+            let border_material = materials.add(SelectionCellMaterial {
+                colour: SELECTION_COLOUR.to_linear().to_vec4(),
+            });
+
+            // Add SelectedCell Marker
+            commands.entity(entity).insert(SelectedCell);
+
+            // Add Selection Mesh
+            commands.entity(entity).with_children(|parent| {
+                parent.spawn((
+                    mesh.clone(),
+                    MeshMaterial2d(border_material),
+                    Transform::from_xyz(0., 0., -0.1).with_scale(Vec3::splat(SELECTION_SCALE)),
+                    SelectionBorder,
+                ));
+            });
         }
     }
 }
