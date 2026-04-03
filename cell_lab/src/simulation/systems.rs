@@ -173,7 +173,7 @@ pub fn spawn_chemicals(
     time: Res<Time>,
     state: Res<SimulationState>,
     mut timer: ResMut<ChemicalTimer>,
-    chemicals: Query<(), With<Chemical>>,
+    chemicals: Query<(), (With<Chemical>, Without<PendingDespawn>)>,
 ) {
     timer.0.tick(time.delta());
 

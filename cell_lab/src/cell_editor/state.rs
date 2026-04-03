@@ -15,6 +15,7 @@ use crate::{
 pub const CELL_EDITOR_SIZE: Vec2 = WINDOW_SIZE;
 pub const CELL_EDITOR_CELL_SIZE_PER_MASS: f32 = 20.;
 const CELL_EDITOR_CELL_ENERGY_GAIN_RATE: f32 = 2.;
+const CELL_EDITOR_CELL_ENERGY_DECAY_RATE: f32 = 0.5;
 const CELL_EDITOR_SIMULATION_DELTA_TIME: f32 = 0.02;
 
 #[derive(Resource)]
@@ -25,6 +26,7 @@ pub struct CellEditorState {
     pub dish: Dish,
     pub cell_size_per_mass: f32,
     pub cell_energy_gain_rate: f32,
+    pub cell_energy_decay_rate: f32,
     pub dialogs: CellEditorUiDialogState,
     pub simulation_delta_time: f32,
 }
@@ -38,6 +40,7 @@ impl Default for CellEditorState {
             dish: Dish::new(CELL_EDITOR_SIZE),
             cell_size_per_mass: CELL_EDITOR_CELL_SIZE_PER_MASS,
             cell_energy_gain_rate: CELL_EDITOR_CELL_ENERGY_GAIN_RATE,
+            cell_energy_decay_rate: CELL_EDITOR_CELL_ENERGY_DECAY_RATE,
             dialogs: CellEditorUiDialogState::default(),
             simulation_delta_time: CELL_EDITOR_SIMULATION_DELTA_TIME,
         }

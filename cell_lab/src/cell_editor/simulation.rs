@@ -6,7 +6,7 @@ use crate::{
         snapshot::{CellEditorSimulationState, CellHistoryCache},
         state::CellEditorState,
     },
-    cells::{CELL_MAX_ENERGY, CellMaterial, Velocity, cell::CellBundle},
+    cells::{CELL_MAX_ENERGY, CELL_MIN_ENERGY, CellMaterial, Velocity, cell::CellBundle},
     genomes::{CellSplitType, GenomeBank, daughters::DaughterData},
 };
 
@@ -64,6 +64,7 @@ pub fn simulate_to_editor_age(
             dt,
             current_time,
             state.cell_energy_gain_rate,
+            state.cell_energy_decay_rate,
             state.dish.size,
             &genome_mode,
         );
@@ -84,15 +85,25 @@ pub fn step_simulation(
     dt: f32,
     current_time: f32,
     cell_energy_gain_rate: f32,
+    cell_energy_decay_rate: f32,
     editor_size: Vec2,
     genome_bank: &GenomeBank,
 ) {
     // Update age, energy, and size
-    for lc in cells.iter_mut() {
+    let mut i = 0;
+    while i < cells.len() {
+        let lc = &mut cells[i];
         lc.cell.age = current_time - lc.time_of_birth;
 
-        lc.cell.energy += (cell_energy_gain_rate * dt).min(CELL_MAX_ENERGY);
-        lc.transform.scale = lc.cell.get_size().extend(1.);
+        // Cell will die from lack of energy
+        if lc.cell.energy <= CELL_MIN_ENERGY {
+            cells.swap_remove(i);
+        } else {
+            lc.cell.energy += ((cell_energy_gain_rate - cell_energy_decay_rate) * dt).min(CELL_MAX_ENERGY);
+            lc.transform.scale = lc.cell.get_size().extend(1.);
+
+            i += 1; // Only advance if nothing was removed
+        }
     }
 
     // Movement
@@ -159,7 +170,7 @@ pub fn step_simulation(
                 time_of_birth,
             });
         } else {
-            i += 1;
+            i += 1; // Only advance if nothing was removed
         }
     }
 
