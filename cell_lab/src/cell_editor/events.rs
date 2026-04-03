@@ -3,10 +3,7 @@ use std::collections::HashMap;
 use bevy::prelude::*;
 
 use crate::{
-    cell_editor::{
-        drawing::{SplitAngleArrow, draw_split_angle_arrow_as_child},
-        state::CellEditorState,
-    },
+    cell_editor::state::CellEditorState,
     cells::{Cell, CellMaterial, SelectionCellMaterial},
     despawning::PendingDespawn,
     genomes::GenomeBank,
@@ -29,9 +26,6 @@ pub struct CellEditorSelectedGenomeModeMessage;
 
 #[derive(Message, Debug, Clone)]
 pub struct CellEditorColourMessage;
-
-#[derive(Message, Debug, Clone)]
-pub struct CellEditorSplitAngleMessage;
 
 #[allow(clippy::needless_pass_by_value)]
 pub fn cell_editor_initial_genome_mode_message_reader(events: MessageReader<CellEditorInitialGenomeModeMessage>) {
@@ -78,31 +72,6 @@ pub fn cell_editor_colour_message_reader(
     }
 }
 
-#[allow(clippy::needless_pass_by_value, clippy::type_complexity)]
-pub fn cell_editor_split_angle_message_reader(
-    mut commands: Commands,
-    events: MessageReader<CellEditorSplitAngleMessage>,
-    genome_bank: Res<GenomeBank>,
-    state: Res<CellEditorState>,
-    arrows: Query<(Entity, &ChildOf), (With<SplitAngleArrow>, Without<PendingDespawn>)>,
-    selected_entities: Query<Entity, (With<SelectedCell>, Without<PendingDespawn>)>,
-    selected_cells: Query<(Entity, &Cell), (With<SelectedCell>, Without<PendingDespawn>)>,
-) {
-    if !events.is_empty() {
-        // Despawn the previous arrows
-        for (arrow_entity, child_of) in arrows {
-            if selected_entities.get(child_of.parent()).is_ok() {
-                commands.entity(arrow_entity).insert(PendingDespawn);
-            }
-        }
-
-        // Spawn the arrows back in with their new angles
-        for (entity, cell) in selected_cells {
-            draw_split_angle_arrow_as_child(&mut commands, &genome_bank, &state, entity, cell);
-        }
-    }
-}
-
 #[allow(clippy::type_complexity, clippy::needless_pass_by_value)]
 pub fn remove_selection_borders(
     mut commands: Commands,
@@ -141,35 +110,39 @@ pub fn remove_selection_borders(
 pub fn add_selection_borders(
     mut commands: Commands,
     state: Res<CellEditorState>,
-    mut materials: ResMut<Assets<SelectionCellMaterial>>,
-    added: Query<(Entity, &Cell, &Mesh2d), (Added<SelectedCell>, Without<PendingDespawn>)>,
-    unselected: Query<(Entity, &Cell, &Mesh2d), (Without<SelectedCell>, Without<PendingDespawn>)>,
+    mut selection_materials: ResMut<Assets<SelectionCellMaterial>>,
+    mut cell_materials: ResMut<Assets<CellMaterial>>,
+    added: Query<(Entity, &Cell, &Mesh2d, &MeshMaterial2d<CellMaterial>), (Added<SelectedCell>, Without<PendingDespawn>)>,
+    unselected: Query<(Entity, &Cell, &Mesh2d, &MeshMaterial2d<CellMaterial>), (Without<SelectedCell>, Without<PendingDespawn>)>,
 ) {
     // Add markers to unselected cells that need to be selected
-    for (entity, cell, _mesh) in unselected {
+    for (entity, cell, _mesh, cell_material) in unselected {
         // This cell should be selected
         if cell.genome_mode_id == state.selected_genome_mode {
             // Add SelectedCell Marker
             commands.entity(entity).insert(SelectedCell);
+
+            // Set the show_cell_info flag of CellMaterial to true
+            if let Some(material) = cell_materials.get_mut(cell_material.id()) {
+                material.show_cell_info = true as u32;
+            }
         }
     }
 
     // Add selection to unselected (or recently selected) cells if necessary
-    for (entity, _cell, mesh) in unselected
+    for (entity, _cell, cell_mesh, _cell_material) in unselected
         .iter()
         // Only add selection mesh to cells who are the selected genome mode
-        .filter(|(_, cell, _)| cell.genome_mode_id == state.selected_genome_mode)
+        .filter(|(_, cell, _, _)| cell.genome_mode_id == state.selected_genome_mode)
         .chain(added)
     {
-        let border_material = materials.add(SelectionCellMaterial {
-            colour: SELECTION_COLOUR.to_linear().to_vec4(),
-        });
-
         // Add Selection Mesh
         commands.entity(entity).with_children(|parent| {
             parent.spawn((
-                mesh.clone(),
-                MeshMaterial2d(border_material),
+                cell_mesh.clone(),
+                MeshMaterial2d(selection_materials.add(SelectionCellMaterial {
+                    colour: SELECTION_COLOUR.to_linear().to_vec4(),
+                })),
                 Transform::from_xyz(0., 0., -0.1).with_scale(Vec3::splat(SELECTION_SCALE)),
                 SelectionBorder,
             ));

@@ -4,9 +4,12 @@
 var<uniform> colour: vec4<f32>;
 
 @group(2) @binding(1)
-var<uniform> split_angle: f32;
+var<uniform> show_cell_info: u32;
 
 @group(2) @binding(2)
+var<uniform> split_angle: f32;
+
+@group(2) @binding(3)
 var<uniform> split_fraction: f32;
 
 fn sine_wave_radius(pos: vec2<f32>, frequency: f32, amplitude: f32) -> f32 {
@@ -98,15 +101,18 @@ fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
     if dist > 1.0 { discard; }
 
     let cell_and_nucleus_colour = get_cell_with_nucleus(uv, dist);
-    let line_colour =  vec4<f32>(1.0, 1.0, 1.0, 1.0);
 
-    let line_segments = 6.0;
-    let line_gap_percent = 0.3;
-    let line_width = 0.06;
+    if show_cell_info == 1 {
+        let line_colour =  vec4<f32>(1.0, 1.0, 1.0, 1.0);
 
-    let line_mask = dashed_offset_rotated_line_mask(uv, split_angle, split_fraction, line_segments, line_gap_percent, line_width);
+        let line_segments = 6.0;
+        let line_gap_percent = 0.3;
+        let line_width = 0.06;
 
-    let colour = mix(cell_and_nucleus_colour, line_colour, line_mask);
+        let line_mask = dashed_offset_rotated_line_mask(uv, split_angle, 1.0 - split_fraction * 2.0, line_segments, line_gap_percent, line_width);
 
-    return colour;
+        return mix(cell_and_nucleus_colour, line_colour, line_mask);
+    } else {
+        return cell_and_nucleus_colour;
+    }
 }

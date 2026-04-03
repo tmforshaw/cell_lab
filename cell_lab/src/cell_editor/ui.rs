@@ -7,7 +7,7 @@ use strum::IntoEnumIterator;
 
 use crate::{
     cell_editor::{
-        events::{CellEditorColourMessage, CellEditorSelectedGenomeModeMessage, CellEditorSplitAngleMessage},
+        events::{CellEditorColourMessage, CellEditorSelectedGenomeModeMessage},
         simulation::{CellEditorSimulationClearMessage, CellEditorSimulationStatus},
         state::CellEditorState,
         ui_dialog::{default_genome_mode_dialog, load_or_delete_dialog, save_or_overwrite_dialog},
@@ -36,7 +36,6 @@ pub fn cell_editor_ui_update(
     mut cell_editor_style_applied: ResMut<CellEditorUiStyleApplied>,
     mut selected_genome_mode_message_writer: MessageWriter<CellEditorSelectedGenomeModeMessage>,
     mut colour_message_writer: MessageWriter<CellEditorColourMessage>,
-    mut split_angle_message_writer: MessageWriter<CellEditorSplitAngleMessage>,
     mut simulation_cache_message_writer: MessageWriter<CellEditorSimulationClearMessage>,
 ) -> Result {
     let ctx = match egui_ctx.ctx_mut() {
@@ -285,8 +284,6 @@ pub fn cell_editor_ui_update(
                 if ui.add(egui::Slider::new(&mut angle_degrees, (0.)..=360.)).changed() {
                     // Split angle was changed
                     state.get_selected_genome_mode_mut(&mut genome_bank).split_angle = -angle_degrees.to_radians();
-
-                    split_angle_message_writer.write(CellEditorSplitAngleMessage);
 
                     // Clear the simulation cache
                     simulation_cache_message_writer.write(CellEditorSimulationClearMessage);

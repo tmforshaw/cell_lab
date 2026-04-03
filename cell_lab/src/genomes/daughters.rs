@@ -32,9 +32,9 @@ impl DaughterData {
         // Give new velocity depending on split angle
         let velocity_mag = parent_genome_mode.split_force;
         let d1_new_velocity =
-            velocity_mag * Vec2::Y.rotate(Vec2::from_angle(parent_genome_mode.split_angle - PI / 2. + parent_angle));
+            velocity_mag * Vec2::Y.rotate(Vec2::from_angle(PI / 2. - parent_genome_mode.split_angle + parent_angle));
         let d2_new_velocity =
-            velocity_mag * Vec2::Y.rotate(Vec2::from_angle(parent_genome_mode.split_angle + PI / 2. + parent_angle));
+            velocity_mag * Vec2::Y.rotate(Vec2::from_angle(-(PI / 2. + parent_genome_mode.split_angle) + parent_angle));
 
         // Calculate the amount of velocity to give to each daughter based on split fraction
         let d1_velocity_from_parent = velocity.0 * parent_genome_mode.split_fraction.sqrt();
@@ -121,6 +121,7 @@ impl DaughterData {
             Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
             MeshMaterial2d(materials.add(CellMaterial::new(
                 genome_mode.colour,
+                false,
                 genome_mode.split_angle,
                 genome_mode.split_fraction,
             ))),

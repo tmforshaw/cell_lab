@@ -88,6 +88,7 @@ impl Cell {
             Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
             MeshMaterial2d(materials.add(CellMaterial::new(
                 genome_mode.colour,
+                false,
                 genome_mode.split_angle,
                 genome_mode.split_fraction,
             ))),
@@ -127,6 +128,7 @@ impl Cell {
             Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
             MeshMaterial2d(materials.add(CellMaterial::new(
                 genome_mode.colour,
+                false,
                 genome_mode.split_angle,
                 genome_mode.split_fraction,
             ))),
@@ -164,6 +166,7 @@ impl Cell {
             Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
             MeshMaterial2d(materials.add(CellMaterial::new(
                 genome_mode.colour,
+                false,
                 genome_mode.split_angle,
                 genome_mode.split_fraction,
             ))),
@@ -204,6 +207,7 @@ impl Cell {
             Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
             MeshMaterial2d(materials.add(CellMaterial::new(
                 genome_mode.colour,
+                false,
                 genome_mode.split_angle,
                 genome_mode.split_fraction,
             ))),

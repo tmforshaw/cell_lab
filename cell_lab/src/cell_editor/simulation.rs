@@ -198,6 +198,7 @@ pub fn spawn_cells_from_simulation(
             Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
             MeshMaterial2d(materials.add(CellMaterial::new(
                 genome_mode.colour,
+                true,
                 genome_mode.split_angle,
                 genome_mode.split_fraction,
             ))),

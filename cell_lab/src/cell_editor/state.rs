@@ -4,6 +4,7 @@ use crate::{
     WINDOW_SIZE,
     cell_editor::{
         editor_age::CellEditorAge,
+        simulation::CellEditorSimulationStatus,
         snapshot::{CellEditorSimulationState, CellHistoryCache},
         ui_dialog::CellEditorUiDialogState,
     },
@@ -14,7 +15,7 @@ use crate::{
 
 pub const CELL_EDITOR_SIZE: Vec2 = WINDOW_SIZE;
 pub const CELL_EDITOR_CELL_SIZE_PER_MASS: f32 = 50.;
-const CELL_EDITOR_CELL_ENERGY_GAIN_RATE: f32 = 2.;
+const CELL_EDITOR_CELL_ENERGY_GAIN_RATE: f32 = 1.;
 const CELL_EDITOR_CELL_ENERGY_DECAY_RATE: f32 = 0.5;
 const CELL_EDITOR_SIMULATION_DELTA_TIME: f32 = 0.02;
 
@@ -74,6 +75,9 @@ pub fn init_cell_editor_mode(mut commands: Commands, state: ResMut<CellEditorSta
     // Insert the simulation resources
     commands.insert_resource(CellHistoryCache::default());
     commands.insert_resource(CellEditorSimulationState::default());
+
+    // Set the simulation to NeedsRecompute
+    commands.set_state(CellEditorSimulationStatus::NeedsRecompute);
 
     // Spawn dish
     commands.spawn(state.dish.into_bundle());

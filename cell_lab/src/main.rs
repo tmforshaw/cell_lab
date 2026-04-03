@@ -17,12 +17,10 @@ use bevy_prototype_lyon::plugin::ShapePlugin;
 
 use crate::{
     cell_editor::{
-        drawing::draw_cell_info,
         events::{
             CellEditorColourMessage, CellEditorInitialGenomeModeMessage, CellEditorSelectedGenomeModeMessage,
-            CellEditorSplitAngleMessage, add_selection_borders, cell_editor_colour_message_reader,
-            cell_editor_initial_genome_mode_message_reader, cell_editor_selected_genome_mode_message_reader,
-            cell_editor_split_angle_message_reader, remove_selection_borders,
+            add_selection_borders, cell_editor_colour_message_reader, cell_editor_initial_genome_mode_message_reader,
+            cell_editor_selected_genome_mode_message_reader, remove_selection_borders,
         },
         logical_cell::clear_cells,
         simulation::{
@@ -69,7 +67,7 @@ pub mod simulation;
 pub mod spatial_partitioning;
 pub mod ui;
 
-// TODO Flip angle in cell material shader so spllit angle is correct
+// TODO need to show that cell spawned even if it dies instantly (When splitting into a tiny cell)
 
 fn main() {
     App::new()
@@ -93,7 +91,6 @@ fn main() {
         .add_message::<CellEditorInitialGenomeModeMessage>()
         .add_message::<CellEditorSelectedGenomeModeMessage>()
         .add_message::<CellEditorColourMessage>()
-        .add_message::<CellEditorSplitAngleMessage>()
         .add_message::<CellEditorSimulationClearMessage>()
         //
         // --------------------- Mode Independent Systems ----------------------
@@ -137,7 +134,6 @@ fn main() {
                 cell_editor_initial_genome_mode_message_reader,
                 cell_editor_selected_genome_mode_message_reader,
                 cell_editor_colour_message_reader,
-                cell_editor_split_angle_message_reader,
                 clear_simulation_cache_message_reader,
                 (
                     clear_cells,
@@ -148,7 +144,6 @@ fn main() {
                 // Remove borders after spawning cells (If SimulationStatus needs recomputing)
                 remove_selection_borders.after(spawn_cells_from_simulation),
                 add_selection_borders.after(remove_selection_borders),
-                draw_cell_info.after(spawn_cells_from_simulation).after(add_selection_borders),
                 build_quadtree::<CellQuadTree, Cell>,
                 visualise_quadtree::<Entity, CellQuadTree, ShowCellQuadTree, CellQuadTreeDebug>,
             )
