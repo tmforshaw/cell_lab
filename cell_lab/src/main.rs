@@ -13,7 +13,6 @@
 
 use bevy::{prelude::*, sprite_render::Material2dPlugin};
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
-use bevy_prototype_lyon::plugin::ShapePlugin;
 
 use crate::{
     cell_editor::{
@@ -75,7 +74,6 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(EguiPlugin::default())
-        .add_plugins(ShapePlugin)
         .add_plugins(Material2dPlugin::<CellMaterial>::default())
         .add_plugins(Material2dPlugin::<SelectionCellMaterial>::default())
         .add_plugins(Material2dPlugin::<ChemicalMaterial>::default())
