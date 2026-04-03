@@ -6,19 +6,36 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::genomes::Genome;
+use crate::{
+    genomes::Genome,
+    helpers::{SanitisedString, SemiSanitisedString},
+};
 
 const GENOME_FILE_EXT: &str = "genome";
 
+// Sanitise filename, but leave spaces for now
 #[must_use]
-pub fn sanitise_filename(input: &str) -> String {
+pub fn semi_sanitise_filename<S: AsRef<str>>(input: S) -> SemiSanitisedString {
     let illegal_chars = ['<', '>', ':', '"', '/', '\\', '|', '?', '*', '.'];
 
-    input
-        .chars()
-        .filter(|c| !illegal_chars.contains(c)) // Remove illegal characters
-        .map(|c| if c.is_whitespace() { '_' } else { c }) // Replace spaces with _
-        .collect()
+    SemiSanitisedString::new(
+        input
+            .as_ref()
+            .chars()
+            .filter(|c| !illegal_chars.contains(c)) // Remove illegal characters
+            .collect(),
+    )
+}
+
+// Sanitise filename, replacing spaces with underscores
+#[must_use]
+pub fn sanitise_filename<S: AsRef<str>>(input: S) -> SanitisedString {
+    SanitisedString::new(
+        semi_sanitise_filename(input.as_ref())
+            .chars()
+            .map(|c| if c.is_whitespace() { '_' } else { c }) // Replace spaces with _
+            .collect(),
+    )
 }
 
 #[must_use]
@@ -58,10 +75,12 @@ fn get_data_dir() -> Option<String> {
     Some(path.to_string_lossy().into_owned())
 }
 
-pub fn write_genome_to_file<S: AsRef<str>>(filename: S, genome: &Genome) {
+pub fn write_genome_to_file(filename: &SemiSanitisedString, genome: &Genome) {
+    let filename = (*sanitise_filename((**filename).clone())).clone();
+
     // Get the data folder
     if let Some(data_dir) = get_data_dir() {
-        let path = Path::new(&data_dir).join(filename.as_ref()).with_extension(GENOME_FILE_EXT);
+        let path = Path::new(&data_dir).join(&filename).with_extension(GENOME_FILE_EXT);
 
         // Create the file from the path
         match File::create(&path) {
@@ -78,12 +97,12 @@ pub fn write_genome_to_file<S: AsRef<str>>(filename: S, genome: &Genome) {
                         }
                     }
                     Err(e) => {
-                        eprintln!("Could not create file '{data_dir}/{}':\n\t{e}", filename.as_ref());
+                        eprintln!("Could not create file '{data_dir}/{filename}':\n\t{e}");
                     }
                 }
             }
             Err(e) => {
-                eprintln!("Could not serialise genome for file '{}':\n\t{e}", filename.as_ref());
+                eprintln!("Could not serialise genome for file '{filename}':\n\t{e}");
             }
         }
     } else {
@@ -91,6 +110,7 @@ pub fn write_genome_to_file<S: AsRef<str>>(filename: S, genome: &Genome) {
     }
 }
 
+#[must_use]
 pub fn get_genomes_in_folder() -> Option<Vec<String>> {
     // Get the data folder
     let files = if let Some(data_dir) = get_data_dir() {
@@ -120,19 +140,34 @@ pub fn get_genomes_in_folder() -> Option<Vec<String>> {
     Some(files)
 }
 
-pub fn does_genome_exist_in_folder<S: AsRef<str>>(filename: S) -> bool {
+#[must_use]
+pub fn get_genomes_in_folder_underscore_to_spaces() -> Option<Vec<SemiSanitisedString>> {
+    // Replace underscores with spaces
+    get_genomes_in_folder().map(|genomes| {
+        genomes
+            .iter()
+            .map(|genome| SemiSanitisedString::new(genome.chars().map(|c| if c == '_' { ' ' } else { c }).collect()))
+            .collect()
+    })
+}
+
+#[must_use]
+pub fn does_genome_exist_in_folder(filename: &SemiSanitisedString) -> bool {
     let Some(files) = get_genomes_in_folder() else {
         return false;
     };
 
-    files.contains(&filename.as_ref().to_string())
+    files.contains(filename)
 }
 
-pub fn read_genome_file<S: AsRef<str>>(filename: S) -> Option<Genome> {
+#[must_use]
+pub fn read_genome_file(filename: &SemiSanitisedString) -> Option<Genome> {
+    let filename = (*sanitise_filename((**filename).clone())).clone();
+
     // Get the data folder
     let genome = if let Some(data_dir) = get_data_dir() {
         // Get the path to the genome file
-        let path = Path::new(&data_dir).join(filename.as_ref()).with_extension(GENOME_FILE_EXT);
+        let path = Path::new(&data_dir).join(filename).with_extension(GENOME_FILE_EXT);
 
         // Read the file at data_dir
         match fs::read(&path) {
@@ -158,11 +193,13 @@ pub fn read_genome_file<S: AsRef<str>>(filename: S) -> Option<Genome> {
     Some(genome)
 }
 
-pub fn delete_genome_file<S: AsRef<str>>(filename: S) {
+pub fn delete_genome_file(filename: &SemiSanitisedString) {
+    let filename = (*sanitise_filename((**filename).clone())).clone();
+
     // Get the data folder
     if let Some(data_dir) = get_data_dir() {
         // Get the path to the genome file
-        let path = Path::new(&data_dir).join(filename.as_ref()).with_extension(GENOME_FILE_EXT);
+        let path = Path::new(&data_dir).join(filename).with_extension(GENOME_FILE_EXT);
 
         // Remove the file from disk
         if let Err(e) = fs::remove_file(&path) {

@@ -4,9 +4,10 @@ use bevy_egui::egui::{self, Context};
 use crate::{
     cell_editor::simulation::CellEditorSimulationClearMessage,
     genomes::{Genome, GenomeMode, GenomeModeId, genome_mode::colour_from_genome_mode_id},
+    helpers::SemiSanitisedString,
     serialisation::{
-        delete_genome_file, does_genome_exist_in_folder, get_genomes_in_folder, read_genome_file, sanitise_filename,
-        write_genome_to_file,
+        delete_genome_file, does_genome_exist_in_folder, get_genomes_in_folder, get_genomes_in_folder_underscore_to_spaces,
+        read_genome_file, semi_sanitise_filename, write_genome_to_file,
     },
     ui::SEPARATOR_SPACING,
 };
@@ -14,7 +15,7 @@ use crate::{
 #[derive(Default)]
 pub struct CellEditorUiDialogState {
     save_dialog_open: bool,
-    pub save_filename: String,
+    pub save_filename: SemiSanitisedString,
     pub save_selected_genome: Option<usize>,
     overwrite_dialog_open: bool,
     save_filename_empty_dialog_open: bool,
@@ -22,7 +23,7 @@ pub struct CellEditorUiDialogState {
     pub load_selected_file: Option<usize>,
     load_default_genome_dialog_open: bool,
     delete_dialog_open: bool,
-    delete_file: Option<String>,
+    delete_file: Option<SemiSanitisedString>,
     default_genome_mode_dialog_open: bool,
 }
 
@@ -107,11 +108,11 @@ impl CellEditorUiDialogState {
         };
     }
 
-    pub fn open_delete_dialog<S: AsRef<str>>(&mut self, delete_file: S) {
+    pub fn open_delete_dialog(&mut self, delete_file: SemiSanitisedString) {
         // Open delete dialog, set delete_file, close the load dialog, keeping the selected file the same
         *self = Self {
             delete_dialog_open: true,
-            delete_file: Some(delete_file.as_ref().to_string()),
+            delete_file: Some(delete_file),
             load_dialog_open: false,
             load_selected_file: self.load_selected_file,
             ..default()
@@ -165,7 +166,7 @@ impl CellEditorUiDialogState {
 pub fn save_or_overwrite_dialog(ctx: &Context, dialogs: &mut CellEditorUiDialogState, selected_genome: &mut Genome) {
     // If overwrite dialog is open, don't show save dialog
     if dialogs.overwrite_dialog_is_open() {
-        egui::Window::new(format!("Overwrite '{}'", dialogs.save_filename))
+        egui::Window::new(format!("Overwrite '{}'", *dialogs.save_filename))
             .collapsible(false)
             .resizable(false)
             .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
@@ -173,7 +174,7 @@ pub fn save_or_overwrite_dialog(ctx: &Context, dialogs: &mut CellEditorUiDialogS
                 ui.horizontal(|ui| {
                     // Confirm overwrite
                     if ui.button("Confirm").clicked() {
-                        write_genome_to_file(dialogs.save_filename.clone(), selected_genome);
+                        write_genome_to_file(&dialogs.save_filename, selected_genome);
 
                         // Exit the dialog
                         dialogs.close_all_dialogs();
@@ -212,12 +213,12 @@ pub fn save_or_overwrite_dialog(ctx: &Context, dialogs: &mut CellEditorUiDialogS
                 .show(ctx, |ui| {
                     ui.horizontal(|ui| {
                         ui.label("Name of genome: ");
-                        if ui.text_edit_singleline(&mut dialogs.save_filename).changed() {
-                            // Sanitise the name so it can be a filename
-                            dialogs.save_filename = sanitise_filename(&dialogs.save_filename);
+                        if ui.text_edit_singleline(&mut *dialogs.save_filename).changed() {
+                            // Semi-sanitise the name so it can be a filename (Leave spaces for now)
+                            dialogs.save_filename = semi_sanitise_filename((*dialogs.save_filename).clone());
 
                             // Check genomes in the genome folder to see if any match the file name
-                            if let Some(genomes) = get_genomes_in_folder()
+                            if let Some(genomes) = get_genomes_in_folder_underscore_to_spaces()
                                 && let Some((i, _)) = genomes
                                     .iter()
                                     .enumerate()
@@ -235,7 +236,7 @@ pub fn save_or_overwrite_dialog(ctx: &Context, dialogs: &mut CellEditorUiDialogS
                             // Save genome
                             if ui.button("Submit").clicked() {
                                 // Check if the file already exists
-                                if does_genome_exist_in_folder(dialogs.save_filename.clone()) {
+                                if does_genome_exist_in_folder(&dialogs.save_filename) {
                                     // Open the overwrite dialog
                                     dialogs.open_overwrite_dialog();
                                 } else if dialogs.save_filename.trim().is_empty() {
@@ -243,7 +244,7 @@ pub fn save_or_overwrite_dialog(ctx: &Context, dialogs: &mut CellEditorUiDialogS
                                     dialogs.open_save_filename_empty_dialog();
                                 } else {
                                     // Write genome to file
-                                    write_genome_to_file(dialogs.save_filename.clone(), selected_genome);
+                                    write_genome_to_file(&dialogs.save_filename, selected_genome);
 
                                     // Exit the dialog
                                     dialogs.close_all_dialogs();
@@ -259,13 +260,13 @@ pub fn save_or_overwrite_dialog(ctx: &Context, dialogs: &mut CellEditorUiDialogS
                     });
 
                     // If there are genomes already saved
-                    if let Some(genomes) = get_genomes_in_folder() {
+                    if let Some(genomes) = get_genomes_in_folder_underscore_to_spaces() {
                         // Iterate genomes and create a selectable value for each
                         if genomes
                             .iter()
                             .enumerate()
                             .map(|(i, genome)| {
-                                ui.selectable_value(&mut dialogs.save_selected_genome, Some(i), genome)
+                                ui.selectable_value(&mut dialogs.save_selected_genome, Some(i), (**genome).clone())
                                     .changed()
                             })
                             .fold(false, |acc, changed| acc | changed)
@@ -292,7 +293,7 @@ pub fn load_or_delete_dialog(
     if dialogs.delete_dialog_is_open() {
         // If the delete file is specified
         if let Some(delete_file) = dialogs.delete_file.clone() {
-            egui::Window::new(format!("Delete Genome '{delete_file}'"))
+            egui::Window::new(format!("Delete Genome '{}'", *delete_file))
                 .collapsible(false)
                 .resizable(false)
                 .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
@@ -300,7 +301,7 @@ pub fn load_or_delete_dialog(
                     ui.horizontal(|ui| {
                         // Confirm deletion
                         if ui.button("Confirm").clicked() {
-                            delete_genome_file(delete_file);
+                            delete_genome_file(&delete_file);
 
                             // Set the selected file to be 0, unless there are no files left
                             if let Some(files) = get_genomes_in_folder() {
@@ -356,7 +357,7 @@ pub fn load_or_delete_dialog(
                 .resizable(false)
                 .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
                 .show(ctx, |ui| {
-                    if let Some(files) = get_genomes_in_folder()
+                    if let Some(files) = get_genomes_in_folder_underscore_to_spaces()
                         && !files.is_empty()
                     {
                         let selected_file = dialogs.load_selected_file.unwrap_or(0);
@@ -371,7 +372,9 @@ pub fn load_or_delete_dialog(
 
                                 ui.horizontal(|ui| {
                                     // Show a selectable value
-                                    changed = ui.selectable_value(&mut dialogs.load_selected_file, Some(i), file).changed();
+                                    changed = ui
+                                        .selectable_value(&mut dialogs.load_selected_file, Some(i), (**file).clone())
+                                        .changed();
 
                                     // Delete this genome
                                     if ui.button("Delete").clicked() {
