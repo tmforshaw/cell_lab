@@ -78,12 +78,19 @@ impl Cell {
             genome_id,
             size_per_mass,
         };
+
+        let genome_mode = cell.get_genome_mode(genome_bank);
+
         CellBundle::new(
             cell.clone(),
             Velocity(velocity),
             Transform::from_translation(position.extend(1.)).with_scale(cell.get_size().extend(1.)),
             Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
-            MeshMaterial2d(materials.add(CellMaterial::new(cell.get_genome_mode(genome_bank).colour))),
+            MeshMaterial2d(materials.add(CellMaterial::new(
+                genome_mode.colour,
+                genome_mode.split_angle,
+                genome_mode.split_fraction,
+            ))),
         )
     }
 
@@ -108,6 +115,9 @@ impl Cell {
             genome_id,
             size_per_mass,
         };
+
+        let genome_mode = cell.get_genome_mode(genome_bank);
+
         CellBundle::new(
             cell.clone(),
             Velocity(velocity),
@@ -115,7 +125,11 @@ impl Cell {
                 .with_scale(cell.get_size().extend(1.))
                 .with_rotation(Quat::from_rotation_z(rotation)),
             Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
-            MeshMaterial2d(materials.add(CellMaterial::new(cell.get_genome_mode(genome_bank).colour))),
+            MeshMaterial2d(materials.add(CellMaterial::new(
+                genome_mode.colour,
+                genome_mode.split_angle,
+                genome_mode.split_fraction,
+            ))),
         )
     }
 
@@ -140,12 +154,19 @@ impl Cell {
             genome_id,
             size_per_mass,
         };
+
+        let genome_mode = cell.get_genome_mode(genome_bank);
+
         CellBundle::new(
             cell.clone(),
             Velocity(velocity),
             Transform::from_translation(position.extend(1.)).with_scale(cell.get_size().extend(1.)),
             Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
-            MeshMaterial2d(materials.add(CellMaterial::new(cell.get_genome_mode(genome_bank).colour))),
+            MeshMaterial2d(materials.add(CellMaterial::new(
+                genome_mode.colour,
+                genome_mode.split_angle,
+                genome_mode.split_fraction,
+            ))),
         )
     }
 
@@ -171,6 +192,9 @@ impl Cell {
             genome_id,
             size_per_mass,
         };
+
+        let genome_mode = cell.get_genome_mode(genome_bank);
+
         CellBundle::new(
             cell.clone(),
             Velocity(velocity),
@@ -178,7 +202,11 @@ impl Cell {
                 .with_scale(cell.get_size().extend(1.))
                 .with_rotation(Quat::from_rotation_z(rotation)),
             Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
-            MeshMaterial2d(materials.add(CellMaterial::new(cell.get_genome_mode(genome_bank).colour))),
+            MeshMaterial2d(materials.add(CellMaterial::new(
+                genome_mode.colour,
+                genome_mode.split_angle,
+                genome_mode.split_fraction,
+            ))),
         )
     }
 

@@ -69,6 +69,8 @@ pub mod simulation;
 pub mod spatial_partitioning;
 pub mod ui;
 
+// TODO Flip angle in cell material shader so spllit angle is correct
+
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)

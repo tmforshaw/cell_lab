@@ -189,12 +189,18 @@ pub fn spawn_cells_from_simulation(
 ) {
     // Iterate through logical cells and spawn them in
     for lc in &sim.cells {
+        let genome_mode = lc.cell.get_genome_mode(&genome_bank);
+
         commands.spawn(CellBundle::new(
             lc.cell.clone(),
             lc.velocity.clone(),
             lc.transform,
             Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
-            MeshMaterial2d(materials.add(CellMaterial::new(lc.cell.get_genome_mode(&genome_bank).colour))),
+            MeshMaterial2d(materials.add(CellMaterial::new(
+                genome_mode.colour,
+                genome_mode.split_angle,
+                genome_mode.split_fraction,
+            ))),
         ));
     }
 

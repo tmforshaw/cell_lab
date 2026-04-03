@@ -112,12 +112,18 @@ impl DaughterData {
         meshes: &mut Assets<Mesh>,
         materials: &mut Assets<CellMaterial>,
     ) -> CellBundle {
+        let genome_mode = self.cell.get_genome_mode(genome_bank);
+
         CellBundle::new(
             self.cell.clone(),
             Velocity(self.velocity),
             self.transform,
             Mesh2d(meshes.add(Rectangle::new(1.0, 1.0))),
-            MeshMaterial2d(materials.add(CellMaterial::new(self.cell.get_genome_mode(genome_bank).colour))),
+            MeshMaterial2d(materials.add(CellMaterial::new(
+                genome_mode.colour,
+                genome_mode.split_angle,
+                genome_mode.split_fraction,
+            ))),
         )
     }
 }
