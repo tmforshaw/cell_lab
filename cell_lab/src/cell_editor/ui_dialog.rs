@@ -16,6 +16,7 @@ pub struct CellEditorUiDialogState {
     save_dialog_open: bool,
     pub save_filename: String,
     overwrite_dialog_open: bool,
+    save_filename_empty_dialog_open: bool,
     load_dialog_open: bool,
     pub load_selected_file: Option<usize>,
     delete_dialog_open: bool,
@@ -32,6 +33,11 @@ impl CellEditorUiDialogState {
     #[must_use]
     pub const fn overwrite_dialog_is_open(&self) -> bool {
         self.overwrite_dialog_open
+    }
+
+    #[must_use]
+    pub const fn save_filename_empty_dialog_is_open(&self) -> bool {
+        self.save_filename_empty_dialog_open
     }
 
     #[must_use]
@@ -66,6 +72,15 @@ impl CellEditorUiDialogState {
         };
     }
 
+    pub fn open_save_filename_empty_dialog(&mut self) {
+        // Open save filename empty dialog, everything except save_filename gets cleared
+        *self = Self {
+            save_filename_empty_dialog_open: true,
+            save_filename: self.save_filename.clone(),
+            ..default()
+        };
+    }
+
     pub fn open_load_dialog(&mut self) {
         // Open load dialog, everything else gets cleared
         *self = Self {
@@ -95,6 +110,16 @@ impl CellEditorUiDialogState {
 
     pub fn close_all_dialogs(&mut self) {
         *self = Self::default();
+    }
+
+    pub fn close_save_filename_empty_dialog(&mut self) {
+        // Close save filename empty dialog, open the save dialog, keeping the selected filename the same
+        *self = Self {
+            save_filename_empty_dialog_open: false,
+            save_dialog_open: true,
+            save_filename: self.save_filename.clone(),
+            ..default()
+        };
     }
 
     pub fn close_delete_dialog(&mut self) {
@@ -132,6 +157,22 @@ pub fn save_or_overwrite_dialog(ctx: &Context, dialogs: &mut CellEditorUiDialogS
                     }
                 });
             });
+
+    // If save filename empty dialog is open
+    } else if dialogs.save_filename_empty_dialog_is_open() {
+        egui::Window::new("Can't Save Genome With Empty Filename".to_string())
+            .collapsible(false)
+            .resizable(false)
+            .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
+            .show(ctx, |ui| {
+                ui.vertical_centered(|ui| {
+                    // Close dialog
+                    if ui.button("Ok").clicked() {
+                        // Exit the dialog
+                        dialogs.close_save_filename_empty_dialog();
+                    }
+                });
+            });
     } else {
         // Render save dialog if it is open
         if dialogs.save_dialog_is_open() {
@@ -154,6 +195,9 @@ pub fn save_or_overwrite_dialog(ctx: &Context, dialogs: &mut CellEditorUiDialogS
                                 if does_genome_exist_in_folder(dialogs.save_filename.clone()) {
                                     // Open the overwrite dialog
                                     dialogs.open_overwrite_dialog();
+                                } else if dialogs.save_filename.trim().is_empty() {
+                                    // Filename was empty
+                                    dialogs.open_save_filename_empty_dialog();
                                 } else {
                                     // Write genome to file
                                     write_genome_to_file(dialogs.save_filename.clone(), selected_genome);

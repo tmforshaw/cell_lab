@@ -59,7 +59,6 @@ pub const WINDOW_SIZE: Vec2 = Vec2::splat(1200.);
 // TODO Possible bug in simulation mode where cells that split don't get an energy check until the decay function is ran (May stay alive for a frame too long)
 // TODO Quadtree size would be wrong if simulation or cell editor dish was uneven
 // TODO Add semi-sanitise filename where spaces are shown as spaces, but replaced with _ later on
-// TODO Message popup when trying to save empty filename
 // TODO Add Load default genome bank button within the load dialog
 // TODO Add names when saving file, so you can quickly name something the same as an existing genome
 
