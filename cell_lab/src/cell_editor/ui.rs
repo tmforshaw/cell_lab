@@ -3,6 +3,7 @@ use bevy_egui::{
     EguiContexts,
     egui::{self, Color32, Context, CornerRadius, Stroke, Ui, containers::ComboBox},
 };
+use strum::IntoEnumIterator;
 
 use crate::{
     cell_editor::{
@@ -393,37 +394,16 @@ pub fn set_cell_editor_ui_style(ctx: &mut Context, cell_editor_style_applied: &m
 pub fn create_mode_combo_box(selected_genome_mode: &mut GenomeModeId, ui: &mut Ui, id: impl std::hash::Hash) -> bool {
     let mut changed = false;
 
-    // TODO There must be a better way to do this
     ComboBox::from_id_salt(id)
         .selected_text(format!("{selected_genome_mode}"))
         .show_ui(ui, |ui| {
-            changed = ui
-                .selectable_value(selected_genome_mode, GenomeModeId::M1, GenomeModeId::M1.to_string())
-                .changed()
-                || ui
-                    .selectable_value(selected_genome_mode, GenomeModeId::M2, GenomeModeId::M2.to_string())
-                    .changed()
-                || ui
-                    .selectable_value(selected_genome_mode, GenomeModeId::M3, GenomeModeId::M3.to_string())
-                    .changed()
-                || ui
-                    .selectable_value(selected_genome_mode, GenomeModeId::M4, GenomeModeId::M4.to_string())
-                    .changed()
-                || ui
-                    .selectable_value(selected_genome_mode, GenomeModeId::M5, GenomeModeId::M5.to_string())
-                    .changed()
-                || ui
-                    .selectable_value(selected_genome_mode, GenomeModeId::M6, GenomeModeId::M6.to_string())
-                    .changed()
-                || ui
-                    .selectable_value(selected_genome_mode, GenomeModeId::M7, GenomeModeId::M7.to_string())
-                    .changed()
-                || ui
-                    .selectable_value(selected_genome_mode, GenomeModeId::M8, GenomeModeId::M8.to_string())
-                    .changed()
-                || ui
-                    .selectable_value(selected_genome_mode, GenomeModeId::M9, GenomeModeId::M9.to_string())
-                    .changed();
+            // Iterate through the enums
+            changed = GenomeModeId::iter()
+                .map(|genome_mode| {
+                    ui.selectable_value(selected_genome_mode, genome_mode, genome_mode.to_string())
+                        .changed()
+                })
+                .fold(false, |acc, changed| acc | changed);
         });
 
     changed
