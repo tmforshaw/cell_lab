@@ -107,7 +107,7 @@ pub fn cells_absorb_chemical(
                     // Collision has occurred
                     if dist < combined_radius {
                         // Cell gains the chemical's energy then resizes based on new energy
-                        cell.energy += chemical.energy;
+                        cell.energy += (chemical.energy).min(CELL_MAX_ENERGY - cell.energy);
                         cell_transform.scale = cell.get_size().extend(1.);
 
                         // Despawn the chemical

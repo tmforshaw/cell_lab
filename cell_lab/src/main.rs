@@ -56,7 +56,6 @@ use crate::{
 
 pub const WINDOW_SIZE: Vec2 = Vec2::splat(1200.);
 
-// TODO Strange bug where cell can split even though it has split type never split (And the daughters are bigger than the parent)
 // TODO Possible bug in simulation mode where cells that split don't get an energy check until the decay function is ran (May stay alive for a frame too long)
 // TODO Quadtree size would be wrong if simulation or cell editor dish was uneven
 // TODO Add semi-sanitise filename where spaces are shown as spaces, but replaced with _ later on
@@ -65,6 +64,7 @@ pub const WINDOW_SIZE: Vec2 = Vec2::splat(1200.);
 // TODO Switch UI from saying genome when it means genome bank
 // TODO Cell editor doesn't have cells dying from energy being too low
 // TODO Selected cell isn't marked in the editor
+// TODO Add names when saving file, so you can quickly name something the same as an existing genome
 
 pub mod cell_editor;
 pub mod cells;
