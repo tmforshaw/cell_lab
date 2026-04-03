@@ -19,10 +19,10 @@ use crate::{
     cell_editor::{
         drawing::draw_cell_info,
         events::{
-            CellEditorAgeMessage, CellEditorColourMessage, CellEditorInitialGenomeModeMessage,
-            CellEditorSelectedGenomeModeMessage, CellEditorSplitAngleMessage, add_selection_borders,
-            cell_editor_age_message_reader, cell_editor_colour_message_reader, cell_editor_initial_genome_mode_message_reader,
-            cell_editor_selected_genome_mode_message_reader, cell_editor_split_angle_message_reader, remove_selection_borders,
+            CellEditorColourMessage, CellEditorInitialGenomeModeMessage, CellEditorSelectedGenomeModeMessage,
+            CellEditorSplitAngleMessage, add_selection_borders, cell_editor_colour_message_reader,
+            cell_editor_initial_genome_mode_message_reader, cell_editor_selected_genome_mode_message_reader,
+            cell_editor_split_angle_message_reader, remove_selection_borders,
         },
         logical_cell::clear_cells,
         simulation::{
@@ -89,7 +89,6 @@ fn main() {
         .init_resource::<ChemicalQuadTree>()
         .init_resource::<ShowChemicalQuadTree>()
         .add_message::<CellEditorInitialGenomeModeMessage>()
-        .add_message::<CellEditorAgeMessage>()
         .add_message::<CellEditorSelectedGenomeModeMessage>()
         .add_message::<CellEditorColourMessage>()
         .add_message::<CellEditorSplitAngleMessage>()
@@ -134,7 +133,6 @@ fn main() {
             (
                 cell_editor_mode_keyboard_event_reader,
                 cell_editor_initial_genome_mode_message_reader,
-                cell_editor_age_message_reader,
                 cell_editor_selected_genome_mode_message_reader,
                 cell_editor_colour_message_reader,
                 cell_editor_split_angle_message_reader,

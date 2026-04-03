@@ -25,9 +25,6 @@ pub struct SelectionBorder;
 pub struct CellEditorInitialGenomeModeMessage;
 
 #[derive(Message, Debug, Clone)]
-pub struct CellEditorAgeMessage;
-
-#[derive(Message, Debug, Clone)]
 pub struct CellEditorSelectedGenomeModeMessage;
 
 #[derive(Message, Debug, Clone)]
@@ -41,11 +38,6 @@ pub fn cell_editor_initial_genome_mode_message_reader(events: MessageReader<Cell
     if !events.is_empty() {
         // Do something
     }
-}
-
-#[allow(clippy::needless_pass_by_value)]
-pub const fn cell_editor_age_message_reader(mut _events: MessageReader<CellEditorAgeMessage>) {
-    // TODO
 }
 
 #[allow(clippy::needless_pass_by_value)]

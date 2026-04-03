@@ -7,9 +7,7 @@ use strum::IntoEnumIterator;
 
 use crate::{
     cell_editor::{
-        events::{
-            CellEditorAgeMessage, CellEditorColourMessage, CellEditorSelectedGenomeModeMessage, CellEditorSplitAngleMessage,
-        },
+        events::{CellEditorColourMessage, CellEditorSelectedGenomeModeMessage, CellEditorSplitAngleMessage},
         simulation::{CellEditorSimulationClearMessage, CellEditorSimulationStatus},
         state::CellEditorState,
         ui_dialog::{default_genome_mode_dialog, load_or_delete_dialog, save_or_overwrite_dialog},
@@ -36,7 +34,6 @@ pub fn cell_editor_ui_update(
     mut state: ResMut<CellEditorState>,
     mut sim_status: ResMut<NextState<CellEditorSimulationStatus>>,
     mut cell_editor_style_applied: ResMut<CellEditorUiStyleApplied>,
-    mut age_message_writer: MessageWriter<CellEditorAgeMessage>,
     mut selected_genome_mode_message_writer: MessageWriter<CellEditorSelectedGenomeModeMessage>,
     mut colour_message_writer: MessageWriter<CellEditorColourMessage>,
     mut split_angle_message_writer: MessageWriter<CellEditorSplitAngleMessage>,
@@ -332,7 +329,6 @@ pub fn cell_editor_ui_update(
                     .changed()
                 {
                     // Age was changed
-                    age_message_writer.write(CellEditorAgeMessage);
 
                     // Mark the simulation as needing recomputing
                     sim_status.set(CellEditorSimulationStatus::NeedsRecompute);
