@@ -11,7 +11,7 @@
 #![allow(clippy::while_float)]
 #![allow(clippy::assigning_clones)]
 
-use bevy::{prelude::*, sprite_render::Material2dPlugin};
+use bevy::{input_focus::InputFocus, prelude::*, sprite_render::Material2dPlugin};
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
 
 use crate::{
@@ -50,6 +50,7 @@ use crate::{
         quadtree::QuadTreeTrait,
         systems::{build_quadtree, visualise_quadtree},
     },
+    ui::{ButtonType, UiElement, UiTheme, spawn_ui_element, ui_button_update},
 };
 
 pub mod cell_editor;
@@ -84,6 +85,7 @@ fn main() {
         .insert_resource(param)
         .insert_state(game_mode)
         .init_state::<CellEditorSimulationStatus>()
+        .init_resource::<InputFocus>()
         .init_resource::<CellEditorUiStyleApplied>()
         .init_resource::<CellEditorState>()
         .init_resource::<ShowCellQuadTree>()
@@ -95,9 +97,9 @@ fn main() {
         //
         // --------------------- Mode Independent Systems ----------------------
         //
-        .add_systems(Startup, setup)
+        .add_systems(Startup, (UiTheme::setup.before(setup), setup))
         .add_systems(PreUpdate, apply_pending_despawns.run_if(state_changed::<GameMode>)) // Need to do despawning right now when GameMode changes
-        .add_systems(Update, mode_independent_keyboard_event_reader)
+        .add_systems(Update, (mode_independent_keyboard_event_reader, ui_button_update))
         .add_systems(PostUpdate, apply_pending_despawns) // Despawn after the update in most cases
         //
         // ------------------------- Simulation Mode ---------------------------
@@ -161,7 +163,20 @@ fn main() {
 
 // Spawn cells and chemicals
 #[allow(clippy::needless_pass_by_value)]
-fn setup(mut commands: Commands) {
+fn setup(mut commands: Commands, ui_theme: Res<UiTheme>) {
     // 2D camera
     commands.spawn(Camera2d);
+
+    // Spawn UI Root Node and its children
+    commands
+        .spawn(Node {
+            width: percent(100),
+            height: percent(100),
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::Center,
+            ..default()
+        })
+        .with_children(|parent| {
+            spawn_ui_element(parent, "Save", UiElement::Button(ButtonType::Save), &ui_theme);
+        });
 }

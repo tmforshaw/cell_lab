@@ -183,8 +183,8 @@ impl Default for UiParameters {
         Self {
             separator_spacing: 8.,
             subsection_spacing: 4.,
-            slider_percent: 0.55,
-            cell_editor_panel_width: 500.,
+            slider_percent: 0.45,
+            cell_editor_panel_width: 600.,
         }
     }
 }
