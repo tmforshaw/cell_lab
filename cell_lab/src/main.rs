@@ -50,7 +50,11 @@ use crate::{
         quadtree::QuadTreeTrait,
         systems::{build_quadtree, visualise_quadtree},
     },
-    ui::{ButtonType, UiElement, UiTheme, spawn_ui_element, ui_button_update},
+    ui::{
+        ButtonId, SliderId, UiTheme,
+        slider::{slider_begin_drag_system, slider_drag_system, slider_release_system},
+        spawn_button, spawn_slider, ui_element_update,
+    },
 };
 
 pub mod cell_editor;
@@ -99,8 +103,17 @@ fn main() {
         //
         .add_systems(Startup, (UiTheme::setup.before(setup), setup))
         .add_systems(PreUpdate, apply_pending_despawns.run_if(state_changed::<GameMode>)) // Need to do despawning right now when GameMode changes
-        .add_systems(Update, (mode_independent_keyboard_event_reader, ui_button_update))
-        .add_systems(PostUpdate, apply_pending_despawns) // Despawn after the update in most cases
+        .add_systems(Update, (mode_independent_keyboard_event_reader,))
+        .add_systems(
+            PostUpdate,
+            (
+                apply_pending_despawns,
+                ui_element_update,
+                slider_begin_drag_system,
+                slider_drag_system.after(slider_begin_drag_system),
+                slider_release_system,
+            ),
+        ) // Despawn after the update in most cases
         //
         // ------------------------- Simulation Mode ---------------------------
         //
@@ -177,6 +190,7 @@ fn setup(mut commands: Commands, ui_theme: Res<UiTheme>) {
             ..default()
         })
         .with_children(|parent| {
-            spawn_ui_element(parent, "Save", UiElement::Button(ButtonType::Save), &ui_theme);
+            spawn_button(parent, "Save", ButtonId::Save, &ui_theme);
+            spawn_slider(parent, SliderId::SplitEnergy, 0.0..=10., &ui_theme);
         });
 }

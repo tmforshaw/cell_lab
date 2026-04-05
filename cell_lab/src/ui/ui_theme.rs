@@ -6,9 +6,10 @@ pub struct UiTheme {
     pub text_colour: TextColor,
     pub font: Handle<Font>,
     pub text_shadow: TextShadow,
-    pub button: UiThemeButton,
     pub border: UiRect,
     pub border_radius: BorderRadius,
+    pub button: UiThemeButton,
+    pub slider: UiThemeSlider,
 }
 
 impl UiTheme {
@@ -21,9 +22,10 @@ impl UiTheme {
             text_colour: TextColor(Color::WHITE),
             font: font_handle,
             text_shadow: TextShadow::default(),
-            button: UiThemeButton::default(),
-            border: UiRect::axes(px(5), px(5)),
+            border: UiRect::axes(px(5.), px(5.)),
             border_radius: BorderRadius::MAX,
+            button: UiThemeButton::default(),
+            slider: UiThemeSlider::default(),
         });
     }
 }
@@ -48,6 +50,42 @@ impl Default for UiThemeButton {
             hover_colour: Color::linear_rgb(0.35, 0.35, 0.4),
             pressed_colour: Color::linear_rgb(0.2, 0.2, 0.3),
             padding: UiRect::axes(px(10), px(5)),
+        }
+    }
+}
+
+pub struct UiThemeSlider {
+    pub width: Val,
+    pub height: Val,
+    pub track_colour: Color,
+    pub track_border_colour: Color,
+    pub handle_width: Val,
+    pub handle_height: Val,
+    pub handle_colour: Color,
+    pub handle_hover_colour: Color,
+    pub handle_pressed_colour: Color,
+    pub handle_border_colour: Color,
+    pub handle_hover_border_colour: Color,
+    pub handle_pressed_border_colour: Color,
+    pub padding: UiRect,
+}
+
+impl Default for UiThemeSlider {
+    fn default() -> Self {
+        Self {
+            width: px(200),
+            height: px(20),
+            track_colour: Color::linear_rgb(1., 0., 1.),
+            track_border_colour: Color::linear_rgb(0.1, 0.1, 0.1),
+            handle_width: px(25.),
+            handle_height: px(25.),
+            handle_colour: Color::linear_rgb(1.0, 1., 1.),
+            handle_hover_colour: Color::linear_rgb(0.8, 0.8, 0.8),
+            handle_pressed_colour: Color::linear_rgb(0.6, 0.6, 0.6),
+            handle_border_colour: Color::linear_rgb(0.1, 0.1, 0.1),
+            handle_hover_border_colour: Color::linear_rgb(0.2, 0.2, 0.2),
+            handle_pressed_border_colour: Color::linear_rgb(0.4, 0.4, 0.4),
+            padding: UiRect::axes(px(20), px(5)),
         }
     }
 }
