@@ -1,8 +1,8 @@
 use std::ops::RangeInclusive;
 
-use bevy::{ecs::relationship::RelatedSpawnerCommands, prelude::*};
+use bevy::{ecs::relationship::RelatedSpawnerCommands, input_focus::InputFocus, prelude::*};
 
-use crate::ui::{UiElement, UiTheme};
+use crate::ui::UiTheme;
 
 #[derive(Component, Debug, Copy, Clone)]
 pub enum SliderId {
@@ -48,8 +48,8 @@ pub fn spawn_slider(
         },
         // Mark as a slider
         Slider { percent: 0.0, range },
-        // Mark UiElement type
-        UiElement::Slider(slider_id),
+        // Mark with ID
+        slider_id,
         // Set the colours
         BorderColor::all(ui_theme.slider.track_border_colour),
         BackgroundColor(ui_theme.slider.track_colour),
@@ -147,13 +147,77 @@ pub fn slider_drag_system(
 pub fn slider_release_system(
     mut commands: Commands,
     mouse: Res<ButtonInput<MouseButton>>,
-    query: Query<(Entity, &Slider, &UiElement), With<ActiveSlider>>,
+    query: Query<(Entity, &Slider, &SliderId), With<ActiveSlider>>,
 ) {
     if mouse.just_released(MouseButton::Left) {
-        for (entity, slider, ui_element) in &query {
+        for (entity, slider, slider_id) in &query {
             commands.entity(entity).remove::<ActiveSlider>();
 
-            println!("Slider [{:?}]: {}", ui_element, slider.get_value());
+            println!("Slider [{:?}]: {}", slider_id, slider.get_value());
+        }
+    }
+}
+
+// TODO Find children and change colour of handle
+#[allow(clippy::type_complexity, clippy::needless_pass_by_value)]
+pub fn slider_interaction_system(
+    mut input_focus: ResMut<InputFocus>,
+    ui_theme: Res<UiTheme>,
+    mut interaction_query: Query<(Entity, &Interaction, &SliderId, &Children), Changed<Interaction>>,
+    mut handles_query: Query<(Entity, &mut BackgroundColor, &mut BorderColor), With<SliderHandle>>,
+) {
+    for (entity, interaction, slider_id, children) in &mut interaction_query {
+        match *interaction {
+            Interaction::Pressed => {
+                input_focus.set(entity);
+
+                // Get the slider handle child
+                for child in children {
+                    // If this child is the slider handle, change its colour
+                    if let Ok((_handle_entity, mut handle_bg_colour, mut handle_border_colour)) = handles_query.get_mut(*child) {
+                        handle_bg_colour.0 = ui_theme.slider.handle_pressed_colour;
+                        *handle_border_colour = BorderColor::all(ui_theme.slider.handle_pressed_border_colour);
+
+                        // There should only be one handle
+                        break;
+                    }
+                }
+
+                // TODO Run the functions for the slider
+                match slider_id {
+                    SliderId::SplitEnergy => {}
+                }
+            }
+            Interaction::Hovered => {
+                input_focus.set(entity);
+
+                // Get the slider handle child
+                for child in children {
+                    // If this child is the slider handle, change its colour
+                    if let Ok((_handle_entity, mut handle_bg_colour, mut handle_border_colour)) = handles_query.get_mut(*child) {
+                        handle_bg_colour.0 = ui_theme.slider.handle_hover_colour;
+                        *handle_border_colour = BorderColor::all(ui_theme.slider.handle_hover_border_colour);
+
+                        // There should only be one handle
+                        break;
+                    }
+                }
+            }
+            Interaction::None => {
+                input_focus.clear();
+
+                // Get the slider handle child
+                for child in children {
+                    // If this child is the slider handle, change its colour
+                    if let Ok((_handle_entity, mut handle_bg_colour, mut handle_border_colour)) = handles_query.get_mut(*child) {
+                        handle_bg_colour.0 = ui_theme.slider.handle_colour;
+                        *handle_border_colour = BorderColor::all(ui_theme.slider.handle_border_colour);
+
+                        // There should only be one handle
+                        break;
+                    }
+                }
+            }
         }
     }
 }

@@ -51,9 +51,9 @@ use crate::{
         systems::{build_quadtree, visualise_quadtree},
     },
     ui::{
-        ButtonId, SliderId, UiTheme,
+        ButtonId, CheckboxId, SliderId, UiTheme, button_interaction_system, checkbox_interaction_system,
         slider::{slider_begin_drag_system, slider_drag_system, slider_release_system},
-        spawn_button, spawn_slider, ui_element_update,
+        slider_interaction_system, spawn_button, spawn_checkbox, spawn_slider,
     },
 };
 
@@ -108,7 +108,9 @@ fn main() {
             PostUpdate,
             (
                 apply_pending_despawns,
-                ui_element_update,
+                button_interaction_system,
+                slider_interaction_system,
+                checkbox_interaction_system,
                 slider_begin_drag_system,
                 slider_drag_system.after(slider_begin_drag_system),
                 slider_release_system,
@@ -194,5 +196,6 @@ fn setup(mut commands: Commands, ui_theme: Res<UiTheme>) {
         .with_children(|parent| {
             spawn_button(parent, "Save", ButtonId::Save, &ui_theme);
             spawn_slider(parent, SliderId::SplitEnergy, 0.0..=10., &ui_theme);
+            spawn_checkbox(parent, CheckboxId::InitialMode, &ui_theme);
         });
 }

@@ -10,6 +10,7 @@ pub struct UiTheme {
     pub border_radius: BorderRadius,
     pub button: UiThemeButton,
     pub slider: UiThemeSlider,
+    pub checkbox: UiThemeCheckbox,
 }
 
 impl UiTheme {
@@ -26,6 +27,7 @@ impl UiTheme {
             border_radius: BorderRadius::MAX,
             button: UiThemeButton::default(),
             slider: UiThemeSlider::default(),
+            checkbox: UiThemeCheckbox::default(),
         });
     }
 }
@@ -43,12 +45,12 @@ pub struct UiThemeButton {
 impl Default for UiThemeButton {
     fn default() -> Self {
         Self {
-            border_colour: Color::linear_rgb(0.1, 0.1, 0.1),
-            border_hover_colour: Color::linear_rgb(0.2, 0.2, 0.2),
-            border_pressed_colour: Color::linear_rgb(0.4, 0.4, 0.4),
             normal_colour: Color::linear_rgb(0.25, 0.25, 0.3),
             hover_colour: Color::linear_rgb(0.35, 0.35, 0.4),
             pressed_colour: Color::linear_rgb(0.2, 0.2, 0.3),
+            border_colour: Color::linear_rgb(0.1, 0.1, 0.1),
+            border_hover_colour: Color::linear_rgb(0.2, 0.2, 0.2),
+            border_pressed_colour: Color::linear_rgb(0.4, 0.4, 0.4),
             padding: UiRect::axes(px(10), px(5)),
         }
     }
@@ -86,6 +88,36 @@ impl Default for UiThemeSlider {
             handle_hover_border_colour: Color::linear_rgb(0.2, 0.2, 0.2),
             handle_pressed_border_colour: Color::linear_rgb(0.4, 0.4, 0.4),
             padding: UiRect::axes(px(20), px(5)),
+        }
+    }
+}
+
+pub struct UiThemeCheckbox {
+    pub normal_colour: Color,
+    pub hover_colour: Color,
+    pub pressed_colour: Color,
+    pub normal_selected_colour: Color,
+    pub hover_selected_colour: Color,
+    pub pressed_selected_colour: Color,
+    pub border_colour: Color,
+    pub border_hover_colour: Color,
+    pub border_pressed_colour: Color,
+    pub padding: UiRect,
+}
+
+impl Default for UiThemeCheckbox {
+    fn default() -> Self {
+        Self {
+            normal_colour: Color::linear_rgb(0.25, 0.25, 0.3),
+            hover_colour: Color::linear_rgb(0.35, 0.35, 0.4),
+            pressed_colour: Color::linear_rgb(0.2, 0.2, 0.3),
+            normal_selected_colour: Color::linear_rgb(0.5, 0.0, 0.5),
+            hover_selected_colour: Color::linear_rgb(0.4, 0.0, 0.4),
+            pressed_selected_colour: Color::linear_rgb(0.2, 0.0, 0.2),
+            border_colour: Color::linear_rgb(0.1, 0.1, 0.1),
+            border_hover_colour: Color::linear_rgb(0.2, 0.2, 0.2),
+            border_pressed_colour: Color::linear_rgb(0.4, 0.4, 0.4),
+            padding: UiRect::axes(px(7.5), px(7.5)),
         }
     }
 }
