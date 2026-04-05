@@ -38,7 +38,15 @@ pub fn ui_element_update(
                             ButtonId::Load => todo!(),
                         }
                     }
-                    UiElement::Slider(_slider_id) => {}
+                    UiElement::Slider(slider_id) => {
+                        // TODO Need to access the child to change the colour of the handle
+                        match slider_id {
+                            SliderId::SplitEnergy => {
+                                // TODO Need to be able to access the slider component
+                                // param.cell_parameters.split_energy =
+                            }
+                        }
+                    }
                 }
             }
             Interaction::Hovered => {

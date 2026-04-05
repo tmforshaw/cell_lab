@@ -187,6 +187,8 @@ fn setup(mut commands: Commands, ui_theme: Res<UiTheme>) {
             height: percent(100),
             align_items: AlignItems::Center,
             justify_content: JustifyContent::Center,
+            flex_direction: FlexDirection::Column,
+            row_gap: px(20.),
             ..default()
         })
         .with_children(|parent| {
