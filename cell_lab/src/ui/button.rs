@@ -31,7 +31,7 @@ pub fn spawn_button(parent: &mut RelatedSpawnerCommands<ChildOf>, label: &str, b
             Text::new(label),
             TextFont {
                 font: ui_theme.font.clone(),
-                font_size: 32.0,
+                font_size: ui_theme.button.font_size,
                 ..default()
             },
             ui_theme.text_colour,

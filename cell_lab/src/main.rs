@@ -51,9 +51,10 @@ use crate::{
         systems::{build_quadtree, visualise_quadtree},
     },
     ui::{
-        ButtonId, CheckboxId, SliderId, UiTheme, button_interaction_system, checkbox_interaction_system,
+        ButtonId, CheckboxId, RadioId, SliderId, UiTheme, button_interaction_system, checkbox_interaction_system,
+        radio_interaction_system,
         slider::{slider_begin_drag_system, slider_drag_system, slider_release_system},
-        slider_interaction_system, spawn_button, spawn_checkbox, spawn_slider,
+        slider_interaction_system, spawn_button, spawn_checkbox, spawn_radio, spawn_slider,
     },
 };
 
@@ -111,6 +112,7 @@ fn main() {
                 button_interaction_system,
                 slider_interaction_system,
                 checkbox_interaction_system,
+                radio_interaction_system,
                 slider_begin_drag_system,
                 slider_drag_system.after(slider_begin_drag_system),
                 slider_release_system,
@@ -184,18 +186,23 @@ fn setup(mut commands: Commands, ui_theme: Res<UiTheme>) {
 
     // Spawn UI Root Node and its children
     commands
-        .spawn(Node {
-            width: percent(100),
-            height: percent(100),
-            align_items: AlignItems::Center,
-            justify_content: JustifyContent::Center,
-            flex_direction: FlexDirection::Column,
-            row_gap: px(20.),
-            ..default()
-        })
+        .spawn((
+            Node {
+                width: percent(30),
+                height: percent(80),
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                flex_direction: FlexDirection::Column,
+                row_gap: px(20.),
+                ..default()
+            },
+            BackgroundColor(Color::linear_rgb(0.1, 0.1, 0.1)),
+            BorderColor::all(Color::linear_rgb(0.05, 0.05, 0.05)),
+        ))
         .with_children(|parent| {
             spawn_button(parent, "Save", ButtonId::Save, &ui_theme);
             spawn_slider(parent, SliderId::SplitEnergy, 0.0..=10., &ui_theme);
             spawn_checkbox(parent, CheckboxId::InitialMode, &ui_theme);
+            spawn_radio(parent, RadioId::SplitType, &["Option 1", "Option 2"], &ui_theme);
         });
 }

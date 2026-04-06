@@ -11,6 +11,7 @@ pub struct UiTheme {
     pub button: UiThemeButton,
     pub slider: UiThemeSlider,
     pub checkbox: UiThemeCheckbox,
+    pub radio: UiThemeRadio,
 }
 
 impl UiTheme {
@@ -28,6 +29,7 @@ impl UiTheme {
             button: UiThemeButton::default(),
             slider: UiThemeSlider::default(),
             checkbox: UiThemeCheckbox::default(),
+            radio: UiThemeRadio::default(),
         });
     }
 }
@@ -40,6 +42,7 @@ pub struct UiThemeButton {
     pub border_hover_colour: Color,
     pub border_pressed_colour: Color,
     pub padding: UiRect,
+    pub font_size: f32,
 }
 
 impl Default for UiThemeButton {
@@ -52,6 +55,7 @@ impl Default for UiThemeButton {
             border_hover_colour: Color::linear_rgb(0.2, 0.2, 0.2),
             border_pressed_colour: Color::linear_rgb(0.4, 0.4, 0.4),
             padding: UiRect::axes(px(10), px(5)),
+            font_size: 32.,
         }
     }
 }
@@ -118,6 +122,40 @@ impl Default for UiThemeCheckbox {
             border_hover_colour: Color::linear_rgb(0.2, 0.2, 0.2),
             border_pressed_colour: Color::linear_rgb(0.4, 0.4, 0.4),
             padding: UiRect::axes(px(7.5), px(7.5)),
+        }
+    }
+}
+
+pub struct UiThemeRadio {
+    pub normal_colour: Color,
+    pub hover_colour: Color,
+    pub pressed_colour: Color,
+    pub normal_selected_colour: Color,
+    pub hover_selected_colour: Color,
+    pub pressed_selected_colour: Color,
+    pub border_colour: Color,
+    pub border_hover_colour: Color,
+    pub border_pressed_colour: Color,
+    pub padding: UiRect,
+    pub option_padding: UiRect,
+    pub font_size: f32,
+}
+
+impl Default for UiThemeRadio {
+    fn default() -> Self {
+        Self {
+            normal_colour: Color::linear_rgb(0.25, 0.25, 0.3),
+            hover_colour: Color::linear_rgb(0.35, 0.35, 0.4),
+            pressed_colour: Color::linear_rgb(0.2, 0.2, 0.3),
+            normal_selected_colour: Color::linear_rgb(0.5, 0.0, 0.5),
+            hover_selected_colour: Color::linear_rgb(0.4, 0.0, 0.4),
+            pressed_selected_colour: Color::linear_rgb(0.2, 0.0, 0.2),
+            border_colour: Color::linear_rgb(0.1, 0.1, 0.1),
+            border_hover_colour: Color::linear_rgb(0.2, 0.2, 0.2),
+            border_pressed_colour: Color::linear_rgb(0.4, 0.4, 0.4),
+            padding: UiRect::axes(px(7.5), px(7.5)),
+            option_padding: UiRect::axes(px(7.5), px(7.5)),
+            font_size: 24.,
         }
     }
 }
