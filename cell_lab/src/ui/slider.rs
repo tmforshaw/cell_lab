@@ -195,8 +195,8 @@ pub fn slider_interaction_system(
                 for child in children {
                     // If this child is the slider handle, change its colour
                     if let Ok((_handle_entity, mut handle_bg_colour, mut handle_border_colour)) = handles_query.get_mut(*child) {
-                        handle_bg_colour.0 = ui_theme.slider.handle_hover_colour;
-                        *handle_border_colour = BorderColor::all(ui_theme.slider.handle_hover_border_colour);
+                        handle_bg_colour.0 = ui_theme.slider.handle_hovered_colour;
+                        *handle_border_colour = BorderColor::all(ui_theme.slider.handle_hovered_border_colour);
 
                         // There should only be one handle
                         break;

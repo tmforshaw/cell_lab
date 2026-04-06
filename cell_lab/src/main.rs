@@ -51,10 +51,10 @@ use crate::{
         systems::{build_quadtree, visualise_quadtree},
     },
     ui::{
-        ButtonId, CheckboxId, RadioId, SliderId, UiTheme, button_interaction_system, checkbox_interaction_system,
-        radio_interaction_system,
+        ButtonId, CheckboxId, ComboboxId, RadioId, SliderId, UiTheme, button_interaction_system, checkbox_interaction_system,
+        combobox_interaction_system, radio_interaction_system,
         slider::{slider_begin_drag_system, slider_drag_system, slider_release_system},
-        slider_interaction_system, spawn_button, spawn_checkbox, spawn_radio, spawn_slider,
+        slider_interaction_system, spawn_button, spawn_checkbox, spawn_combobox, spawn_radio, spawn_slider,
     },
 };
 
@@ -72,9 +72,9 @@ pub mod spatial_partitioning;
 pub mod ui;
 
 // TODO need to show that cell spawned even if it dies instantly (When splitting into a tiny cell)
-// TODO Add combo box
 // TODO Show label before all of the ui elements (Other than button)
 // TODO Show value of slider as child of the handle when the handle is being moved (Or just to the side)
+// TODO Separate combobox interaction system into multiple systems
 
 fn main() {
     let param = GameParameters::default();
@@ -116,6 +116,7 @@ fn main() {
                 slider_interaction_system,
                 checkbox_interaction_system,
                 radio_interaction_system,
+                combobox_interaction_system,
                 slider_begin_drag_system,
                 slider_drag_system.after(slider_begin_drag_system),
                 slider_release_system,
@@ -207,5 +208,11 @@ fn setup(mut commands: Commands, ui_theme: Res<UiTheme>) {
             spawn_slider(parent, SliderId::SplitEnergy, 0.0..=10., &ui_theme);
             spawn_checkbox(parent, CheckboxId::InitialMode, &ui_theme);
             spawn_radio(parent, RadioId::SplitType, &["Option 1", "Option 2"], &ui_theme);
+            spawn_combobox(
+                parent,
+                ComboboxId::SplitType,
+                &["Option 1", "Option 2", "Option 3", "Option 4", "Option 5", "Option 6"],
+                &ui_theme,
+            );
         });
 }

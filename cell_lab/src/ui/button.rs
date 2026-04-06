@@ -66,8 +66,8 @@ pub fn button_interaction_system(
             Interaction::Hovered => {
                 input_focus.set(entity);
 
-                *colour = ui_theme.button.hover_colour.into();
-                *border_colour = ui_theme.button.border_hover_colour.into();
+                *colour = ui_theme.button.hovered_colour.into();
+                *border_colour = ui_theme.button.border_hovered_colour.into();
             }
             Interaction::None => {
                 input_focus.clear();

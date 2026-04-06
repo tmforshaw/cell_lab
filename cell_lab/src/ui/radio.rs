@@ -86,6 +86,7 @@ pub fn spawn_radio<S: AsRef<str>>(
                 align_items: AlignItems::Center,
                 flex_direction: FlexDirection::Row,
                 border_radius: ui_theme.border_radius,
+                column_gap: ui_theme.radio.option_spacing,
                 ..default()
             },
             // Make it a radio
@@ -96,6 +97,7 @@ pub fn spawn_radio<S: AsRef<str>>(
             BorderColor::all(ui_theme.radio.border_colour),
             BackgroundColor(ui_theme.radio.normal_colour),
         ))
+        // Add the options
         .with_children(|parent| {
             for child in children {
                 parent.spawn(child);
@@ -154,12 +156,12 @@ pub fn radio_interaction_system(
 
                     // Change the colour, depending on selection
                     if radio.selected == radio_option.index {
-                        colour.0 = ui_theme.radio.hover_selected_colour;
+                        colour.0 = ui_theme.radio.hovered_selected_colour;
                     } else {
-                        colour.0 = ui_theme.radio.hover_colour;
+                        colour.0 = ui_theme.radio.hovered_colour;
                     }
 
-                    *border_colour = BorderColor::all(ui_theme.radio.border_hover_colour);
+                    *border_colour = BorderColor::all(ui_theme.radio.border_hovered_colour);
                 }
                 Interaction::None => {
                     input_focus.clear();

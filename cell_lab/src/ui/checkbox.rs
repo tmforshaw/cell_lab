@@ -74,12 +74,12 @@ pub fn checkbox_interaction_system(
 
                 // Change the colour based on selection
                 if checkbox.selected {
-                    colour.0 = ui_theme.checkbox.hover_selected_colour;
+                    colour.0 = ui_theme.checkbox.hovered_selected_colour;
                 } else {
-                    colour.0 = ui_theme.checkbox.hover_colour;
+                    colour.0 = ui_theme.checkbox.hovered_colour;
                 }
 
-                *border_colour = BorderColor::all(ui_theme.checkbox.border_hover_colour);
+                *border_colour = BorderColor::all(ui_theme.checkbox.border_hovered_colour);
             }
             Interaction::None => {
                 input_focus.clear();
@@ -87,7 +87,7 @@ pub fn checkbox_interaction_system(
                 // Change the colour based on selection
                 if checkbox.selected {
                     colour.0 = ui_theme.checkbox.normal_selected_colour;
-                    *border_colour = BorderColor::all(ui_theme.checkbox.border_hover_colour);
+                    *border_colour = BorderColor::all(ui_theme.checkbox.border_hovered_colour);
                 } else {
                     colour.0 = ui_theme.checkbox.normal_colour;
                 }

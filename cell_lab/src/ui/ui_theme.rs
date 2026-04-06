@@ -12,6 +12,7 @@ pub struct UiTheme {
     pub slider: UiThemeSlider,
     pub checkbox: UiThemeCheckbox,
     pub radio: UiThemeRadio,
+    pub combobox: UiThemeCombobox,
 }
 
 impl UiTheme {
@@ -30,16 +31,17 @@ impl UiTheme {
             slider: UiThemeSlider::default(),
             checkbox: UiThemeCheckbox::default(),
             radio: UiThemeRadio::default(),
+            combobox: UiThemeCombobox::default(),
         });
     }
 }
 
 pub struct UiThemeButton {
     pub normal_colour: Color,
-    pub hover_colour: Color,
+    pub hovered_colour: Color,
     pub pressed_colour: Color,
     pub border_colour: Color,
-    pub border_hover_colour: Color,
+    pub border_hovered_colour: Color,
     pub border_pressed_colour: Color,
     pub padding: UiRect,
     pub font_size: f32,
@@ -49,10 +51,10 @@ impl Default for UiThemeButton {
     fn default() -> Self {
         Self {
             normal_colour: Color::linear_rgb(0.25, 0.25, 0.3),
-            hover_colour: Color::linear_rgb(0.35, 0.35, 0.4),
+            hovered_colour: Color::linear_rgb(0.35, 0.35, 0.4),
             pressed_colour: Color::linear_rgb(0.2, 0.2, 0.3),
             border_colour: Color::linear_rgb(0.1, 0.1, 0.1),
-            border_hover_colour: Color::linear_rgb(0.2, 0.2, 0.2),
+            border_hovered_colour: Color::linear_rgb(0.2, 0.2, 0.2),
             border_pressed_colour: Color::linear_rgb(0.4, 0.4, 0.4),
             padding: UiRect::axes(px(10), px(5)),
             font_size: 32.,
@@ -68,10 +70,10 @@ pub struct UiThemeSlider {
     pub handle_width: Val,
     pub handle_height: Val,
     pub handle_colour: Color,
-    pub handle_hover_colour: Color,
+    pub handle_hovered_colour: Color,
     pub handle_pressed_colour: Color,
     pub handle_border_colour: Color,
-    pub handle_hover_border_colour: Color,
+    pub handle_hovered_border_colour: Color,
     pub handle_pressed_border_colour: Color,
     pub padding: UiRect,
 }
@@ -86,10 +88,10 @@ impl Default for UiThemeSlider {
             handle_width: px(25.),
             handle_height: px(25.),
             handle_colour: Color::linear_rgb(1.0, 1., 1.),
-            handle_hover_colour: Color::linear_rgb(0.8, 0.8, 0.8),
+            handle_hovered_colour: Color::linear_rgb(0.8, 0.8, 0.8),
             handle_pressed_colour: Color::linear_rgb(0.6, 0.6, 0.6),
             handle_border_colour: Color::linear_rgb(0.1, 0.1, 0.1),
-            handle_hover_border_colour: Color::linear_rgb(0.2, 0.2, 0.2),
+            handle_hovered_border_colour: Color::linear_rgb(0.2, 0.2, 0.2),
             handle_pressed_border_colour: Color::linear_rgb(0.4, 0.4, 0.4),
             padding: UiRect::axes(px(20), px(5)),
         }
@@ -98,13 +100,13 @@ impl Default for UiThemeSlider {
 
 pub struct UiThemeCheckbox {
     pub normal_colour: Color,
-    pub hover_colour: Color,
+    pub hovered_colour: Color,
     pub pressed_colour: Color,
     pub normal_selected_colour: Color,
-    pub hover_selected_colour: Color,
+    pub hovered_selected_colour: Color,
     pub pressed_selected_colour: Color,
     pub border_colour: Color,
-    pub border_hover_colour: Color,
+    pub border_hovered_colour: Color,
     pub border_pressed_colour: Color,
     pub padding: UiRect,
 }
@@ -113,13 +115,13 @@ impl Default for UiThemeCheckbox {
     fn default() -> Self {
         Self {
             normal_colour: Color::linear_rgb(0.25, 0.25, 0.3),
-            hover_colour: Color::linear_rgb(0.35, 0.35, 0.4),
+            hovered_colour: Color::linear_rgb(0.35, 0.35, 0.4),
             pressed_colour: Color::linear_rgb(0.2, 0.2, 0.3),
-            normal_selected_colour: Color::linear_rgb(0.5, 0.0, 0.5),
-            hover_selected_colour: Color::linear_rgb(0.4, 0.0, 0.4),
-            pressed_selected_colour: Color::linear_rgb(0.2, 0.0, 0.2),
+            normal_selected_colour: Color::linear_rgb(0.5, 0., 0.5),
+            hovered_selected_colour: Color::linear_rgb(0.4, 0., 0.4),
+            pressed_selected_colour: Color::linear_rgb(0.2, 0., 0.2),
             border_colour: Color::linear_rgb(0.1, 0.1, 0.1),
-            border_hover_colour: Color::linear_rgb(0.2, 0.2, 0.2),
+            border_hovered_colour: Color::linear_rgb(0.2, 0.2, 0.2),
             border_pressed_colour: Color::linear_rgb(0.4, 0.4, 0.4),
             padding: UiRect::axes(px(7.5), px(7.5)),
         }
@@ -128,16 +130,17 @@ impl Default for UiThemeCheckbox {
 
 pub struct UiThemeRadio {
     pub normal_colour: Color,
-    pub hover_colour: Color,
+    pub hovered_colour: Color,
     pub pressed_colour: Color,
     pub normal_selected_colour: Color,
-    pub hover_selected_colour: Color,
+    pub hovered_selected_colour: Color,
     pub pressed_selected_colour: Color,
     pub border_colour: Color,
-    pub border_hover_colour: Color,
+    pub border_hovered_colour: Color,
     pub border_pressed_colour: Color,
     pub padding: UiRect,
     pub option_padding: UiRect,
+    pub option_spacing: Val,
     pub font_size: f32,
 }
 
@@ -145,16 +148,59 @@ impl Default for UiThemeRadio {
     fn default() -> Self {
         Self {
             normal_colour: Color::linear_rgb(0.25, 0.25, 0.3),
-            hover_colour: Color::linear_rgb(0.35, 0.35, 0.4),
+            hovered_colour: Color::linear_rgb(0.35, 0.35, 0.4),
             pressed_colour: Color::linear_rgb(0.2, 0.2, 0.3),
-            normal_selected_colour: Color::linear_rgb(0.5, 0.0, 0.5),
-            hover_selected_colour: Color::linear_rgb(0.4, 0.0, 0.4),
-            pressed_selected_colour: Color::linear_rgb(0.2, 0.0, 0.2),
+            normal_selected_colour: Color::linear_rgb(0.5, 0., 0.5),
+            hovered_selected_colour: Color::linear_rgb(0.4, 0., 0.4),
+            pressed_selected_colour: Color::linear_rgb(0.2, 0., 0.2),
             border_colour: Color::linear_rgb(0.1, 0.1, 0.1),
-            border_hover_colour: Color::linear_rgb(0.2, 0.2, 0.2),
+            border_hovered_colour: Color::linear_rgb(0.2, 0.2, 0.2),
             border_pressed_colour: Color::linear_rgb(0.4, 0.4, 0.4),
             padding: UiRect::axes(px(7.5), px(7.5)),
             option_padding: UiRect::axes(px(7.5), px(7.5)),
+            option_spacing: px(5.),
+            font_size: 24.,
+        }
+    }
+}
+
+pub struct UiThemeCombobox {
+    pub normal_colour: Color,
+    pub hovered_colour: Color,
+    pub pressed_colour: Color,
+    pub normal_selected_colour: Color,
+    pub hovered_selected_colour: Color,
+    pub pressed_selected_colour: Color,
+    pub normal_valuebox_colour: Color,
+    pub hovered_value_box_colour: Color,
+    pub pressed_value_box_colour: Color,
+    pub border_colour: Color,
+    pub border_hovered_colour: Color,
+    pub border_pressed_colour: Color,
+    pub padding: UiRect,
+    pub option_padding: UiRect,
+    pub option_spacing: Val,
+    pub font_size: f32,
+}
+
+impl Default for UiThemeCombobox {
+    fn default() -> Self {
+        Self {
+            normal_colour: Color::linear_rgb(0.25, 0.25, 0.3),
+            hovered_colour: Color::linear_rgb(0.35, 0.35, 0.4),
+            pressed_colour: Color::linear_rgb(0.2, 0.2, 0.3),
+            normal_selected_colour: Color::linear_rgb(0.5, 0., 0.5),
+            hovered_selected_colour: Color::linear_rgb(0.4, 0., 0.4),
+            pressed_selected_colour: Color::linear_rgb(0.2, 0., 0.2),
+            normal_valuebox_colour: Color::linear_rgb(0.5, 0.5, 0.),
+            hovered_value_box_colour: Color::linear_rgb(0.4, 0.4, 0.),
+            pressed_value_box_colour: Color::linear_rgb(0.2, 0.2, 0.),
+            border_colour: Color::linear_rgb(0.1, 0.1, 0.1),
+            border_hovered_colour: Color::linear_rgb(0.2, 0.2, 0.2),
+            border_pressed_colour: Color::linear_rgb(0.4, 0.4, 0.4),
+            padding: UiRect::axes(px(7.5), px(7.5)),
+            option_padding: UiRect::axes(px(7.5), px(7.5)),
+            option_spacing: px(5.),
             font_size: 24.,
         }
     }
