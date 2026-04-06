@@ -5,12 +5,13 @@ use crate::ui::UiTheme;
 #[derive(Debug, Copy, Clone)]
 pub enum UiWindowId {
     CellEditor,
+    SaveGenome,
 }
 
 #[derive(Debug, Copy, Clone)]
 pub enum UiWindowType {
-    Floating,
     Panel(UiPanelType),
+    Dialog,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -123,6 +124,43 @@ pub fn spawn_panel(
                     BorderColor::all(ui_theme.window.border_colour),
                 ))
                 // Children from function
+                .with_children(children);
+        })
+        .id()
+}
+
+pub fn spawn_dialog(
+    id: UiWindowId,
+    ui_theme: &UiTheme,
+    commands: &mut Commands,
+    children: impl FnOnce(&mut RelatedSpawnerCommands<ChildOf>),
+) -> Entity {
+    commands
+        .spawn(Node {
+            width: percent(100),
+            height: percent(100),
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::Center,
+            ..default()
+        })
+        .with_children(|parent| {
+            parent
+                .spawn((
+                    UiWindow {
+                        id,
+                        window_type: UiWindowType::Dialog,
+                    },
+                    Node {
+                        align_items: AlignItems::Start,
+                        justify_content: JustifyContent::Start,
+                        flex_direction: FlexDirection::Column,
+                        row_gap: ui_theme.window.item_spacing,
+                        padding: ui_theme.window.padding,
+                        ..default()
+                    },
+                    BackgroundColor(ui_theme.window.colour),
+                    BorderColor::all(ui_theme.window.border_colour),
+                ))
                 .with_children(children);
         })
         .id()

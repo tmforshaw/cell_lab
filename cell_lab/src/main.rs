@@ -13,7 +13,6 @@
 
 use bevy::{input_focus::InputFocus, prelude::*, sprite_render::Material2dPlugin};
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
-use strum::IntoEnumIterator;
 
 use crate::{
     cell_editor::{
@@ -34,7 +33,7 @@ use crate::{
     collision::systems::collision_system,
     despawning::apply_pending_despawns,
     game::{game_mode::GameMode, game_parameters::GameParameters},
-    genomes::{CellSplitType, CellType, GenomeModeId, genome::GenomeBank},
+    genomes::genome::GenomeBank,
     input::{
         cell_editor_mode_keyboard_event_reader, mode_independent_keyboard_event_reader, simulation_mode_keyboard_event_reader,
     },
@@ -52,12 +51,11 @@ use crate::{
         systems::{build_quadtree, visualise_quadtree},
     },
     ui::{
-        ButtonEvent, ButtonId, CheckboxEvent, CheckboxId, ComboboxEvent, ComboboxId, RadioEvent, RadioId, SliderEvent, SliderId,
-        UiPanelType, UiTheme, UiWindowId, button_event_reader, button_interaction_system, checkbox_event_reader,
-        checkbox_interaction_system, combobox_event_reader, combobox_option_select_system, combobox_text_update_system,
-        combobox_toggle_system, radio_event_reader, radio_interaction_system, slider_begin_drag_system, slider_drag_system,
-        slider_event_reader, slider_interaction_system, slider_release_system, spawn_button, spawn_checkbox, spawn_combobox,
-        spawn_heading, spawn_panel, spawn_radio, spawn_semi_separator, spawn_separator, spawn_slider, spawn_subheading,
+        ButtonEvent, CheckboxEvent, ComboboxEvent, RadioEvent, SliderEvent, UiTheme, UiWindowId, button_event_reader,
+        button_interaction_system, checkbox_event_reader, checkbox_interaction_system, combobox_event_reader,
+        combobox_option_select_system, combobox_text_update_system, combobox_toggle_system, radio_event_reader,
+        radio_interaction_system, slider_begin_drag_system, slider_drag_system, slider_event_reader, slider_interaction_system,
+        slider_release_system, spawn_heading, test_panel::spawn_cell_editor_panel, window::spawn_dialog,
     },
 };
 
@@ -77,10 +75,11 @@ pub mod ui;
 // TODO need to show that cell spawned even if it dies instantly (When splitting into a tiny cell)
 // TODO Show value of slider value as child of the handle when the handle is being moved (Or just to the side)
 // TODO Add UiState and add dialogs using that
-// TODO Combobox should close dialog when click is away from the box
+// TODO Combobox should close its dialog when click is away from the box
 // TODO Add vertical and horizontal as ui elements (Like in egui)
 // TODO Force UI to update when the values have changed
 // TODO Allow clicking just outside of the slider to adjust value
+// TODO Text input
 
 #[allow(clippy::too_many_lines)]
 fn main() {
@@ -119,7 +118,10 @@ fn main() {
         //
         // --------------------- Mode Independent Systems ----------------------
         //
-        .add_systems(Startup, (UiTheme::setup.before(setup), setup))
+        .add_systems(
+            Startup,
+            (UiTheme::setup.before(setup), setup, spawn_cell_editor_panel.after(setup)),
+        )
         .add_systems(PreUpdate, apply_pending_despawns.run_if(state_changed::<GameMode>)) // Need to do despawning right now when GameMode changes
         .add_systems(
             Update,
@@ -215,231 +217,12 @@ fn main() {
 }
 
 // Spawn cells and chemicals
-#[allow(clippy::needless_pass_by_value, clippy::too_many_lines)]
-fn setup(
-    mut commands: Commands,
-    ui_theme: Res<UiTheme>,
-    editor_state: Res<CellEditorState>,
-    param: Res<GameParameters>,
-    genome_bank: Res<GenomeBank>,
-) {
+#[allow(clippy::needless_pass_by_value)]
+fn setup(mut commands: Commands, ui_theme: Res<UiTheme>) {
     // 2D camera
     commands.spawn(Camera2d);
 
-    let genome_mode_strings = GenomeModeId::iter()
-        .map(|variant| variant.as_ref().to_string())
-        .collect::<Vec<_>>();
-
-    // Spawn a panel for the cell editor
-    spawn_panel(
-        UiWindowId::CellEditor,
-        UiPanelType::Right,
-        percent(20),
-        &ui_theme,
-        &mut commands,
-        |parent| {
-            parent
-                .spawn(Node {
-                    width: percent(100),
-                    flex_direction: FlexDirection::Row,
-                    align_content: AlignContent::Start,
-                    justify_items: JustifyItems::Start,
-                    justify_content: JustifyContent::SpaceBetween,
-                    column_gap: ui_theme.window.item_spacing,
-                    ..default()
-                })
-                .with_children(|parent| {
-                    // Title
-                    spawn_heading(parent, "Cell Editor", &ui_theme);
-
-                    // Mode selection
-                    spawn_combobox(
-                        parent,
-                        ComboboxId::SelectedMode,
-                        "Mode:",
-                        editor_state.selected_genome_mode.into(),
-                        &genome_mode_strings,
-                        &ui_theme,
-                    );
-                });
-
-            spawn_semi_separator(parent, &ui_theme);
-
-            parent
-                .spawn(Node {
-                    flex_direction: FlexDirection::Row,
-                    column_gap: ui_theme.window.item_spacing,
-                    ..default()
-                })
-                .with_children(|parent| {
-                    spawn_button(parent, "Save", ButtonId::Save, &ui_theme);
-                    spawn_button(parent, "Load", ButtonId::Load, &ui_theme);
-                    spawn_button(
-                        parent,
-                        "Replace Mode With Default",
-                        ButtonId::ReplaceModeWithDefault,
-                        &ui_theme,
-                    );
-                });
-
-            spawn_separator(parent, &ui_theme);
-
-            parent
-                .spawn(Node {
-                    width: percent(100),
-                    flex_direction: FlexDirection::Row,
-                    justify_content: JustifyContent::SpaceBetween,
-                    column_gap: ui_theme.window.item_spacing,
-                    ..default()
-                })
-                .with_children(|parent| {
-                    spawn_checkbox(parent, CheckboxId::InitialMode, "Initial Mode:", true, &ui_theme);
-
-                    spawn_combobox(
-                        parent,
-                        ComboboxId::CellType,
-                        "Cell Type:",
-                        editor_state.get_selected_genome_mode(&genome_bank).cell_type.into(),
-                        &CellType::iter()
-                            .map(|variant| variant.as_ref().to_string())
-                            .collect::<Vec<_>>(),
-                        &ui_theme,
-                    );
-                });
-
-            spawn_separator(parent, &ui_theme);
-
-            spawn_subheading(parent, "Daughters", &ui_theme);
-
-            spawn_semi_separator(parent, &ui_theme);
-
-            spawn_subheading(parent, "Daughter 1", &ui_theme);
-
-            spawn_combobox(
-                parent,
-                ComboboxId::Daughter1Mode,
-                "Mode:",
-                editor_state
-                    .get_selected_genome_mode(&genome_bank)
-                    .daughter_genome_modes
-                    .0
-                    .into(),
-                &genome_mode_strings,
-                &ui_theme,
-            );
-
-            spawn_slider(
-                parent,
-                SliderId::Daughter1Angle,
-                "Angle",
-                -editor_state
-                    .get_selected_genome_mode(&genome_bank)
-                    .daughter_angles
-                    .0
-                    .to_degrees(),
-                0.0..=360.,
-                &ui_theme,
-            );
-
-            spawn_semi_separator(parent, &ui_theme);
-
-            spawn_subheading(parent, "Daughter 2", &ui_theme);
-
-            spawn_combobox(
-                parent,
-                ComboboxId::Daughter2Mode,
-                "Mode:",
-                editor_state
-                    .get_selected_genome_mode(&genome_bank)
-                    .daughter_genome_modes
-                    .1
-                    .into(),
-                &genome_mode_strings,
-                &ui_theme,
-            );
-
-            spawn_slider(
-                parent,
-                SliderId::Daughter2Angle,
-                "Angle",
-                -editor_state
-                    .get_selected_genome_mode(&genome_bank)
-                    .daughter_angles
-                    .1
-                    .to_degrees(),
-                0.0..=360.,
-                &ui_theme,
-            );
-
-            spawn_separator(parent, &ui_theme);
-
-            // TODO Colour
-
-            spawn_subheading(parent, "Colour", &ui_theme);
-
-            spawn_separator(parent, &ui_theme);
-
-            spawn_subheading(parent, "Split Parameters", &ui_theme);
-
-            spawn_semi_separator(parent, &ui_theme);
-
-            spawn_radio(
-                parent,
-                RadioId::SplitType,
-                "Split Type:",
-                editor_state.get_selected_genome_mode(&genome_bank).split_type.into(),
-                &CellSplitType::iter()
-                    .map(|variant| variant.as_ref().to_string())
-                    .collect::<Vec<_>>(),
-                &ui_theme,
-            );
-
-            // TODO Select between showing split energy, age, and neither
-
-            spawn_slider(
-                parent,
-                SliderId::SplitEnergy,
-                "Split Energy:",
-                editor_state.get_selected_genome_mode(&genome_bank).split_energy,
-                0.0..=param.cell_parameters.max_energy,
-                &ui_theme,
-            );
-
-            spawn_slider(
-                parent,
-                SliderId::SplitAge,
-                "Split Age:",
-                editor_state.get_selected_genome_mode(&genome_bank).split_age,
-                0.0..=param.cell_parameters.max_split_age,
-                &ui_theme,
-            );
-
-            spawn_slider(
-                parent,
-                SliderId::SplitFraction,
-                "Split Fraction:",
-                editor_state.get_selected_genome_mode(&genome_bank).split_fraction,
-                0.0..=1.0,
-                &ui_theme,
-            );
-
-            spawn_slider(
-                parent,
-                SliderId::SplitAngle,
-                "Split Angle:",
-                -editor_state.get_selected_genome_mode(&genome_bank).split_angle.to_degrees(),
-                0.0..=360.0,
-                &ui_theme,
-            );
-
-            spawn_slider(
-                parent,
-                SliderId::SplitForce,
-                "Split Force:",
-                editor_state.get_selected_genome_mode(&genome_bank).split_force,
-                0.0..=60.0,
-                &ui_theme,
-            );
-        },
-    );
+    spawn_dialog(UiWindowId::SaveGenome, &ui_theme, &mut commands, |parent| {
+        spawn_heading(parent, "Save Dialog", &ui_theme);
+    });
 }

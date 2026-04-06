@@ -1,10 +1,12 @@
 pub mod button;
 pub mod checkbox;
 pub mod combobox;
+pub mod dialog_state;
 pub mod label;
 pub mod radio;
 pub mod separator;
 pub mod slider;
+pub mod test_panel;
 pub mod ui_theme;
 pub mod window;
 
