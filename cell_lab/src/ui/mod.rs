@@ -38,6 +38,6 @@ pub use slider::{
 
 pub use ui_theme::UiTheme;
 
-pub use window::{UiWindow, UiWindowId, UiWindowType, spawn_window};
+pub use window::{UiWindow, UiWindowId, UiWindowType, spawn_panel, spawn_window};
 
 pub use separator::spawn_separator;

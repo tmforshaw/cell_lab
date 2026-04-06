@@ -57,7 +57,7 @@ use crate::{
         checkbox_interaction_system, combobox_event_reader, combobox_option_select_system, combobox_text_update_system,
         combobox_toggle_system, radio_event_reader, radio_interaction_system, slider_begin_drag_system, slider_drag_system,
         slider_event_reader, slider_interaction_system, slider_release_system, spawn_button, spawn_checkbox, spawn_combobox,
-        spawn_radio, spawn_separator, spawn_slider, spawn_window,
+        spawn_panel, spawn_radio, spawn_separator, spawn_slider, spawn_window, window::UiPanelType,
     },
 };
 
@@ -225,11 +225,10 @@ fn setup(
     commands.spawn(Camera2d);
 
     // Spawn a panel for the cell editor
-    spawn_window(
+    spawn_panel(
         UiWindowId::CellEditor,
-        UiWindowType::Panel,
-        percent(30),
-        percent(80),
+        UiPanelType::Right,
+        percent(20),
         &ui_theme,
         &mut commands,
         |parent| {

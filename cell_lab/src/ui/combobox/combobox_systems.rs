@@ -191,7 +191,7 @@ pub fn spawn_combobox<S1: AsRef<str>, S2: AsRef<str>>(
                                 display: Display::None,                // Make the dropdown invisible by default
                                 ..default()
                             },
-                            ZIndex(100), // Ensure that this node is drawn above the other nodes
+                            GlobalZIndex(999_999), // Ensure that this node is drawn above other nodes
                             // Set the colours
                             BorderColor::all(ui_theme.combobox.border_colour),
                             BackgroundColor(ui_theme.combobox.normal_colour),
