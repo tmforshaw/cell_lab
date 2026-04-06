@@ -239,7 +239,7 @@ pub fn combobox_toggle_system(
                 input_focus.set(entity);
 
                 // Set the colours depending on the interaction type
-                colour.0 = ui_theme.combobox.hovered_value_box_colour;
+                colour.0 = ui_theme.combobox.hovered_valuebox_colour;
                 *border_colour = BorderColor::all(ui_theme.combobox.border_hovered_colour);
             }
             Interaction::None => {
