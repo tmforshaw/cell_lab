@@ -2,11 +2,17 @@ use std::ops::RangeInclusive;
 
 use bevy::{ecs::relationship::RelatedSpawnerCommands, input_focus::InputFocus, prelude::*};
 
-use crate::ui::{SliderEvent, UiTheme};
+use crate::ui::{SliderEvent, UiTheme, spawn_label};
 
 #[derive(Component, Debug, Copy, Clone)]
 pub enum SliderId {
     SplitEnergy,
+    SplitAge,
+    SplitFraction,
+    SplitAngle,
+    SplitForce,
+    Daughter1Angle,
+    Daughter2Angle,
 }
 
 #[derive(Component)]
@@ -38,34 +44,28 @@ pub fn spawn_slider<S: AsRef<str>>(
 ) {
     // Ensure that inital value is within the range
     if !range.contains(&initial_value) {
-        eprintln!("Slider initial value was outside of values range");
+        eprintln!("Slider initial value was outside of values range: {slider_id:?}");
         return;
     }
 
     let percent = (initial_value - range.start()) / (range.end() - range.start());
 
-    parent.spawn((
-        // Create a horizontal flex box for the label and the ui element
-        Node {
-            justify_content: JustifyContent::Start,
-            align_items: AlignItems::Center,
-            flex_direction: FlexDirection::Row,
-            column_gap: ui_theme.label_gap,
-            ..default()
-        },
-        children![
+    parent
+        .spawn(
+            // Create a horizontal flex box for the label and the ui element
+            Node {
+                justify_content: JustifyContent::Start,
+                align_items: AlignItems::Center,
+                flex_direction: FlexDirection::Row,
+                column_gap: ui_theme.label_gap,
+                ..default()
+            },
+        )
+        .with_children(|parent| {
             // Add a label for the ui element
-            (
-                Text::new(label.as_ref()),
-                TextFont {
-                    font: ui_theme.font.clone(),
-                    font_size: ui_theme.label_font_size,
-                    ..default()
-                },
-                ui_theme.text_colour,
-                ui_theme.text_shadow,
-            ),
-            (
+            spawn_label(parent, label, ui_theme);
+
+            parent.spawn((
                 // Create a slider shape
                 Node {
                     padding: ui_theme.slider.padding,
@@ -100,9 +100,8 @@ pub fn spawn_slider<S: AsRef<str>>(
                     BackgroundColor(ui_theme.slider.handle_colour),
                     SliderHandle
                 )],
-            )
-        ],
-    ));
+            ));
+        });
 }
 
 #[allow(clippy::type_complexity)]

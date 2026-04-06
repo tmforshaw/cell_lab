@@ -1,6 +1,6 @@
 use bevy::{ecs::relationship::RelatedSpawnerCommands, input_focus::InputFocus, prelude::*};
 
-use crate::ui::{RadioEvent, UiTheme};
+use crate::ui::{RadioEvent, UiTheme, spawn_label};
 
 #[derive(Component, Debug, Copy, Clone)]
 pub enum RadioId {
@@ -31,13 +31,13 @@ pub fn spawn_radio<S1: AsRef<str>, S2: AsRef<str>>(
 ) {
     // Ensure that the options Vec has at least one option
     if options.is_empty() {
-        eprintln!("Radio options was an empty Vec");
+        eprintln!("Radio options was an empty Vec: {radio_id:?}");
         return;
     }
 
     // Ensure that initial selected is within the options length
     if initial_selected >= options.len() {
-        eprintln!("Radio initial selected was outside of options Vec");
+        eprintln!("Radio initial selected was outside of options Vec: {radio_id:?}");
         return;
     }
 
@@ -97,16 +97,7 @@ pub fn spawn_radio<S1: AsRef<str>, S2: AsRef<str>>(
         )
         .with_children(|parent| {
             // Add a label for the ui element
-            parent.spawn((
-                Text::new(label.as_ref()),
-                TextFont {
-                    font: ui_theme.font.clone(),
-                    font_size: ui_theme.label_font_size,
-                    ..default()
-                },
-                ui_theme.text_colour,
-                ui_theme.text_shadow,
-            ));
+            spawn_label(parent, label, ui_theme);
 
             parent
                 .spawn((

@@ -1,6 +1,6 @@
 use bevy::{ecs::relationship::RelatedSpawnerCommands, input_focus::InputFocus, prelude::*};
 
-use crate::ui::{CheckboxEvent, UiTheme};
+use crate::ui::{CheckboxEvent, UiTheme, spawn_label};
 
 #[derive(Component, Debug, Copy, Clone)]
 pub enum CheckboxId {
@@ -19,29 +19,23 @@ pub fn spawn_checkbox<S: AsRef<str>>(
     initial_value: bool,
     ui_theme: &UiTheme,
 ) {
-    parent.spawn((
-        // Create a horizontal flex box for the label and the ui element
-        Node {
-            justify_content: JustifyContent::Start,
-            align_items: AlignItems::Center,
-            flex_direction: FlexDirection::Row,
-            column_gap: ui_theme.label_gap,
-            ..default()
-        },
-        children![
+    parent
+        .spawn(
+            // Create a horizontal flex box for the label and the ui element
+            Node {
+                justify_content: JustifyContent::Start,
+                align_items: AlignItems::Center,
+                flex_direction: FlexDirection::Row,
+                column_gap: ui_theme.label_gap,
+                ..default()
+            },
+        )
+        .with_children(|parent| {
             // Add a label for the ui element
-            (
-                Text::new(label.as_ref()),
-                TextFont {
-                    font: ui_theme.font.clone(),
-                    font_size: ui_theme.label_font_size,
-                    ..default()
-                },
-                ui_theme.text_colour,
-                ui_theme.text_shadow,
-            ),
+            spawn_label(parent, label, ui_theme);
+
             // Create a checkbox shape
-            (
+            parent.spawn((
                 Node {
                     padding: ui_theme.checkbox.padding,
                     border: ui_theme.border,
@@ -63,9 +57,8 @@ pub fn spawn_checkbox<S: AsRef<str>>(
                     BackgroundColor(ui_theme.checkbox.normal_colour)
                 },
                 BorderColor::all(ui_theme.checkbox.border_colour),
-            )
-        ],
-    ));
+            ));
+        });
 }
 
 #[allow(clippy::type_complexity, clippy::needless_pass_by_value)]

@@ -1,10 +1,13 @@
 use bevy::{ecs::relationship::RelatedSpawnerCommands, input_focus::InputFocus, prelude::*};
 
-use crate::ui::{ComboboxEvent, UiTheme};
+use crate::ui::{ComboboxEvent, UiTheme, spawn_label};
 
 #[derive(Component, Debug, Copy, Clone)]
 pub enum ComboboxId {
-    Mode,
+    SelectedMode,
+    Daughter1Mode,
+    Daughter2Mode,
+    CellType,
 }
 
 #[derive(Component)]
@@ -41,13 +44,13 @@ pub fn spawn_combobox<S1: AsRef<str>, S2: AsRef<str>>(
 ) {
     // Ensure that the options Vec has at least one option
     if options.is_empty() {
-        eprintln!("Combobox options was an empty Vec");
+        eprintln!("Combobox options was an empty Vec: {combobox_id:?}");
         return;
     }
 
     // Ensure that initial selected is within the options length
     if initial_selected >= options.len() {
-        eprintln!("Combobox initial selected was outside of options Vec");
+        eprintln!("Combobox initial selected was outside of options Vec: {combobox_id:?}");
         return;
     }
 
@@ -109,16 +112,7 @@ pub fn spawn_combobox<S1: AsRef<str>, S2: AsRef<str>>(
         )
         .with_children(|parent| {
             // Add a label for the ui element
-            parent.spawn((
-                Text::new(label.as_ref()),
-                TextFont {
-                    font: ui_theme.font.clone(),
-                    font_size: ui_theme.label_font_size,
-                    ..default()
-                },
-                ui_theme.text_colour,
-                ui_theme.text_shadow,
-            ));
+            spawn_label(parent, label, ui_theme);
 
             parent
                 .spawn((
@@ -334,25 +328,30 @@ pub fn combobox_option_select_system(
     }
 }
 
-#[allow(clippy::needless_pass_by_value)]
+#[allow(clippy::needless_pass_by_value, clippy::type_complexity)]
 pub fn combobox_text_update_system(
     ui_theme: Res<UiTheme>,
     comboboxes: Query<(&Combobox, &Children), Changed<Combobox>>,
     containers: Query<&Children, With<ComboboxOptionContainer>>,
     mut options: Query<(&mut BackgroundColor, &mut BorderColor, &ComboboxOption), Without<ComboboxValueBox>>,
+    valuebox_options: Query<&Children, (With<ComboboxValueBox>, Without<Combobox>, Without<ComboboxOption>)>,
     mut text_query: Query<&mut Text, With<ComboboxValueBoxText>>,
 ) {
     for (combobox, children) in &comboboxes {
         let selected = combobox.options[combobox.selected].clone();
 
-        // Change the value box text to display the selected option
-        for mut text in &mut text_query {
-            **text = selected.clone();
-        }
-
         // Get the container for the options
         for &child in children {
-            if let Ok(container_children) = containers.get(child) {
+            // Get the valuebox children
+            if let Ok(valuebox_children) = valuebox_options.get(child) {
+                // Iterate over valuebox children
+                for &child in valuebox_children {
+                    // Change the value box text to display the selected option
+                    if let Ok(mut text) = text_query.get_mut(child) {
+                        **text = selected.clone();
+                    }
+                }
+            } else if let Ok(container_children) = containers.get(child) {
                 // Iterate over options in container
                 for &child in container_children {
                     // If the child is an option

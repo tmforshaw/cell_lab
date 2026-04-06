@@ -16,6 +16,9 @@ pub fn button_event_reader(mut events: MessageReader<ButtonEvent>, mut editor_st
             ButtonId::Load => {
                 editor_state.dialogs.open_load_dialog();
             }
+            ButtonId::ReplaceModeWithDefault => {
+                editor_state.dialogs.open_default_genome_mode_dialog();
+            }
         }
     }
 }

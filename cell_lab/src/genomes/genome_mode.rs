@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::game::game_parameters::GameParameters;
 
-#[derive(Component, Debug, Default, Clone, Copy, PartialEq, PartialOrd, Ord, Eq, Serialize, Deserialize)]
+#[derive(Component, Debug, Default, Clone, Copy, PartialEq, PartialOrd, Ord, Eq, Serialize, Deserialize, EnumIter, AsRefStr)]
 pub enum CellType {
     #[default]
     Phagocyte,
@@ -21,6 +21,24 @@ impl std::fmt::Display for CellType {
                 Self::Photocyte => "Photocyte",
             },
         )
+    }
+}
+
+impl From<usize> for CellType {
+    fn from(value: usize) -> Self {
+        match value {
+            0 => Self::Phagocyte,
+            _ => Self::Photocyte,
+        }
+    }
+}
+
+impl From<CellType> for usize {
+    fn from(value: CellType) -> Self {
+        match value {
+            CellType::Phagocyte => 0,
+            CellType::Photocyte => 1,
+        }
     }
 }
 

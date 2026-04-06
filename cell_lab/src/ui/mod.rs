@@ -1,6 +1,7 @@
 pub mod button;
 pub mod checkbox;
 pub mod combobox;
+pub mod label;
 pub mod radio;
 pub mod separator;
 pub mod slider;
@@ -38,6 +39,8 @@ pub use slider::{
 
 pub use ui_theme::UiTheme;
 
-pub use window::{UiWindow, UiWindowId, UiWindowType, spawn_panel, spawn_window};
+pub use window::{UiPanelType, UiWindow, UiWindowId, UiWindowType, spawn_panel, spawn_window};
 
-pub use separator::spawn_separator;
+pub use separator::{spawn_semi_separator, spawn_separator};
+
+pub use label::{spawn_heading, spawn_label, spawn_subheading};
