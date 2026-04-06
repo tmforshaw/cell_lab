@@ -9,9 +9,12 @@ pub struct UiTheme {
     pub border: UiRect,
     pub border_radius: BorderRadius,
     pub label_gap: Val,
+    pub heading_font_size: f32,
+    pub subheading_font_size: f32,
     pub label_font_size: f32,
     pub inner_font_size: f32,
     pub window: UiThemeWindow,
+    pub separator: UiThemeSeparator,
     pub button: UiThemeButton,
     pub slider: UiThemeSlider,
     pub checkbox: UiThemeCheckbox,
@@ -32,9 +35,12 @@ impl UiTheme {
             border: UiRect::axes(px(0), px(0)),
             border_radius: BorderRadius::MAX,
             label_gap: px(5.),
+            heading_font_size: 30.,
+            subheading_font_size: 25.,
             label_font_size: 20.,
             inner_font_size: 16.,
             window: UiThemeWindow::default(),
+            separator: UiThemeSeparator::default(),
             button: UiThemeButton::default(),
             slider: UiThemeSlider::default(),
             checkbox: UiThemeCheckbox::default(),
@@ -222,6 +228,22 @@ impl Default for UiThemeWindow {
             border_colour: Color::linear_rgb(0.05, 0.05, 0.05),
             item_spacing: px(5),
             padding: UiRect::axes(px(10), px(10)),
+        }
+    }
+}
+
+pub struct UiThemeSeparator {
+    pub height: Val,
+    pub colour: Color,
+    pub margin: UiRect,
+}
+
+impl Default for UiThemeSeparator {
+    fn default() -> Self {
+        Self {
+            height: px(5),
+            colour: Color::linear_rgb(0., 0., 0.),
+            margin: UiRect::axes(px(0.), px(10.)),
         }
     }
 }

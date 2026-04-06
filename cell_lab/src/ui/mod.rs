@@ -2,6 +2,7 @@ pub mod button;
 pub mod checkbox;
 pub mod combobox;
 pub mod radio;
+pub mod separator;
 pub mod slider;
 pub mod ui_theme;
 pub mod window;
@@ -38,3 +39,5 @@ pub use slider::{
 pub use ui_theme::UiTheme;
 
 pub use window::{UiWindow, UiWindowId, UiWindowType, spawn_window};
+
+pub use separator::spawn_separator;

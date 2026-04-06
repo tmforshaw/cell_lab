@@ -57,7 +57,7 @@ use crate::{
         checkbox_interaction_system, combobox_event_reader, combobox_option_select_system, combobox_text_update_system,
         combobox_toggle_system, radio_event_reader, radio_interaction_system, slider_begin_drag_system, slider_drag_system,
         slider_event_reader, slider_interaction_system, slider_release_system, spawn_button, spawn_checkbox, spawn_combobox,
-        spawn_radio, spawn_slider, spawn_window,
+        spawn_radio, spawn_separator, spawn_slider, spawn_window,
     },
 };
 
@@ -78,6 +78,7 @@ pub mod ui;
 // TODO Show value of slider value as child of the handle when the handle is being moved (Or just to the side)
 // TODO Add UiState and add dialogs using that
 // TODO Add panel or window to UiElements
+// TODO Add label spawning
 
 #[allow(clippy::too_many_lines)]
 fn main() {
@@ -234,8 +235,44 @@ fn setup(
         |parent| {
             parent
                 .spawn(Node {
+                    width: percent(100),
                     flex_direction: FlexDirection::Row,
-                    column_gap: px(20),
+                    align_content: AlignContent::Start,
+                    justify_items: JustifyItems::Start,
+                    justify_content: JustifyContent::SpaceBetween,
+                    column_gap: ui_theme.window.item_spacing,
+                    ..default()
+                })
+                .with_children(|parent| {
+                    // Title
+                    parent.spawn((
+                        Text::new("Cell Editor"),
+                        TextFont {
+                            font: ui_theme.font.clone(),
+                            font_size: ui_theme.heading_font_size,
+                            ..default()
+                        },
+                        ui_theme.text_colour,
+                        ui_theme.text_shadow,
+                    ));
+
+                    // Mode selection
+                    spawn_combobox(
+                        parent,
+                        ComboboxId::Mode,
+                        "Mode:",
+                        editor_state.selected_genome_mode.into(),
+                        &GenomeModeId::iter()
+                            .map(|variant| variant.as_ref().to_string())
+                            .collect::<Vec<_>>(),
+                        &ui_theme,
+                    );
+                });
+
+            parent
+                .spawn(Node {
+                    flex_direction: FlexDirection::Row,
+                    column_gap: ui_theme.window.item_spacing,
                     ..default()
                 })
                 .with_children(|parent| {
@@ -243,15 +280,16 @@ fn setup(
                     spawn_button(parent, "Load", ButtonId::Load, &ui_theme);
                 });
 
-            spawn_slider(
-                parent,
-                SliderId::SplitEnergy,
-                "Split Energy:",
-                editor_state.get_selected_genome_mode(&genome_bank).split_energy,
-                0.0..=param.cell_parameters.max_energy,
-                &ui_theme,
-            );
+            spawn_separator(parent, &ui_theme);
+
             spawn_checkbox(parent, CheckboxId::InitialMode, "Initial Mode:", true, &ui_theme);
+
+            spawn_separator(parent, &ui_theme);
+
+            // TODO Daughter sections
+
+            spawn_separator(parent, &ui_theme);
+
             spawn_radio(
                 parent,
                 RadioId::SplitType,
@@ -262,14 +300,13 @@ fn setup(
                     .collect::<Vec<_>>(),
                 &ui_theme,
             );
-            spawn_combobox(
+
+            spawn_slider(
                 parent,
-                ComboboxId::Mode,
-                "Mode:",
-                editor_state.selected_genome_mode.into(),
-                &GenomeModeId::iter()
-                    .map(|variant| variant.as_ref().to_string())
-                    .collect::<Vec<_>>(),
+                SliderId::SplitEnergy,
+                "Split Energy:",
+                editor_state.get_selected_genome_mode(&genome_bank).split_energy,
+                0.0..=param.cell_parameters.max_energy,
                 &ui_theme,
             );
         },
