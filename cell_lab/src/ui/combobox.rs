@@ -178,6 +178,7 @@ pub fn spawn_combobox<S: AsRef<str>>(
                                 flex_direction: FlexDirection::Column,
                                 row_gap: ui_theme.combobox.option_spacing,
                                 position_type: PositionType::Absolute, // Make the options overlap the other content
+                                display: Display::None,                // Make the dropdown invisible by default
                                 ..default()
                             },
                             ZIndex(100), // Ensure that this node is drawn above the other nodes
