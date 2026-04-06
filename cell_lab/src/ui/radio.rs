@@ -25,12 +25,19 @@ pub fn spawn_radio<S: AsRef<str>>(
     parent: &mut RelatedSpawnerCommands<ChildOf>,
     radio_id: RadioId,
     label: S,
+    initial_selected: usize,
     options: &[S],
     ui_theme: &UiTheme,
 ) {
     // Ensure that the options Vec has at least one option
     if options.is_empty() {
         eprintln!("Radio options was an empty Vec");
+        return;
+    }
+
+    // Ensure that initial selected is within the options length
+    if initial_selected >= options.len() {
+        eprintln!("Radio initial selected was outside of options Vec");
         return;
     }
 
@@ -53,7 +60,7 @@ pub fn spawn_radio<S: AsRef<str>>(
                 // Mark as a radio option
                 RadioOption { index: i },
                 // Set the background and border colours
-                BackgroundColor(if i == 0 {
+                BackgroundColor(if i == initial_selected {
                     ui_theme.radio.normal_selected_colour
                 } else {
                     ui_theme.radio.normal_colour
@@ -115,7 +122,10 @@ pub fn spawn_radio<S: AsRef<str>>(
                         ..default()
                     },
                     // Make it a radio
-                    Radio { options, selected: 0 },
+                    Radio {
+                        options,
+                        selected: initial_selected,
+                    },
                     // Mark with ID
                     radio_id,
                     // Set the colours

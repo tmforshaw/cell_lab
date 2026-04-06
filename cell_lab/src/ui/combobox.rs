@@ -35,6 +35,7 @@ pub fn spawn_combobox<S: AsRef<str>>(
     parent: &mut RelatedSpawnerCommands<ChildOf>,
     combobox_id: ComboboxId,
     label: S,
+    initial_selected: usize,
     options: &[S],
     ui_theme: &UiTheme,
 ) {
@@ -44,9 +45,15 @@ pub fn spawn_combobox<S: AsRef<str>>(
         return;
     }
 
+    // Ensure that initial selected is within the options length
+    if initial_selected >= options.len() {
+        eprintln!("Combobox initial selected was outside of options Vec");
+        return;
+    }
+
     let options: Vec<_> = options.iter().map(AsRef::as_ref).map(ToString::to_string).collect();
 
-    let selected_option = options[0].clone();
+    let selected_option = options[initial_selected].clone();
 
     // Create the children bundles for each option
     let children: Vec<_> = options
@@ -65,7 +72,7 @@ pub fn spawn_combobox<S: AsRef<str>>(
                 // Mark as a combobox option
                 ComboboxOption { index: i },
                 // Set the background and border colours
-                BackgroundColor(if i == 0 {
+                BackgroundColor(if i == initial_selected {
                     ui_theme.combobox.normal_selected_colour
                 } else {
                     ui_theme.combobox.normal_colour
@@ -127,7 +134,10 @@ pub fn spawn_combobox<S: AsRef<str>>(
                         ..default()
                     },
                     // Make it a combobox
-                    Combobox { options, selected: 0 },
+                    Combobox {
+                        options,
+                        selected: initial_selected,
+                    },
                     // Mark with ID
                     combobox_id,
                     // Set the colours

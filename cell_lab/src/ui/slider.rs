@@ -18,7 +18,7 @@ pub struct Slider {
 impl Slider {
     #[must_use]
     pub fn get_value(&self) -> f32 {
-        self.percent * (self.range.end() - self.range.start())
+        self.percent * (self.range.end() - self.range.start()) + self.range.start()
     }
 }
 
@@ -32,9 +32,18 @@ pub fn spawn_slider<S: AsRef<str>>(
     parent: &mut RelatedSpawnerCommands<ChildOf>,
     slider_id: SliderId,
     label: S,
+    initial_value: f32,
     range: RangeInclusive<f32>,
     ui_theme: &UiTheme,
 ) {
+    // Ensure that inital value is within the range
+    if !range.contains(&initial_value) {
+        eprintln!("Slider initial value was outside of values range");
+        return;
+    }
+
+    let percent = (initial_value - range.start()) / (range.end() - range.start());
+
     parent.spawn((
         // Create a horizontal flex box for the label and the ui element
         Node {
@@ -69,7 +78,7 @@ pub fn spawn_slider<S: AsRef<str>>(
                     ..default()
                 },
                 // Mark as a slider
-                Slider { percent: 0.0, range },
+                Slider { percent, range },
                 // Mark with ID
                 slider_id,
                 // Set the colours
@@ -83,7 +92,7 @@ pub fn spawn_slider<S: AsRef<str>>(
                         width: ui_theme.slider.handle_width,
                         height: ui_theme.slider.handle_height,
                         position_type: PositionType::Absolute,
-                        left: px(0.),
+                        left: Val::Percent(percent * 100.),
                         border_radius: ui_theme.border_radius,
                         ..default()
                     },

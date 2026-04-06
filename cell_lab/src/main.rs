@@ -209,12 +209,13 @@ fn setup(mut commands: Commands, ui_theme: Res<UiTheme>) {
         ))
         .with_children(|parent| {
             spawn_button(parent, "Save", ButtonId::Save, &ui_theme);
-            spawn_slider(parent, SliderId::SplitEnergy, "Split Energy:", 0.0..=10., &ui_theme);
-            spawn_checkbox(parent, CheckboxId::InitialMode, "Initial Mode:", &ui_theme);
+            spawn_slider(parent, SliderId::SplitEnergy, "Split Energy:", 20., 0.0..=40., &ui_theme);
+            spawn_checkbox(parent, CheckboxId::InitialMode, "Initial Mode:", true, &ui_theme);
             spawn_radio(
                 parent,
                 RadioId::SplitType,
                 "Split Type:",
+                1,
                 &["Option 1", "Option 2"],
                 &ui_theme,
             );
@@ -222,6 +223,7 @@ fn setup(mut commands: Commands, ui_theme: Res<UiTheme>) {
                 parent,
                 ComboboxId::SplitType,
                 "Mode:",
+                4,
                 &["Option 1", "Option 2", "Option 3", "Option 4", "Option 5", "Option 6"],
                 &ui_theme,
             );

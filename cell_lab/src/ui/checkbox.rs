@@ -16,6 +16,7 @@ pub fn spawn_checkbox<S: AsRef<str>>(
     parent: &mut RelatedSpawnerCommands<ChildOf>,
     checkbox_id: CheckboxId,
     label: S,
+    initial_value: bool,
     ui_theme: &UiTheme,
 ) {
     parent.spawn((
@@ -50,14 +51,18 @@ pub fn spawn_checkbox<S: AsRef<str>>(
                     ..default()
                 },
                 // Make it a checkbox
-                Checkbox { selected: false },
+                Checkbox { selected: initial_value },
                 // Mark with ID
                 checkbox_id,
                 // Add the interaction component
                 Interaction::default(),
                 // Set the colours
+                if initial_value {
+                    BackgroundColor(ui_theme.checkbox.normal_selected_colour)
+                } else {
+                    BackgroundColor(ui_theme.checkbox.normal_colour)
+                },
                 BorderColor::all(ui_theme.checkbox.border_colour),
-                BackgroundColor(ui_theme.checkbox.normal_colour),
             )
         ],
     ));
