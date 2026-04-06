@@ -77,9 +77,9 @@ pub fn generate_enum(input: TokenStream) -> TokenStream {
 
     // Turn all those generated texts into code to be pasted
     let expanded = quote! {
-        use strum_macros::EnumIter;
+        use strum_macros::{EnumIter, AsRefStr};
 
-        #[derive(Debug, Clone, Copy, Default, PartialEq, PartialOrd, Ord, Eq, Serialize, Deserialize, EnumIter)]
+        #[derive(Debug, Clone, Copy, Default, PartialEq, PartialOrd, Ord, Eq, Serialize, Deserialize, EnumIter, AsRefStr)]
         pub enum #enum_name {
             #(#variants),*
         }

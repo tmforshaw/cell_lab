@@ -2,7 +2,7 @@ use std::ops::RangeInclusive;
 
 use bevy::{ecs::relationship::RelatedSpawnerCommands, input_focus::InputFocus, prelude::*};
 
-use crate::ui::UiTheme;
+use crate::ui::{SliderEvent, UiTheme};
 
 #[derive(Component, Debug, Copy, Clone)]
 pub enum SliderId {
@@ -92,6 +92,7 @@ pub fn spawn_slider<S: AsRef<str>>(
                         width: ui_theme.slider.handle_width,
                         height: ui_theme.slider.handle_height,
                         position_type: PositionType::Absolute,
+                        // TODO Need to account for handle width
                         left: Val::Percent(percent * 100.),
                         border_radius: ui_theme.border_radius,
                         ..default()
@@ -118,8 +119,9 @@ pub fn slider_begin_drag_system(
 
 pub fn slider_drag_system(
     windows: Query<&Window>,
-    mut sliders: Query<(&mut Slider, &Node, &UiGlobalTransform, &Children), With<ActiveSlider>>,
+    mut sliders: Query<(&mut Slider, &SliderId, &Node, &UiGlobalTransform, &Children), With<ActiveSlider>>,
     mut handles: Query<&mut Node, (With<SliderHandle>, Without<Slider>)>,
+    mut slider_event_writer: MessageWriter<SliderEvent>,
 ) {
     // Get window properties to calculate the pixel size of different elements
     let Ok(window) = windows.single() else { return };
@@ -129,7 +131,7 @@ pub fn slider_drag_system(
     // Get the mouse position
     if let Some(cursor_pos) = window.cursor_position() {
         // Iterate over active sliders (should only be one) to adjust handle position
-        for (mut slider, node, transform, children) in &mut sliders {
+        for (mut slider, slider_id, node, transform, children) in &mut sliders {
             // Find the slider handle for this slider
             for &child in children {
                 // Get the node for the slider handle
@@ -168,6 +170,12 @@ pub fn slider_drag_system(
 
                     handle_node.left = Val::Px(slider.percent * adjusted_track_width);
 
+                    // Send an event for this slider drag
+                    slider_event_writer.write(SliderEvent {
+                        id: *slider_id,
+                        new_value: slider.get_value(),
+                    });
+
                     // There is only one handle for the slider
                     break;
                 }
@@ -180,26 +188,23 @@ pub fn slider_drag_system(
 pub fn slider_release_system(
     mut commands: Commands,
     mouse: Res<ButtonInput<MouseButton>>,
-    query: Query<(Entity, &Slider, &SliderId), With<ActiveSlider>>,
+    query: Query<Entity, With<ActiveSlider>>,
 ) {
     if mouse.just_released(MouseButton::Left) {
-        for (entity, slider, slider_id) in &query {
+        for entity in &query {
             commands.entity(entity).remove::<ActiveSlider>();
-
-            println!("Slider [{:?}]: {}", slider_id, slider.get_value());
         }
     }
 }
 
-// TODO Find children and change colour of handle
 #[allow(clippy::type_complexity, clippy::needless_pass_by_value)]
 pub fn slider_interaction_system(
     mut input_focus: ResMut<InputFocus>,
     ui_theme: Res<UiTheme>,
-    mut interaction_query: Query<(Entity, &Interaction, &SliderId, &Children), Changed<Interaction>>,
+    mut interaction_query: Query<(Entity, &Interaction, &Children), (Changed<Interaction>, With<Slider>)>,
     mut handles_query: Query<(Entity, &mut BackgroundColor, &mut BorderColor), With<SliderHandle>>,
 ) {
-    for (entity, interaction, slider_id, children) in &mut interaction_query {
+    for (entity, interaction, children) in &mut interaction_query {
         match *interaction {
             Interaction::Pressed => {
                 input_focus.set(entity);
@@ -214,11 +219,6 @@ pub fn slider_interaction_system(
                         // There should only be one handle
                         break;
                     }
-                }
-
-                // TODO Run the functions for the slider
-                match slider_id {
-                    SliderId::SplitEnergy => {}
                 }
             }
             Interaction::Hovered => {

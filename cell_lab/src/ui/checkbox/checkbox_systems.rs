@@ -1,6 +1,6 @@
 use bevy::{ecs::relationship::RelatedSpawnerCommands, input_focus::InputFocus, prelude::*};
 
-use crate::ui::UiTheme;
+use crate::ui::{CheckboxEvent, UiTheme};
 
 #[derive(Component, Debug, Copy, Clone)]
 pub enum CheckboxId {
@@ -83,9 +83,9 @@ pub fn checkbox_interaction_system(
         ),
         Changed<Interaction>,
     >,
-    // mut editor_state: ResMut<CellEditorState>,
+    mut checkbox_event_writer: MessageWriter<CheckboxEvent>,
 ) {
-    for (entity, interaction, mut colour, mut border_colour, _checkbox_id, mut checkbox) in &mut interaction_query {
+    for (entity, interaction, mut colour, mut border_colour, checkbox_id, mut checkbox) in &mut interaction_query {
         match *interaction {
             Interaction::Pressed => {
                 input_focus.set(entity);
@@ -101,6 +101,13 @@ pub fn checkbox_interaction_system(
                 }
 
                 *border_colour = BorderColor::all(ui_theme.checkbox.border_pressed_colour);
+
+                // Trigger an event for the checkbox change
+                checkbox_event_writer.write(CheckboxEvent {
+                    entity,
+                    id: *checkbox_id,
+                    new_value: checkbox.selected,
+                });
             }
             Interaction::Hovered => {
                 input_focus.set(entity);

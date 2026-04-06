@@ -1,6 +1,6 @@
 use bevy::{ecs::relationship::RelatedSpawnerCommands, input_focus::InputFocus, prelude::*};
 
-use crate::{cell_editor::state::CellEditorState, ui::UiTheme};
+use crate::{ui::ButtonEvent, ui::UiTheme};
 
 #[derive(Component, Debug, Copy, Clone)]
 pub enum ButtonId {
@@ -45,34 +45,32 @@ pub fn button_interaction_system(
     mut input_focus: ResMut<InputFocus>,
     ui_theme: Res<UiTheme>,
     mut interaction_query: Query<(Entity, &Interaction, &mut BackgroundColor, &mut BorderColor, &ButtonId), Changed<Interaction>>,
-    mut editor_state: ResMut<CellEditorState>,
+    mut button_event_writer: MessageWriter<ButtonEvent>,
 ) {
     for (entity, interaction, mut colour, mut border_colour, button_id) in &mut interaction_query {
         match *interaction {
             Interaction::Pressed => {
                 input_focus.set(entity);
 
-                *colour = ui_theme.button.pressed_colour.into();
+                // Change the colour depending on the interaction type
+                colour.0 = ui_theme.button.pressed_colour;
                 *border_colour = ui_theme.button.border_pressed_colour.into();
 
-                // TODO Run the functions for each button
-                match button_id {
-                    ButtonId::Save => {
-                        editor_state.dialogs.open_save_dialog();
-                    }
-                    ButtonId::Load => todo!(),
-                }
+                // Fire an event to trigger this button
+                button_event_writer.write(ButtonEvent { id: *button_id });
             }
             Interaction::Hovered => {
                 input_focus.set(entity);
 
-                *colour = ui_theme.button.hovered_colour.into();
+                // Change the colour depending on the interaction type
+                colour.0 = ui_theme.button.hovered_colour;
                 *border_colour = ui_theme.button.border_hovered_colour.into();
             }
             Interaction::None => {
                 input_focus.clear();
 
-                *colour = ui_theme.button.normal_colour.into();
+                // Change the colour depending on the interaction type
+                colour.0 = ui_theme.button.normal_colour;
                 *border_colour = ui_theme.button.border_colour.into();
             }
         }

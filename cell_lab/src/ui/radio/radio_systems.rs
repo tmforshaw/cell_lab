@@ -1,6 +1,6 @@
 use bevy::{ecs::relationship::RelatedSpawnerCommands, input_focus::InputFocus, prelude::*};
 
-use crate::ui::UiTheme;
+use crate::ui::{RadioEvent, UiTheme};
 
 #[derive(Component, Debug, Copy, Clone)]
 pub enum RadioId {
@@ -21,12 +21,12 @@ pub struct RadioOption {
 #[derive(Component)]
 pub struct RadioOptionText;
 
-pub fn spawn_radio<S: AsRef<str>>(
+pub fn spawn_radio<S1: AsRef<str>, S2: AsRef<str>>(
     parent: &mut RelatedSpawnerCommands<ChildOf>,
     radio_id: RadioId,
-    label: S,
+    label: S1,
     initial_selected: usize,
-    options: &[S],
+    options: &[S2],
     ui_theme: &UiTheme,
 ) {
     // Ensure that the options Vec has at least one option
@@ -160,6 +160,7 @@ pub fn radio_interaction_system(
         >,
         Query<(&mut BackgroundColor, &mut BorderColor, &RadioOption)>,
     )>,
+    mut radio_event_writer: MessageWriter<RadioEvent>,
 ) {
     let mut siblings_to_deselect = Vec::new();
 
@@ -182,10 +183,11 @@ pub fn radio_interaction_system(
                         siblings_to_deselect.push((*child, radio_option.index));
                     }
 
-                    // TODO Do a function based on radio ID
-                    match radio_id {
-                        RadioId::SplitType => {}
-                    }
+                    // Trigger an event for the radio value change
+                    radio_event_writer.write(RadioEvent {
+                        id: *radio_id,
+                        new_value_index: radio.selected,
+                    });
                 }
                 Interaction::Hovered => {
                     input_focus.set(entity);

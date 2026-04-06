@@ -24,12 +24,32 @@ impl std::fmt::Display for CellType {
     }
 }
 
-#[derive(Component, Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Component, Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, EnumIter, AsRefStr)]
 pub enum CellSplitType {
     #[default]
     Energy,
     Age,
     Never,
+}
+
+impl From<usize> for CellSplitType {
+    fn from(value: usize) -> Self {
+        match value {
+            0 => Self::Energy,
+            1 => Self::Age,
+            _ => Self::Never,
+        }
+    }
+}
+
+impl From<CellSplitType> for usize {
+    fn from(value: CellSplitType) -> Self {
+        match value {
+            CellSplitType::Energy => 0,
+            CellSplitType::Age => 1,
+            CellSplitType::Never => 2,
+        }
+    }
 }
 
 #[derive(Component, Debug, Clone, Serialize, Deserialize)]

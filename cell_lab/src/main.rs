@@ -13,6 +13,7 @@
 
 use bevy::{input_focus::InputFocus, prelude::*, sprite_render::Material2dPlugin};
 use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
+use strum::IntoEnumIterator;
 
 use crate::{
     cell_editor::{
@@ -33,7 +34,7 @@ use crate::{
     collision::systems::collision_system,
     despawning::apply_pending_despawns,
     game::{game_mode::GameMode, game_parameters::GameParameters},
-    genomes::genome::GenomeBank,
+    genomes::{CellSplitType, GenomeModeId, genome::GenomeBank},
     input::{
         cell_editor_mode_keyboard_event_reader, mode_independent_keyboard_event_reader, simulation_mode_keyboard_event_reader,
     },
@@ -51,10 +52,12 @@ use crate::{
         systems::{build_quadtree, visualise_quadtree},
     },
     ui::{
-        ButtonId, CheckboxId, ComboboxId, RadioId, SliderId, UiTheme, button_interaction_system, checkbox_interaction_system,
-        combobox_option_select_system, combobox_text_update_system, combobox_toggle_system, radio_interaction_system,
-        slider_begin_drag_system, slider_drag_system, slider_interaction_system, slider_release_system, spawn_button,
-        spawn_checkbox, spawn_combobox, spawn_radio, spawn_slider,
+        ButtonEvent, ButtonId, CheckboxEvent, CheckboxId, ComboboxEvent, ComboboxId, RadioEvent, RadioId, SliderEvent, SliderId,
+        UiTheme, button_event_reader, button_interaction_system, checkbox_event_reader, checkbox_interaction_system,
+        combobox_event_reader, combobox_option_select_system, combobox_text_update_system, combobox_toggle_system,
+        radio_event_reader, radio_interaction_system, slider_begin_drag_system, slider_drag_system, slider_event_reader,
+        slider_interaction_system, slider_release_system, spawn_button, spawn_checkbox, spawn_combobox, spawn_radio,
+        spawn_slider,
     },
 };
 
@@ -74,6 +77,7 @@ pub mod ui;
 // TODO need to show that cell spawned even if it dies instantly (When splitting into a tiny cell)
 // TODO Show value of slider value as child of the handle when the handle is being moved (Or just to the side)
 
+#[allow(clippy::too_many_lines)]
 fn main() {
     let param = GameParameters::default();
     let game_mode = GameMode::default();
@@ -96,6 +100,13 @@ fn main() {
         .init_resource::<CellEditorState>()
         .init_resource::<ShowCellQuadTree>()
         .init_resource::<ShowChemicalQuadTree>()
+        // UI Events
+        .add_message::<ButtonEvent>()
+        .add_message::<RadioEvent>()
+        .add_message::<CheckboxEvent>()
+        .add_message::<SliderEvent>()
+        .add_message::<ComboboxEvent>()
+        // Other Events
         .add_message::<CellEditorInitialGenomeModeMessage>()
         .add_message::<CellEditorSelectedGenomeModeMessage>()
         .add_message::<CellEditorColourMessage>()
@@ -105,11 +116,23 @@ fn main() {
         //
         .add_systems(Startup, (UiTheme::setup.before(setup), setup))
         .add_systems(PreUpdate, apply_pending_despawns.run_if(state_changed::<GameMode>)) // Need to do despawning right now when GameMode changes
-        .add_systems(Update, (mode_independent_keyboard_event_reader,))
+        .add_systems(
+            Update,
+            (
+                mode_independent_keyboard_event_reader,
+                // UI Events
+                button_event_reader,
+                radio_event_reader,
+                checkbox_event_reader,
+                slider_event_reader,
+                combobox_event_reader,
+            ),
+        )
         .add_systems(
             PostUpdate,
             (
                 apply_pending_despawns,
+                // UI Interaction Systems
                 button_interaction_system,
                 (
                     slider_interaction_system,
@@ -188,7 +211,13 @@ fn main() {
 
 // Spawn cells and chemicals
 #[allow(clippy::needless_pass_by_value)]
-fn setup(mut commands: Commands, ui_theme: Res<UiTheme>) {
+fn setup(
+    mut commands: Commands,
+    ui_theme: Res<UiTheme>,
+    editor_state: Res<CellEditorState>,
+    param: Res<GameParameters>,
+    genome_bank: Res<GenomeBank>,
+) {
     // 2D camera
     commands.spawn(Camera2d);
 
@@ -208,23 +237,44 @@ fn setup(mut commands: Commands, ui_theme: Res<UiTheme>) {
             BorderColor::all(Color::linear_rgb(0.05, 0.05, 0.05)),
         ))
         .with_children(|parent| {
-            spawn_button(parent, "Save", ButtonId::Save, &ui_theme);
-            spawn_slider(parent, SliderId::SplitEnergy, "Split Energy:", 20., 0.0..=40., &ui_theme);
+            parent
+                .spawn(Node {
+                    flex_direction: FlexDirection::Row,
+                    column_gap: px(20),
+                    ..default()
+                })
+                .with_children(|parent| {
+                    spawn_button(parent, "Save", ButtonId::Save, &ui_theme);
+                    spawn_button(parent, "Load", ButtonId::Load, &ui_theme);
+                });
+
+            spawn_slider(
+                parent,
+                SliderId::SplitEnergy,
+                "Split Energy:",
+                editor_state.get_selected_genome_mode(&genome_bank).split_energy,
+                0.0..=param.cell_parameters.max_energy,
+                &ui_theme,
+            );
             spawn_checkbox(parent, CheckboxId::InitialMode, "Initial Mode:", true, &ui_theme);
             spawn_radio(
                 parent,
                 RadioId::SplitType,
                 "Split Type:",
-                1,
-                &["Option 1", "Option 2"],
+                editor_state.get_selected_genome_mode(&genome_bank).split_type.into(),
+                &CellSplitType::iter()
+                    .map(|variant| variant.as_ref().to_string())
+                    .collect::<Vec<_>>(),
                 &ui_theme,
             );
             spawn_combobox(
                 parent,
-                ComboboxId::SplitType,
+                ComboboxId::Mode,
                 "Mode:",
-                4,
-                &["Option 1", "Option 2", "Option 3", "Option 4", "Option 5", "Option 6"],
+                editor_state.selected_genome_mode.into(),
+                &GenomeModeId::iter()
+                    .map(|variant| variant.as_ref().to_string())
+                    .collect::<Vec<_>>(),
                 &ui_theme,
             );
         });

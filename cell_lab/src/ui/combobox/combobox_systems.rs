@@ -1,10 +1,10 @@
 use bevy::{ecs::relationship::RelatedSpawnerCommands, input_focus::InputFocus, prelude::*};
 
-use crate::ui::UiTheme;
+use crate::ui::{ComboboxEvent, UiTheme};
 
 #[derive(Component, Debug, Copy, Clone)]
 pub enum ComboboxId {
-    SplitType,
+    Mode,
 }
 
 #[derive(Component)]
@@ -31,12 +31,12 @@ pub struct ComboboxOptionText;
 pub struct ComboboxValueBoxText;
 
 #[allow(clippy::too_many_lines)]
-pub fn spawn_combobox<S: AsRef<str>>(
+pub fn spawn_combobox<S1: AsRef<str>, S2: AsRef<str>>(
     parent: &mut RelatedSpawnerCommands<ChildOf>,
     combobox_id: ComboboxId,
-    label: S,
+    label: S1,
     initial_selected: usize,
-    options: &[S],
+    options: &[S2],
     ui_theme: &UiTheme,
 ) {
     // Ensure that the options Vec has at least one option
@@ -280,13 +280,14 @@ pub fn combobox_option_select_system(
         (Changed<Interaction>, Without<ComboboxValueBox>),
     >,
     mut containers: Query<(&mut Node, &ChildOf), With<ComboboxOptionContainer>>,
-    mut comboboxes: Query<&mut Combobox>,
+    mut comboboxes: Query<(&mut Combobox, &ComboboxId)>,
+    mut combobox_event_writer: MessageWriter<ComboboxEvent>,
 ) {
     for (entity, interaction, mut colour, mut border_colour, option, parent) in &mut options {
         // Get the container for the option
         if let Ok((mut container_node, container_parent)) = containers.get_mut(parent.parent()) {
             // Get the combobox for the container
-            if let Ok(mut combobox) = comboboxes.get_mut(container_parent.parent()) {
+            if let Ok((mut combobox, combobox_id)) = comboboxes.get_mut(container_parent.parent()) {
                 match *interaction {
                     Interaction::Pressed => {
                         input_focus.set(entity);
@@ -298,6 +299,12 @@ pub fn combobox_option_select_system(
 
                         // Close the options container
                         container_node.display = Display::None;
+
+                        // Trigger event for the combobox change
+                        combobox_event_writer.write(ComboboxEvent {
+                            id: *combobox_id,
+                            new_value_index: combobox.selected,
+                        });
                     }
                     Interaction::Hovered => {
                         input_focus.set(entity);
