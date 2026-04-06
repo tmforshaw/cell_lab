@@ -19,6 +19,9 @@ pub struct ComboboxOption {
 }
 
 #[derive(Component)]
+pub struct ComboboxOptionContainer;
+
+#[derive(Component)]
 pub struct ComboboxSelectOption;
 
 #[derive(Component)]
@@ -57,7 +60,6 @@ pub fn spawn_combobox<S: AsRef<str>>(
                     justify_content: JustifyContent::Center,
                     align_items: AlignItems::Center,
                     border_radius: ui_theme.border_radius,
-                    display: Display::None,
                     ..default()
                 },
                 // Mark as a combobox option
@@ -161,11 +163,36 @@ pub fn spawn_combobox<S: AsRef<str>>(
                         ComboboxSelectOptionText
                     )],
                 ))
-                // Add the options
+                // Add a node with the options as its children
                 .with_children(|parent| {
-                    for child in children {
-                        parent.spawn(child);
-                    }
+                    parent
+                        .spawn((
+                            // Make a Node to contain all the options
+                            Node {
+                                padding: ui_theme.combobox.padding,
+                                border: ui_theme.border,
+                                border_radius: ui_theme.border_radius,
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                top: percent(100), // Move it below the value node
+                                flex_direction: FlexDirection::Column,
+                                row_gap: ui_theme.combobox.option_spacing,
+                                position_type: PositionType::Absolute, // Make the options overlap the other content
+                                ..default()
+                            },
+                            ZIndex(100), // Ensure that this node is drawn above the other nodes
+                            // Set the colours
+                            BorderColor::all(ui_theme.combobox.border_colour),
+                            BackgroundColor(ui_theme.combobox.normal_colour),
+                            // Mark as the options container
+                            ComboboxOptionContainer,
+                        ))
+                        // Add the options
+                        .with_children(|parent| {
+                            for child in children {
+                                parent.spawn(child);
+                            }
+                        });
                 });
         });
 }
@@ -209,6 +236,16 @@ pub fn combobox_interaction_system(
             Without<ComboboxOption>,
         ),
     >,
+    mut commbobox_option_container_query: Query<
+        (&mut Node, &ChildOf, &Children),
+        (
+            With<ComboboxOptionContainer>,
+            Without<Combobox>,
+            Without<ComboboxOption>,
+            Without<ComboboxOptionText>,
+            Without<ComboboxSelectOption>,
+        ),
+    >,
     mut combobox_options_queries: ParamSet<(
         Query<
             (
@@ -227,7 +264,7 @@ pub fn combobox_interaction_system(
             ),
         >,
         Query<
-            (&mut Node, &mut BackgroundColor, &mut BorderColor),
+            (&mut Node, &mut BackgroundColor, &mut BorderColor, &ChildOf),
             (
                 With<ComboboxOption>,
                 Without<ComboboxSelectOption>,
@@ -245,11 +282,22 @@ pub fn combobox_interaction_system(
                 colour.0 = ui_theme.combobox.pressed_value_box_colour;
                 *border_colour = BorderColor::all(ui_theme.combobox.border_pressed_colour);
 
-                // Check the other children of the combobox to make them visible
-                if let Ok((parent_node, _, _, children)) = combobox_query.get_mut(parent.parent()) {
-                    for &child in children {
-                        if let Ok((mut node, _, _)) = combobox_options_queries.p1().get_mut(child) {
-                            node.display = parent_node.display;
+                // Get the parent combobox entity so display can be inherited
+                if let Ok((combobox_node, _combobox_id, _combobox, combobox_children)) = combobox_query.get_mut(parent.parent()) {
+                    for &child in combobox_children {
+                        // Make the combobox options container toggle visibility
+                        if let Ok((mut container_node, _container_parent, _container_children)) =
+                            commbobox_option_container_query.get_mut(child)
+                        {
+                            // Allow clicking the value node to show or unshow the options
+                            if container_node.display == Display::None {
+                                container_node.display = combobox_node.display;
+                            } else {
+                                container_node.display = Display::None;
+                            }
+
+                            // There is only one options container
+                            break;
                         }
                     }
                 }
@@ -267,73 +315,85 @@ pub fn combobox_interaction_system(
         }
     }
 
-    let mut siblings_to_make_invisible = Vec::new();
+    // let mut siblings_to_deselect = Vec::new();
     let mut selected_string = None;
 
+    let mut set_display_to_none = false;
+    let mut option_that_was_interacted = None;
+
     for (entity, interaction, mut colour, mut border_colour, combobox_option, parent) in &mut combobox_options_queries.p0() {
-        // Get the parent of the combobox option, and get its components
-        if let Ok((_parent_node, combobox_id, mut combobox, parent_children)) = combobox_query.get_mut(parent.parent()) {
-            match *interaction {
-                Interaction::Pressed => {
-                    input_focus.set(entity);
+        // Get the parent of the combobox option, and get its parent (The combobox)
+        if let Ok((_container_node, container_parent, _container_children)) =
+            commbobox_option_container_query.get_mut(parent.parent())
+        {
+            // Get the parent of the combobox option's parent, and get its components
+            if let Ok((_parent_node, combobox_id, mut combobox, _combobox_children)) =
+                combobox_query.get_mut(container_parent.parent())
+            {
+                match *interaction {
+                    Interaction::Pressed => {
+                        input_focus.set(entity);
 
-                    // Select this combobox option
-                    combobox.selected = combobox_option.index;
-                    selected_string = Some(combobox.options[combobox.selected].clone());
+                        // Select this combobox option
+                        combobox.selected = combobox_option.index;
+                        selected_string = Some(combobox.options[combobox.selected].clone());
 
-                    // Change the colour
-                    colour.0 = ui_theme.combobox.pressed_selected_colour;
-                    *border_colour = BorderColor::all(ui_theme.combobox.border_pressed_colour);
+                        // Change the colour
+                        colour.0 = ui_theme.combobox.pressed_selected_colour;
+                        *border_colour = BorderColor::all(ui_theme.combobox.border_pressed_colour);
 
-                    // Set combobox children display to None of the parent combobox entity
-                    for child in parent_children {
-                        siblings_to_make_invisible.push(*child);
+                        // Mark that the combobox options need to be set to Display::None
+                        set_display_to_none = true;
+                        option_that_was_interacted = Some(entity);
+
+                        // TODO Do a function based on combobox ID
+                        match combobox_id {
+                            ComboboxId::SplitType => {}
+                        }
                     }
+                    Interaction::Hovered => {
+                        input_focus.set(entity);
 
-                    // TODO Do a function based on combobox ID
-                    match combobox_id {
-                        ComboboxId::SplitType => {}
+                        // Change the colour, depending on selection
+                        if combobox.selected == combobox_option.index {
+                            colour.0 = ui_theme.combobox.hovered_selected_colour;
+                        } else {
+                            colour.0 = ui_theme.combobox.hovered_colour;
+                        }
+
+                        *border_colour = BorderColor::all(ui_theme.combobox.border_hovered_colour);
                     }
-                }
-                Interaction::Hovered => {
-                    input_focus.set(entity);
+                    Interaction::None => {
+                        input_focus.clear();
 
-                    // Change the colour, depending on selection
-                    if combobox.selected == combobox_option.index {
-                        colour.0 = ui_theme.combobox.hovered_selected_colour;
-                    } else {
-                        colour.0 = ui_theme.combobox.hovered_colour;
+                        // Change the colour, depending on selection
+                        if combobox.selected == combobox_option.index {
+                            colour.0 = ui_theme.combobox.normal_selected_colour;
+                        } else {
+                            colour.0 = ui_theme.combobox.normal_colour;
+                        }
+
+                        *border_colour = BorderColor::all(ui_theme.combobox.border_colour);
                     }
-
-                    *border_colour = BorderColor::all(ui_theme.combobox.border_hovered_colour);
-                }
-                Interaction::None => {
-                    input_focus.clear();
-
-                    // Change the colour, depending on selection
-                    if combobox.selected == combobox_option.index {
-                        colour.0 = ui_theme.combobox.normal_selected_colour;
-                    } else {
-                        colour.0 = ui_theme.combobox.normal_colour;
-                    }
-
-                    *border_colour = BorderColor::all(ui_theme.combobox.border_colour);
                 }
             }
         }
     }
 
-    // Set siblings' display to None
-    for sibling in siblings_to_make_invisible {
-        // Get the sibling's components
-        if let Ok((mut sibling_node, mut sibling_colour, mut sibling_border_colour)) =
-            combobox_options_queries.p1().get_mut(sibling)
-        {
-            // Set the colours to show it is no longer deselected
-            sibling_colour.0 = ui_theme.combobox.normal_colour;
-            *sibling_border_colour = BorderColor::all(ui_theme.combobox.border_colour);
+    // Set the options container to be Display::None
+    if set_display_to_none
+        && let Some(option) = option_that_was_interacted
+        && let Ok((_, _, _, parent)) = combobox_options_queries.p1().get_mut(option)
+        && let Ok((mut node, _, container_children)) = commbobox_option_container_query.get_mut(parent.parent())
+    {
+        node.display = Display::None;
 
-            sibling_node.display = Display::None;
+        for &child in container_children {
+            if let Ok((_, mut option_colour, mut option_border_colour, _)) = combobox_options_queries.p1().get_mut(child) {
+                // Set the colours to show it is no longer deselected
+                option_colour.0 = ui_theme.combobox.normal_colour;
+                *option_border_colour = BorderColor::all(ui_theme.combobox.border_colour);
+            }
         }
     }
 
