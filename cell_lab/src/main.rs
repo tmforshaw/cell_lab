@@ -52,9 +52,9 @@ use crate::{
     },
     ui::{
         ButtonId, CheckboxId, ComboboxId, RadioId, SliderId, UiTheme, button_interaction_system, checkbox_interaction_system,
-        combobox_interaction_system, radio_interaction_system,
-        slider::{slider_begin_drag_system, slider_drag_system, slider_release_system},
-        slider_interaction_system, spawn_button, spawn_checkbox, spawn_combobox, spawn_radio, spawn_slider,
+        combobox_option_select_system, combobox_text_update_system, combobox_toggle_system, radio_interaction_system,
+        slider_begin_drag_system, slider_drag_system, slider_interaction_system, slider_release_system, spawn_button,
+        spawn_checkbox, spawn_combobox, spawn_radio, spawn_slider,
     },
 };
 
@@ -73,8 +73,6 @@ pub mod ui;
 
 // TODO need to show that cell spawned even if it dies instantly (When splitting into a tiny cell)
 // TODO Show value of slider value as child of the handle when the handle is being moved (Or just to the side)
-// TODO Separate combobox interaction system into multiple systems
-// TODO Combobox values should overlap with other content instead of moving everything around
 
 fn main() {
     let param = GameParameters::default();
@@ -113,13 +111,19 @@ fn main() {
             (
                 apply_pending_despawns,
                 button_interaction_system,
-                slider_interaction_system,
+                (
+                    slider_interaction_system,
+                    slider_begin_drag_system,
+                    slider_drag_system.after(slider_begin_drag_system),
+                    slider_release_system,
+                ),
                 checkbox_interaction_system,
                 radio_interaction_system,
-                combobox_interaction_system,
-                slider_begin_drag_system,
-                slider_drag_system.after(slider_begin_drag_system),
-                slider_release_system,
+                (
+                    combobox_toggle_system,
+                    combobox_option_select_system.after(combobox_toggle_system),
+                    combobox_text_update_system.after(combobox_option_select_system),
+                ),
             ),
         ) // Despawn after the update in most cases
         //

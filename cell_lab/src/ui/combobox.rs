@@ -22,13 +22,13 @@ pub struct ComboboxOption {
 pub struct ComboboxOptionContainer;
 
 #[derive(Component)]
-pub struct ComboboxSelectOption;
+pub struct ComboboxValueBox;
 
 #[derive(Component)]
 pub struct ComboboxOptionText;
 
 #[derive(Component)]
-pub struct ComboboxSelectOptionText;
+pub struct ComboboxValueBoxText;
 
 #[allow(clippy::too_many_lines)]
 pub fn spawn_combobox<S: AsRef<str>>(
@@ -144,7 +144,7 @@ pub fn spawn_combobox<S: AsRef<str>>(
                         ..default()
                     },
                     // Mark as a combobox selected option
-                    ComboboxSelectOption,
+                    ComboboxValueBox,
                     // Set the background and border colours
                     BackgroundColor(ui_theme.combobox.normal_valuebox_colour),
                     BorderColor::all(ui_theme.combobox.border_colour),
@@ -160,7 +160,7 @@ pub fn spawn_combobox<S: AsRef<str>>(
                         },
                         ui_theme.text_colour,
                         ui_theme.text_shadow,
-                        ComboboxSelectOptionText
+                        ComboboxValueBoxText
                     )],
                 ))
                 // Add a node with the options as its children
@@ -197,165 +197,101 @@ pub fn spawn_combobox<S: AsRef<str>>(
         });
 }
 
-#[allow(clippy::type_complexity, clippy::needless_pass_by_value)]
-pub fn combobox_interaction_system(
-    mut input_focus: ResMut<InputFocus>,
+#[allow(clippy::needless_pass_by_value, clippy::type_complexity)]
+pub fn combobox_toggle_system(
     ui_theme: Res<UiTheme>,
-    mut combobox_query: Query<
-        (&Node, &ComboboxId, &mut Combobox, &Children),
-        (
-            Without<ComboboxOption>,
-            Without<ComboboxSelectOption>,
-            Without<ComboboxSelectOptionText>,
-        ),
+    mut input_focus: ResMut<InputFocus>,
+    mut valueboxes: Query<
+        (Entity, &Interaction, &mut BackgroundColor, &mut BorderColor, &ChildOf),
+        (Changed<Interaction>, With<ComboboxValueBox>),
     >,
-    mut combobox_selected_option_queries: ParamSet<(
-        Query<
-            (&Interaction, &mut BackgroundColor, &mut BorderColor, &ChildOf, &Children),
-            (
-                Changed<Interaction>,
-                With<ComboboxSelectOption>,
-                Without<ComboboxOption>,
-                Without<ComboboxSelectOptionText>,
-            ),
-        >,
-        Query<
-            &Children,
-            (
-                With<ComboboxSelectOption>,
-                Without<ComboboxOption>,
-                Without<ComboboxSelectOptionText>,
-            ),
-        >,
-    )>,
-    mut combobox_selected_option_text_query: Query<
-        &mut Text,
-        (
-            With<ComboboxSelectOptionText>,
-            Without<ComboboxSelectOption>,
-            Without<ComboboxOption>,
-        ),
-    >,
-    mut commbobox_option_container_query: Query<
-        (&mut Node, &ChildOf, &Children),
-        (
-            With<ComboboxOptionContainer>,
-            Without<Combobox>,
-            Without<ComboboxOption>,
-            Without<ComboboxOptionText>,
-            Without<ComboboxSelectOption>,
-        ),
-    >,
-    mut combobox_options_queries: ParamSet<(
-        Query<
-            (
-                Entity,
-                &Interaction,
-                &mut BackgroundColor,
-                &mut BorderColor,
-                &ComboboxOption,
-                &ChildOf,
-            ),
-            (
-                Changed<Interaction>,
-                With<ComboboxOption>,
-                Without<ComboboxSelectOption>,
-                Without<ComboboxSelectOptionText>,
-            ),
-        >,
-        Query<
-            (&mut Node, &mut BackgroundColor, &mut BorderColor, &ChildOf),
-            (
-                With<ComboboxOption>,
-                Without<ComboboxSelectOption>,
-                Without<ComboboxSelectOptionText>,
-            ),
-        >,
-    )>,
+    mut containers: Query<&mut Node, With<ComboboxOptionContainer>>,
+    comboboxes: Query<(&Node, &Children), (With<Combobox>, Without<ComboboxOptionContainer>)>,
 ) {
-    // Check interactions with the select option
-
-    for (interaction, mut colour, mut border_colour, parent, _) in &mut combobox_selected_option_queries.p0() {
+    for (entity, interaction, mut colour, mut border_colour, parent) in &mut valueboxes {
         match *interaction {
             Interaction::Pressed => {
-                // Change the colour
-                colour.0 = ui_theme.combobox.pressed_value_box_colour;
+                input_focus.set(entity);
+
+                // Set the colours depending on the interaction type
+                colour.0 = ui_theme.combobox.pressed_valuebox_colour;
                 *border_colour = BorderColor::all(ui_theme.combobox.border_pressed_colour);
 
-                // Get the parent combobox entity so display can be inherited
-                if let Ok((combobox_node, _combobox_id, _combobox, combobox_children)) = combobox_query.get_mut(parent.parent()) {
+                // Get combobox parent of value box
+                if let Ok((combobox_node, combobox_children)) = comboboxes.get(parent.parent()) {
+                    // Find container for this combobox
                     for &child in combobox_children {
-                        // Make the combobox options container toggle visibility
-                        if let Ok((mut container_node, _container_parent, _container_children)) =
-                            commbobox_option_container_query.get_mut(child)
-                        {
-                            // Allow clicking the value node to show or unshow the options
-                            if container_node.display == Display::None {
-                                container_node.display = combobox_node.display;
+                        // Toggle the display visibility
+                        if let Ok(mut node) = containers.get_mut(child) {
+                            node.display = if node.display == Display::None {
+                                combobox_node.display
                             } else {
-                                container_node.display = Display::None;
-                            }
+                                Display::None
+                            };
 
-                            // There is only one options container
+                            // There is only one container for the combobox
                             break;
                         }
                     }
                 }
             }
             Interaction::Hovered => {
-                // Change the colour
+                input_focus.set(entity);
+
+                // Set the colours depending on the interaction type
                 colour.0 = ui_theme.combobox.hovered_value_box_colour;
                 *border_colour = BorderColor::all(ui_theme.combobox.border_hovered_colour);
             }
             Interaction::None => {
-                // Change the colour
+                input_focus.clear();
+
+                // Set the colours depending on the interaction type
                 colour.0 = ui_theme.combobox.normal_valuebox_colour;
-                *border_colour = BorderColor::all(ui_theme.combobox.border_pressed_colour);
+                *border_colour = BorderColor::all(ui_theme.combobox.border_colour);
             }
         }
     }
+}
 
-    // let mut siblings_to_deselect = Vec::new();
-    let mut selected_string = None;
-
-    let mut set_display_to_none = false;
-    let mut option_that_was_interacted = None;
-
-    for (entity, interaction, mut colour, mut border_colour, combobox_option, parent) in &mut combobox_options_queries.p0() {
-        // Get the parent of the combobox option, and get its parent (The combobox)
-        if let Ok((_container_node, container_parent, _container_children)) =
-            commbobox_option_container_query.get_mut(parent.parent())
-        {
-            // Get the parent of the combobox option's parent, and get its components
-            if let Ok((_parent_node, combobox_id, mut combobox, _combobox_children)) =
-                combobox_query.get_mut(container_parent.parent())
-            {
+#[allow(clippy::needless_pass_by_value, clippy::type_complexity)]
+pub fn combobox_option_select_system(
+    ui_theme: Res<UiTheme>,
+    mut input_focus: ResMut<InputFocus>,
+    mut options: Query<
+        (
+            Entity,
+            &Interaction,
+            &mut BackgroundColor,
+            &mut BorderColor,
+            &ComboboxOption,
+            &ChildOf,
+        ),
+        (Changed<Interaction>, Without<ComboboxValueBox>),
+    >,
+    mut containers: Query<(&mut Node, &ChildOf), With<ComboboxOptionContainer>>,
+    mut comboboxes: Query<&mut Combobox>,
+) {
+    for (entity, interaction, mut colour, mut border_colour, option, parent) in &mut options {
+        // Get the container for the option
+        if let Ok((mut container_node, container_parent)) = containers.get_mut(parent.parent()) {
+            // Get the combobox for the container
+            if let Ok(mut combobox) = comboboxes.get_mut(container_parent.parent()) {
                 match *interaction {
                     Interaction::Pressed => {
                         input_focus.set(entity);
 
-                        // Select this combobox option
-                        combobox.selected = combobox_option.index;
-                        selected_string = Some(combobox.options[combobox.selected].clone());
+                        // Set this option as the selected option
+                        combobox.selected = option.index;
 
-                        // Change the colour
-                        colour.0 = ui_theme.combobox.pressed_selected_colour;
-                        *border_colour = BorderColor::all(ui_theme.combobox.border_pressed_colour);
+                        // No point in setting the colour since the options are going to be set to Display::none
 
-                        // Mark that the combobox options need to be set to Display::None
-                        set_display_to_none = true;
-                        option_that_was_interacted = Some(entity);
-
-                        // TODO Do a function based on combobox ID
-                        match combobox_id {
-                            ComboboxId::SplitType => {}
-                        }
+                        // Close the options container
+                        container_node.display = Display::None;
                     }
                     Interaction::Hovered => {
                         input_focus.set(entity);
 
-                        // Change the colour, depending on selection
-                        if combobox.selected == combobox_option.index {
+                        if combobox.selected == option.index {
                             colour.0 = ui_theme.combobox.hovered_selected_colour;
                         } else {
                             colour.0 = ui_theme.combobox.hovered_colour;
@@ -366,8 +302,7 @@ pub fn combobox_interaction_system(
                     Interaction::None => {
                         input_focus.clear();
 
-                        // Change the colour, depending on selection
-                        if combobox.selected == combobox_option.index {
+                        if combobox.selected == option.index {
                             colour.0 = ui_theme.combobox.normal_selected_colour;
                         } else {
                             colour.0 = ui_theme.combobox.normal_colour;
@@ -379,32 +314,41 @@ pub fn combobox_interaction_system(
             }
         }
     }
+}
 
-    // Set the options container to be Display::None
-    if set_display_to_none
-        && let Some(option) = option_that_was_interacted
-        && let Ok((_, _, _, parent)) = combobox_options_queries.p1().get_mut(option)
-        && let Ok((mut node, _, container_children)) = commbobox_option_container_query.get_mut(parent.parent())
-    {
-        node.display = Display::None;
+#[allow(clippy::needless_pass_by_value)]
+pub fn combobox_text_update_system(
+    ui_theme: Res<UiTheme>,
+    comboboxes: Query<(&Combobox, &Children), Changed<Combobox>>,
+    containers: Query<&Children, With<ComboboxOptionContainer>>,
+    mut options: Query<(&mut BackgroundColor, &mut BorderColor, &ComboboxOption), Without<ComboboxValueBox>>,
+    mut text_query: Query<&mut Text, With<ComboboxValueBoxText>>,
+) {
+    for (combobox, children) in &comboboxes {
+        let selected = combobox.options[combobox.selected].clone();
 
-        for &child in container_children {
-            if let Ok((_, mut option_colour, mut option_border_colour, _)) = combobox_options_queries.p1().get_mut(child) {
-                // Set the colours to show it is no longer deselected
-                option_colour.0 = ui_theme.combobox.normal_colour;
-                *option_border_colour = BorderColor::all(ui_theme.combobox.border_colour);
-            }
+        // Change the value box text to display the selected option
+        for mut text in &mut text_query {
+            **text = selected.clone();
         }
-    }
 
-    // Change the text in the value box for commbobox
-    for children in &mut combobox_selected_option_queries.p1() {
+        // Get the container for the options
         for &child in children {
-            // If this child is the select option's text, and selected string was set
-            if let Ok(mut text) = combobox_selected_option_text_query.get_mut(child)
-                && let Some(selected_string) = &selected_string
-            {
-                **text = selected_string.clone();
+            if let Ok(container_children) = containers.get(child) {
+                // Iterate over options in container
+                for &child in container_children {
+                    // If the child is an option
+                    if let Ok((mut colour, mut border_colour, option)) = options.get_mut(child) {
+                        // Set the option's colour depending on its selection status
+                        if option.index == combobox.selected {
+                            colour.0 = ui_theme.combobox.normal_selected_colour;
+                        } else {
+                            colour.0 = ui_theme.combobox.normal_colour;
+                        }
+
+                        *border_colour = BorderColor::all(ui_theme.combobox.border_colour);
+                    }
+                }
             }
         }
     }
