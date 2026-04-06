@@ -53,11 +53,11 @@ use crate::{
     },
     ui::{
         ButtonEvent, ButtonId, CheckboxEvent, CheckboxId, ComboboxEvent, ComboboxId, RadioEvent, RadioId, SliderEvent, SliderId,
-        UiTheme, button_event_reader, button_interaction_system, checkbox_event_reader, checkbox_interaction_system,
-        combobox_event_reader, combobox_option_select_system, combobox_text_update_system, combobox_toggle_system,
-        radio_event_reader, radio_interaction_system, slider_begin_drag_system, slider_drag_system, slider_event_reader,
-        slider_interaction_system, slider_release_system, spawn_button, spawn_checkbox, spawn_combobox, spawn_radio,
-        spawn_slider,
+        UiTheme, UiWindowId, UiWindowType, button_event_reader, button_interaction_system, checkbox_event_reader,
+        checkbox_interaction_system, combobox_event_reader, combobox_option_select_system, combobox_text_update_system,
+        combobox_toggle_system, radio_event_reader, radio_interaction_system, slider_begin_drag_system, slider_drag_system,
+        slider_event_reader, slider_interaction_system, slider_release_system, spawn_button, spawn_checkbox, spawn_combobox,
+        spawn_radio, spawn_slider, spawn_window,
     },
 };
 
@@ -76,6 +76,8 @@ pub mod ui;
 
 // TODO need to show that cell spawned even if it dies instantly (When splitting into a tiny cell)
 // TODO Show value of slider value as child of the handle when the handle is being moved (Or just to the side)
+// TODO Add UiState and add dialogs using that
+// TODO Add panel or window to UiElements
 
 #[allow(clippy::too_many_lines)]
 fn main() {
@@ -221,22 +223,15 @@ fn setup(
     // 2D camera
     commands.spawn(Camera2d);
 
-    // Spawn UI Root Node and its children
-    commands
-        .spawn((
-            Node {
-                width: percent(30),
-                height: percent(80),
-                align_items: AlignItems::Start,
-                justify_content: JustifyContent::Start,
-                flex_direction: FlexDirection::Column,
-                row_gap: px(10.),
-                ..default()
-            },
-            BackgroundColor(Color::linear_rgb(0.1, 0.1, 0.1)),
-            BorderColor::all(Color::linear_rgb(0.05, 0.05, 0.05)),
-        ))
-        .with_children(|parent| {
+    // Spawn a panel for the cell editor
+    spawn_window(
+        UiWindowId::CellEditor,
+        UiWindowType::Panel,
+        percent(30),
+        percent(80),
+        &ui_theme,
+        &mut commands,
+        |parent| {
             parent
                 .spawn(Node {
                     flex_direction: FlexDirection::Row,
@@ -277,5 +272,6 @@ fn setup(
                     .collect::<Vec<_>>(),
                 &ui_theme,
             );
-        });
+        },
+    );
 }

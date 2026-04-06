@@ -11,6 +11,7 @@ pub struct UiTheme {
     pub label_gap: Val,
     pub label_font_size: f32,
     pub inner_font_size: f32,
+    pub window: UiThemeWindow,
     pub button: UiThemeButton,
     pub slider: UiThemeSlider,
     pub checkbox: UiThemeCheckbox,
@@ -33,6 +34,7 @@ impl UiTheme {
             label_gap: px(5.),
             label_font_size: 20.,
             inner_font_size: 16.,
+            window: UiThemeWindow::default(),
             button: UiThemeButton::default(),
             slider: UiThemeSlider::default(),
             checkbox: UiThemeCheckbox::default(),
@@ -202,6 +204,24 @@ impl Default for UiThemeCombobox {
             padding: UiRect::axes(px(7.5), px(7.5)),
             option_padding: UiRect::axes(px(7.5), px(7.5)),
             option_spacing: px(5.),
+        }
+    }
+}
+
+pub struct UiThemeWindow {
+    pub colour: Color,
+    pub border_colour: Color,
+    pub item_spacing: Val,
+    pub padding: UiRect,
+}
+
+impl Default for UiThemeWindow {
+    fn default() -> Self {
+        Self {
+            colour: Color::linear_rgb(0.1, 0.1, 0.1),
+            border_colour: Color::linear_rgb(0.05, 0.05, 0.05),
+            item_spacing: px(5),
+            padding: UiRect::axes(px(10), px(10)),
         }
     }
 }
