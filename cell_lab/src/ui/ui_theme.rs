@@ -10,6 +10,7 @@ pub struct UiTheme {
     pub border_radius: BorderRadius,
     pub label_gap: Val,
     pub label_font_size: f32,
+    pub inner_font_size: f32,
     pub button: UiThemeButton,
     pub slider: UiThemeSlider,
     pub checkbox: UiThemeCheckbox,
@@ -27,10 +28,11 @@ impl UiTheme {
             text_colour: TextColor(Color::WHITE),
             font: font_handle,
             text_shadow: TextShadow::default(),
-            border: UiRect::axes(px(5.), px(5.)),
+            border: UiRect::axes(px(0), px(0)),
             border_radius: BorderRadius::MAX,
             label_gap: px(5.),
-            label_font_size: 32.,
+            label_font_size: 20.,
+            inner_font_size: 16.,
             button: UiThemeButton::default(),
             slider: UiThemeSlider::default(),
             checkbox: UiThemeCheckbox::default(),
@@ -48,7 +50,6 @@ pub struct UiThemeButton {
     pub border_hovered_colour: Color,
     pub border_pressed_colour: Color,
     pub padding: UiRect,
-    pub font_size: f32,
 }
 
 impl Default for UiThemeButton {
@@ -61,7 +62,6 @@ impl Default for UiThemeButton {
             border_hovered_colour: Color::linear_rgb(0.2, 0.2, 0.2),
             border_pressed_colour: Color::linear_rgb(0.4, 0.4, 0.4),
             padding: UiRect::axes(px(10), px(5)),
-            font_size: 32.,
         }
     }
 }
@@ -86,18 +86,18 @@ impl Default for UiThemeSlider {
     fn default() -> Self {
         Self {
             width: px(200),
-            height: px(20),
+            height: px(3),
             track_colour: Color::linear_rgb(1., 0., 1.),
             track_border_colour: Color::linear_rgb(0.1, 0.1, 0.1),
-            handle_width: px(25.),
-            handle_height: px(25.),
+            handle_width: px(16.),
+            handle_height: px(16.),
             handle_colour: Color::linear_rgb(1.0, 1., 1.),
             handle_hovered_colour: Color::linear_rgb(0.8, 0.8, 0.8),
             handle_pressed_colour: Color::linear_rgb(0.6, 0.6, 0.6),
             handle_border_colour: Color::linear_rgb(0.1, 0.1, 0.1),
             handle_hovered_border_colour: Color::linear_rgb(0.2, 0.2, 0.2),
             handle_pressed_border_colour: Color::linear_rgb(0.4, 0.4, 0.4),
-            padding: UiRect::axes(px(20), px(5)),
+            padding: UiRect::axes(px(0), px(3)),
         }
     }
 }
@@ -145,7 +145,6 @@ pub struct UiThemeRadio {
     pub padding: UiRect,
     pub option_padding: UiRect,
     pub option_spacing: Val,
-    pub font_size: f32,
 }
 
 impl Default for UiThemeRadio {
@@ -163,7 +162,6 @@ impl Default for UiThemeRadio {
             padding: UiRect::axes(px(7.5), px(7.5)),
             option_padding: UiRect::axes(px(7.5), px(7.5)),
             option_spacing: px(5.),
-            font_size: 24.,
         }
     }
 }
@@ -184,7 +182,6 @@ pub struct UiThemeCombobox {
     pub padding: UiRect,
     pub option_padding: UiRect,
     pub option_spacing: Val,
-    pub font_size: f32,
 }
 
 impl Default for UiThemeCombobox {
@@ -205,7 +202,6 @@ impl Default for UiThemeCombobox {
             padding: UiRect::axes(px(7.5), px(7.5)),
             option_padding: UiRect::axes(px(7.5), px(7.5)),
             option_spacing: px(5.),
-            font_size: 24.,
         }
     }
 }

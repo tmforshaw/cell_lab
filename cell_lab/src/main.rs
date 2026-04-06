@@ -201,7 +201,7 @@ fn setup(mut commands: Commands, ui_theme: Res<UiTheme>) {
                 align_items: AlignItems::Start,
                 justify_content: JustifyContent::Start,
                 flex_direction: FlexDirection::Column,
-                row_gap: px(20.),
+                row_gap: px(10.),
                 ..default()
             },
             BackgroundColor(Color::linear_rgb(0.1, 0.1, 0.1)),

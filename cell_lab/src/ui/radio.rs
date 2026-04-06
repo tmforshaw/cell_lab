@@ -66,7 +66,7 @@ pub fn spawn_radio<S: AsRef<str>>(
                     Text::new(option),
                     TextFont {
                         font: ui_theme.font.clone(),
-                        font_size: ui_theme.radio.font_size,
+                        font_size: ui_theme.inner_font_size,
                         ..default()
                     },
                     ui_theme.text_colour,

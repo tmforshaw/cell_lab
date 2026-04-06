@@ -78,7 +78,7 @@ pub fn spawn_combobox<S: AsRef<str>>(
                     Text::new(option),
                     TextFont {
                         font: ui_theme.font.clone(),
-                        font_size: ui_theme.combobox.font_size,
+                        font_size: ui_theme.inner_font_size,
                         ..default()
                     },
                     ui_theme.text_colour,
@@ -155,7 +155,7 @@ pub fn spawn_combobox<S: AsRef<str>>(
                         Text::new(selected_option),
                         TextFont {
                             font: ui_theme.font.clone(),
-                            font_size: ui_theme.combobox.font_size,
+                            font_size: ui_theme.inner_font_size,
                             ..default()
                         },
                         ui_theme.text_colour,
