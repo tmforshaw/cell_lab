@@ -27,9 +27,11 @@ pub struct ComboboxOptionText;
 #[derive(Component)]
 pub struct ComboboxSelectOptionText;
 
+#[allow(clippy::too_many_lines)]
 pub fn spawn_combobox<S: AsRef<str>>(
     parent: &mut RelatedSpawnerCommands<ChildOf>,
     combobox_id: ComboboxId,
+    label: S,
     options: &[S],
     ui_theme: &UiTheme,
 ) {
@@ -86,60 +88,85 @@ pub fn spawn_combobox<S: AsRef<str>>(
         .collect();
 
     parent
-        .spawn((
-            // Create a commbobox root node
+        .spawn(
+            // Create a horizontal flex box for the label and the ui element
             Node {
-                padding: ui_theme.combobox.padding,
-                border: ui_theme.border,
-                justify_content: JustifyContent::Center,
+                justify_content: JustifyContent::Start,
                 align_items: AlignItems::Center,
-                flex_direction: FlexDirection::Column,
-                border_radius: ui_theme.border_radius,
-                row_gap: ui_theme.combobox.option_spacing,
+                flex_direction: FlexDirection::Row,
+                column_gap: ui_theme.label_gap,
                 ..default()
             },
-            // Make it a combobox
-            Combobox { options, selected: 0 },
-            // Mark with ID
-            combobox_id,
-            // Set the colours
-            BorderColor::all(ui_theme.combobox.border_colour),
-            BackgroundColor(ui_theme.combobox.normal_colour),
-        ))
-        .with_child((
-            Node {
-                padding: ui_theme.combobox.option_padding,
-                border: ui_theme.border,
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                border_radius: ui_theme.border_radius,
-                ..default()
-            },
-            // Mark as a combobox selected option
-            ComboboxSelectOption,
-            // Set the background and border colours
-            BackgroundColor(ui_theme.combobox.normal_valuebox_colour),
-            BorderColor::all(ui_theme.combobox.border_colour),
-            // Add the interaction component
-            Interaction::default(),
-            // Add the text for the option
-            children![(
-                Text::new(selected_option),
+        )
+        .with_children(|parent| {
+            // Add a label for the ui element
+            parent.spawn((
+                Text::new(label.as_ref()),
                 TextFont {
                     font: ui_theme.font.clone(),
-                    font_size: ui_theme.combobox.font_size,
+                    font_size: ui_theme.label_font_size,
                     ..default()
                 },
                 ui_theme.text_colour,
                 ui_theme.text_shadow,
-                ComboboxSelectOptionText
-            )],
-        ))
-        // Add the options
-        .with_children(|parent| {
-            for child in children {
-                parent.spawn(child);
-            }
+            ));
+
+            parent
+                .spawn((
+                    // Create a commbobox root node
+                    Node {
+                        padding: ui_theme.combobox.padding,
+                        border: ui_theme.border,
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        flex_direction: FlexDirection::Column,
+                        border_radius: ui_theme.border_radius,
+                        row_gap: ui_theme.combobox.option_spacing,
+                        ..default()
+                    },
+                    // Make it a combobox
+                    Combobox { options, selected: 0 },
+                    // Mark with ID
+                    combobox_id,
+                    // Set the colours
+                    BorderColor::all(ui_theme.combobox.border_colour),
+                    BackgroundColor(ui_theme.combobox.normal_colour),
+                ))
+                .with_child((
+                    Node {
+                        padding: ui_theme.combobox.option_padding,
+                        border: ui_theme.border,
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        border_radius: ui_theme.border_radius,
+                        ..default()
+                    },
+                    // Mark as a combobox selected option
+                    ComboboxSelectOption,
+                    // Set the background and border colours
+                    BackgroundColor(ui_theme.combobox.normal_valuebox_colour),
+                    BorderColor::all(ui_theme.combobox.border_colour),
+                    // Add the interaction component
+                    Interaction::default(),
+                    // Add the text for the option
+                    children![(
+                        Text::new(selected_option),
+                        TextFont {
+                            font: ui_theme.font.clone(),
+                            font_size: ui_theme.combobox.font_size,
+                            ..default()
+                        },
+                        ui_theme.text_colour,
+                        ui_theme.text_shadow,
+                        ComboboxSelectOptionText
+                    )],
+                ))
+                // Add the options
+                .with_children(|parent| {
+                    for child in children {
+                        parent.spawn(child);
+                    }
+                });
         });
 }
 

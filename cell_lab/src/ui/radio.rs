@@ -24,6 +24,7 @@ pub struct RadioOptionText;
 pub fn spawn_radio<S: AsRef<str>>(
     parent: &mut RelatedSpawnerCommands<ChildOf>,
     radio_id: RadioId,
+    label: S,
     options: &[S],
     ui_theme: &UiTheme,
 ) {
@@ -77,31 +78,56 @@ pub fn spawn_radio<S: AsRef<str>>(
         .collect();
 
     parent
-        .spawn((
-            // Create a radio root node
+        .spawn(
+            // Create a horizontal flex box for the label and the ui element
             Node {
-                padding: ui_theme.radio.padding,
-                border: ui_theme.border,
-                justify_content: JustifyContent::Center,
+                justify_content: JustifyContent::Start,
                 align_items: AlignItems::Center,
                 flex_direction: FlexDirection::Row,
-                border_radius: ui_theme.border_radius,
-                column_gap: ui_theme.radio.option_spacing,
+                column_gap: ui_theme.label_gap,
                 ..default()
             },
-            // Make it a radio
-            Radio { options, selected: 0 },
-            // Mark with ID
-            radio_id,
-            // Set the colours
-            BorderColor::all(ui_theme.radio.border_colour),
-            BackgroundColor(ui_theme.radio.normal_colour),
-        ))
-        // Add the options
+        )
         .with_children(|parent| {
-            for child in children {
-                parent.spawn(child);
-            }
+            // Add a label for the ui element
+            parent.spawn((
+                Text::new(label.as_ref()),
+                TextFont {
+                    font: ui_theme.font.clone(),
+                    font_size: ui_theme.label_font_size,
+                    ..default()
+                },
+                ui_theme.text_colour,
+                ui_theme.text_shadow,
+            ));
+
+            parent
+                .spawn((
+                    // Create a radio root node
+                    Node {
+                        padding: ui_theme.radio.padding,
+                        border: ui_theme.border,
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        flex_direction: FlexDirection::Row,
+                        border_radius: ui_theme.border_radius,
+                        column_gap: ui_theme.radio.option_spacing,
+                        ..default()
+                    },
+                    // Make it a radio
+                    Radio { options, selected: 0 },
+                    // Mark with ID
+                    radio_id,
+                    // Set the colours
+                    BorderColor::all(ui_theme.radio.border_colour),
+                    BackgroundColor(ui_theme.radio.normal_colour),
+                ))
+                // Add the options
+                .with_children(|parent| {
+                    for child in children {
+                        parent.spawn(child);
+                    }
+                });
         });
 }
 

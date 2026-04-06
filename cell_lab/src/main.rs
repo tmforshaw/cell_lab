@@ -72,9 +72,9 @@ pub mod spatial_partitioning;
 pub mod ui;
 
 // TODO need to show that cell spawned even if it dies instantly (When splitting into a tiny cell)
-// TODO Show label before all of the ui elements (Other than button)
-// TODO Show value of slider as child of the handle when the handle is being moved (Or just to the side)
+// TODO Show value of slider value as child of the handle when the handle is being moved (Or just to the side)
 // TODO Separate combobox interaction system into multiple systems
+// TODO Combobox values should overlap with other content instead of moving everything around
 
 fn main() {
     let param = GameParameters::default();
@@ -194,8 +194,8 @@ fn setup(mut commands: Commands, ui_theme: Res<UiTheme>) {
             Node {
                 width: percent(30),
                 height: percent(80),
-                align_items: AlignItems::Center,
-                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Start,
+                justify_content: JustifyContent::Start,
                 flex_direction: FlexDirection::Column,
                 row_gap: px(20.),
                 ..default()
@@ -205,12 +205,19 @@ fn setup(mut commands: Commands, ui_theme: Res<UiTheme>) {
         ))
         .with_children(|parent| {
             spawn_button(parent, "Save", ButtonId::Save, &ui_theme);
-            spawn_slider(parent, SliderId::SplitEnergy, 0.0..=10., &ui_theme);
-            spawn_checkbox(parent, CheckboxId::InitialMode, &ui_theme);
-            spawn_radio(parent, RadioId::SplitType, &["Option 1", "Option 2"], &ui_theme);
+            spawn_slider(parent, SliderId::SplitEnergy, "Split Energy:", 0.0..=10., &ui_theme);
+            spawn_checkbox(parent, CheckboxId::InitialMode, "Initial Mode:", &ui_theme);
+            spawn_radio(
+                parent,
+                RadioId::SplitType,
+                "Split Type:",
+                &["Option 1", "Option 2"],
+                &ui_theme,
+            );
             spawn_combobox(
                 parent,
                 ComboboxId::SplitType,
+                "Mode:",
                 &["Option 1", "Option 2", "Option 3", "Option 4", "Option 5", "Option 6"],
                 &ui_theme,
             );

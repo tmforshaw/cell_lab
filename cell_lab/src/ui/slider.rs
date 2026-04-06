@@ -28,46 +28,70 @@ pub struct SliderHandle;
 #[derive(Component)]
 pub struct ActiveSlider;
 
-pub fn spawn_slider(
+pub fn spawn_slider<S: AsRef<str>>(
     parent: &mut RelatedSpawnerCommands<ChildOf>,
     slider_id: SliderId,
+    label: S,
     range: RangeInclusive<f32>,
     ui_theme: &UiTheme,
 ) {
     parent.spawn((
-        // Create a slider shape
+        // Create a horizontal flex box for the label and the ui element
         Node {
-            padding: ui_theme.slider.padding,
-            border: ui_theme.border,
-            justify_content: JustifyContent::Center,
+            justify_content: JustifyContent::Start,
             align_items: AlignItems::Center,
-            border_radius: ui_theme.border_radius,
-            width: ui_theme.slider.width,
-            height: ui_theme.slider.height,
+            flex_direction: FlexDirection::Row,
+            column_gap: ui_theme.label_gap,
             ..default()
         },
-        // Mark as a slider
-        Slider { percent: 0.0, range },
-        // Mark with ID
-        slider_id,
-        // Set the colours
-        BorderColor::all(ui_theme.slider.track_border_colour),
-        BackgroundColor(ui_theme.slider.track_colour),
-        // Add the interaction component
-        Interaction::default(),
-        // Add the text
-        children![(
-            Node {
-                width: ui_theme.slider.handle_width,
-                height: ui_theme.slider.handle_height,
-                position_type: PositionType::Absolute,
-                left: px(0.),
-                border_radius: ui_theme.border_radius,
-                ..default()
-            },
-            BackgroundColor(ui_theme.slider.handle_colour),
-            SliderHandle
-        )],
+        children![
+            // Add a label for the ui element
+            (
+                Text::new(label.as_ref()),
+                TextFont {
+                    font: ui_theme.font.clone(),
+                    font_size: ui_theme.label_font_size,
+                    ..default()
+                },
+                ui_theme.text_colour,
+                ui_theme.text_shadow,
+            ),
+            (
+                // Create a slider shape
+                Node {
+                    padding: ui_theme.slider.padding,
+                    border: ui_theme.border,
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    border_radius: ui_theme.border_radius,
+                    width: ui_theme.slider.width,
+                    height: ui_theme.slider.height,
+                    ..default()
+                },
+                // Mark as a slider
+                Slider { percent: 0.0, range },
+                // Mark with ID
+                slider_id,
+                // Set the colours
+                BorderColor::all(ui_theme.slider.track_border_colour),
+                BackgroundColor(ui_theme.slider.track_colour),
+                // Add the interaction component
+                Interaction::default(),
+                // Add the text
+                children![(
+                    Node {
+                        width: ui_theme.slider.handle_width,
+                        height: ui_theme.slider.handle_height,
+                        position_type: PositionType::Absolute,
+                        left: px(0.),
+                        border_radius: ui_theme.border_radius,
+                        ..default()
+                    },
+                    BackgroundColor(ui_theme.slider.handle_colour),
+                    SliderHandle
+                )],
+            )
+        ],
     ));
 }
 

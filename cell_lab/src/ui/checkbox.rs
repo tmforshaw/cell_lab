@@ -12,26 +12,54 @@ pub struct Checkbox {
     pub selected: bool,
 }
 
-pub fn spawn_checkbox(parent: &mut RelatedSpawnerCommands<ChildOf>, checkbox_id: CheckboxId, ui_theme: &UiTheme) {
+pub fn spawn_checkbox<S: AsRef<str>>(
+    parent: &mut RelatedSpawnerCommands<ChildOf>,
+    checkbox_id: CheckboxId,
+    label: S,
+    ui_theme: &UiTheme,
+) {
     parent.spawn((
-        // Create a checkbox shape
+        // Create a horizontal flex box for the label and the ui element
         Node {
-            padding: ui_theme.checkbox.padding,
-            border: ui_theme.border,
-            justify_content: JustifyContent::Center,
+            justify_content: JustifyContent::Start,
             align_items: AlignItems::Center,
-            border_radius: ui_theme.border_radius,
+            flex_direction: FlexDirection::Row,
+            column_gap: ui_theme.label_gap,
             ..default()
         },
-        // Make it a checkbox
-        Checkbox { selected: false },
-        // Mark with ID
-        checkbox_id,
-        // Add the interaction component
-        Interaction::default(),
-        // Set the colours
-        BorderColor::all(ui_theme.checkbox.border_colour),
-        BackgroundColor(ui_theme.checkbox.normal_colour),
+        children![
+            // Add a label for the ui element
+            (
+                Text::new(label.as_ref()),
+                TextFont {
+                    font: ui_theme.font.clone(),
+                    font_size: ui_theme.label_font_size,
+                    ..default()
+                },
+                ui_theme.text_colour,
+                ui_theme.text_shadow,
+            ),
+            // Create a checkbox shape
+            (
+                Node {
+                    padding: ui_theme.checkbox.padding,
+                    border: ui_theme.border,
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    border_radius: ui_theme.border_radius,
+                    ..default()
+                },
+                // Make it a checkbox
+                Checkbox { selected: false },
+                // Mark with ID
+                checkbox_id,
+                // Add the interaction component
+                Interaction::default(),
+                // Set the colours
+                BorderColor::all(ui_theme.checkbox.border_colour),
+                BackgroundColor(ui_theme.checkbox.normal_colour),
+            )
+        ],
     ));
 }
 
