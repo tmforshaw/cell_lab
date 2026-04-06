@@ -72,6 +72,9 @@ pub mod spatial_partitioning;
 pub mod ui;
 
 // TODO need to show that cell spawned even if it dies instantly (When splitting into a tiny cell)
+// TODO Add combo box
+// TODO Show label before all of the ui elements (Other than button)
+// TODO Show value of slider as child of the handle when the handle is being moved (Or just to the side)
 
 fn main() {
     let param = GameParameters::default();
