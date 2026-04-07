@@ -15,14 +15,27 @@ const GENOME_FILE_EXT: &str = "genome";
 
 // Sanitise filename, but leave spaces for now
 #[must_use]
-pub fn semi_sanitise_filename<S: AsRef<str>>(input: S) -> SemiSanitisedString {
+pub fn semi_sanitise_filter(c: &char) -> bool {
     let illegal_chars = ['<', '>', ':', '"', '/', '\\', '|', '?', '*', '.'];
 
+    !illegal_chars.contains(c)
+}
+
+// Sanitise filename, but leave spaces for now
+#[must_use]
+pub fn semi_sanitise_filter_map(c: &char) -> Option<char> {
+    // Filter the character, but map underscore to space
+    semi_sanitise_filter(c).then_some(if *c == '_' { ' ' } else { *c })
+}
+
+// Sanitise filename, but leave spaces for now
+#[must_use]
+pub fn semi_sanitise_filename<S: AsRef<str>>(input: S) -> SemiSanitisedString {
     SemiSanitisedString::new(
         input
             .as_ref()
             .chars()
-            .filter(|c| !illegal_chars.contains(c)) // Remove illegal characters
+            .filter(semi_sanitise_filter) // Remove illegal characters
             .collect(),
     )
 }

@@ -3,9 +3,12 @@ use std::collections::HashSet;
 use bevy::prelude::*;
 use strum::IntoEnumIterator;
 
-use crate::ui::{
-    UiTheme, UiWindowId, spawn_button, spawn_heading, spawn_horizontal, spawn_separator,
-    window::{UiWindowDialog, spawn_dialog},
+use crate::{
+    serialisation::semi_sanitise_filter_map,
+    ui::{
+        TextInputId, UiTheme, UiWindowId, spawn_button, spawn_heading, spawn_horizontal, spawn_separator, spawn_text_input,
+        window::{UiWindowDialog, spawn_dialog},
+    },
 };
 
 #[derive(Resource, Debug, Default)]
@@ -121,6 +124,15 @@ pub fn spawn_save_dialog(commands: &mut Commands, _dialog_state: &mut UiDialogSt
         spawn_heading(parent, "Save Genome", ui_theme);
 
         spawn_separator(parent, ui_theme);
+
+        spawn_text_input(
+            parent,
+            TextInputId::SaveFilename,
+            "Filename:",
+            "",
+            Some(semi_sanitise_filter_map),
+            ui_theme,
+        );
 
         spawn_button(parent, "Cancel", super::ButtonId::CloseAllDialogs, ui_theme);
     });

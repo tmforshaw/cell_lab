@@ -62,6 +62,7 @@ pub struct UiTheme {
     pub checkbox: UiThemeCheckbox,
     pub radio: UiThemeRadio,
     pub combobox: UiThemeCombobox,
+    pub text_input: UiThemeTextInput,
 }
 
 impl UiTheme {
@@ -95,6 +96,7 @@ impl UiTheme {
             checkbox: UiThemeCheckbox::default(),
             radio: UiThemeRadio::default(),
             combobox: UiThemeCombobox::default(),
+            text_input: UiThemeTextInput::default(),
         }
     }
 
@@ -341,6 +343,36 @@ impl Default for UiThemeSemiSeparator {
     }
 }
 
+pub struct UiThemeTextInput {
+    pub normal_colour: Color,
+    pub focused_colour: Color,
+    pub hovered_colour: Color,
+    pub pressed_colour: Color,
+    pub border_colour: Color,
+    pub border_hovered_colour: Color,
+    pub border_pressed_colour: Color,
+    pub padding: UiRect,
+    pub min_width: f32,
+    pub max_width: f32,
+}
+
+impl Default for UiThemeTextInput {
+    fn default() -> Self {
+        Self {
+            normal_colour: Color::linear_rgb(0.25, 0.25, 0.3),
+            focused_colour: Color::linear_rgb(0.3, 0.3, 0.3),
+            hovered_colour: Color::linear_rgb(0.35, 0.35, 0.4),
+            pressed_colour: Color::linear_rgb(0.2, 0.2, 0.3),
+            border_colour: Color::linear_rgb(0.1, 0.1, 0.1),
+            border_hovered_colour: Color::linear_rgb(0.2, 0.2, 0.2),
+            border_pressed_colour: Color::linear_rgb(0.4, 0.4, 0.4),
+            padding: UiRect::axes(px(2.5), px(2.5)),
+            min_width: 200.,
+            max_width: 350.,
+        }
+    }
+}
+
 impl From<ColourPalette> for UiThemeButton {
     fn from(value: ColourPalette) -> Self {
         Self {
@@ -449,6 +481,21 @@ impl From<ColourPalette> for UiThemeWindow {
             colour: value.surface,
             colour_variant: value.surface_variant,
             border_colour: value.border_strong,
+            ..default()
+        }
+    }
+}
+
+impl From<ColourPalette> for UiThemeTextInput {
+    fn from(value: ColourPalette) -> Self {
+        Self {
+            normal_colour: value.surface_variant,
+            focused_colour: value.surface_accent,
+            hovered_colour: value.surface_accent_hovered,
+            pressed_colour: value.surface_accent_pressed,
+            border_colour: value.border,
+            border_hovered_colour: value.border_hovered,
+            border_pressed_colour: value.border_pressed,
             ..default()
         }
     }
