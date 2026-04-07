@@ -9,6 +9,7 @@ pub mod separator;
 pub mod slider;
 pub mod test_panel;
 pub mod ui_theme;
+pub mod ui_theme_colour_palette;
 pub mod window;
 
 pub use button::{

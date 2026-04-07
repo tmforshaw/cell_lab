@@ -112,7 +112,7 @@ pub fn spawn_combobox<S1: AsRef<str>, S2: AsRef<str>>(
                     justify_content: JustifyContent::Center,
                     align_items: AlignItems::Center,
                     flex_direction: FlexDirection::Column,
-                    border_radius: ui_theme.border_radius,
+                    // border_radius: ui_theme.border_radius,
                     row_gap: ui_theme.combobox.option_spacing,
                     ..default()
                 },
@@ -164,7 +164,7 @@ pub fn spawn_combobox<S1: AsRef<str>, S2: AsRef<str>>(
                         Node {
                             padding: ui_theme.combobox.padding,
                             border: ui_theme.border,
-                            border_radius: ui_theme.border_radius,
+                            // border_radius: ui_theme.border_radius,
                             justify_content: JustifyContent::Center,
                             align_items: AlignItems::Center,
                             top: percent(100), // Move it below the value node
