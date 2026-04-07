@@ -51,11 +51,11 @@ use crate::{
         systems::{build_quadtree, visualise_quadtree},
     },
     ui::{
-        ButtonEvent, CheckboxEvent, ComboboxEvent, RadioEvent, SliderEvent, UiTheme, UiWindowId, button_event_reader,
+        ButtonEvent, CheckboxEvent, ComboboxEvent, RadioEvent, SliderEvent, UiDialogState, UiTheme, button_event_reader,
         button_interaction_system, checkbox_event_reader, checkbox_interaction_system, combobox_event_reader,
-        combobox_option_select_system, combobox_text_update_system, combobox_toggle_system, radio_event_reader,
-        radio_interaction_system, slider_begin_drag_system, slider_drag_system, slider_event_reader, slider_interaction_system,
-        slider_release_system, spawn_heading, test_panel::spawn_cell_editor_panel, window::spawn_dialog,
+        combobox_option_select_system, combobox_text_update_system, combobox_toggle_system, open_or_close_dialogs,
+        radio_event_reader, radio_interaction_system, slider_begin_drag_system, slider_drag_system, slider_event_reader,
+        slider_interaction_system, slider_release_system, test_panel::spawn_cell_editor_panel,
     },
 };
 
@@ -99,6 +99,7 @@ fn main() {
         .insert_resource(param)
         .insert_state(game_mode)
         .init_state::<CellEditorSimulationStatus>()
+        .init_resource::<UiDialogState>()
         .init_resource::<InputFocus>()
         .init_resource::<CellEditorUiStyleApplied>()
         .init_resource::<CellEditorState>()
@@ -133,6 +134,7 @@ fn main() {
                 checkbox_event_reader,
                 slider_event_reader,
                 combobox_event_reader,
+                open_or_close_dialogs,
             ),
         )
         .add_systems(
@@ -218,11 +220,7 @@ fn main() {
 
 // Spawn cells and chemicals
 #[allow(clippy::needless_pass_by_value)]
-fn setup(mut commands: Commands, ui_theme: Res<UiTheme>) {
+fn setup(mut commands: Commands) {
     // 2D camera
     commands.spawn(Camera2d);
-
-    spawn_dialog(UiWindowId::SaveGenome, &ui_theme, &mut commands, |parent| {
-        spawn_heading(parent, "Save Dialog", &ui_theme);
-    });
 }

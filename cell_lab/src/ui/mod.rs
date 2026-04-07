@@ -41,8 +41,10 @@ pub use slider::{
 
 pub use ui_theme::UiTheme;
 
-pub use window::{UiPanelType, UiWindow, UiWindowId, UiWindowType, spawn_panel, spawn_window};
+pub use window::{UiPanelType, UiWindowId, spawn_dialog, spawn_panel};
 
 pub use separator::{spawn_semi_separator, spawn_separator};
 
 pub use label::{spawn_heading, spawn_label, spawn_subheading};
+
+pub use dialog_state::{UiDialogState, UiSaveDialogState, open_or_close_dialogs, spawn_save_dialog};

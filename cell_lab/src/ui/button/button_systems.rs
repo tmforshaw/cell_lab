@@ -7,6 +7,7 @@ pub enum ButtonId {
     Save,
     Load,
     ReplaceModeWithDefault,
+    CloseAllDialogs,
 }
 
 pub fn spawn_button(parent: &mut RelatedSpawnerCommands<ChildOf>, label: &str, button_id: ButtonId, ui_theme: &UiTheme) {

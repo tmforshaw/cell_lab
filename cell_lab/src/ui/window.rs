@@ -1,18 +1,21 @@
 use bevy::{ecs::relationship::RelatedSpawnerCommands, prelude::*};
+use strum::EnumIter;
 
 use crate::ui::UiTheme;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Component, Debug, Copy, Clone, EnumIter, Hash, PartialEq, PartialOrd, Ord, Eq)]
 pub enum UiWindowId {
     CellEditor,
-    SaveGenome,
+    SaveGenomeDialog,
+    LoadGenomeDialog,
+    ReplaceModeWithDefaultDialog,
 }
 
-#[derive(Debug, Copy, Clone)]
-pub enum UiWindowType {
-    Panel(UiPanelType),
-    Dialog,
-}
+#[derive(Component, Debug, Copy, Clone)]
+pub struct UiWindowPanel(pub UiPanelType);
+
+#[derive(Component, Debug, Copy, Clone)]
+pub struct UiWindowDialog;
 
 #[derive(Debug, Copy, Clone)]
 pub enum UiPanelType {
@@ -20,41 +23,6 @@ pub enum UiPanelType {
     Right,
     Top,
     Bottom,
-}
-
-#[derive(Component)]
-pub struct UiWindow {
-    pub id: UiWindowId,
-    pub window_type: UiWindowType,
-}
-
-pub fn spawn_window(
-    id: UiWindowId,
-    window_type: UiWindowType,
-    width: Val,
-    height: Val,
-    ui_theme: &UiTheme,
-    commands: &mut Commands,
-    children: impl FnOnce(&mut RelatedSpawnerCommands<ChildOf>),
-) -> Entity {
-    commands
-        .spawn((
-            UiWindow { id, window_type },
-            Node {
-                width,
-                height,
-                align_items: AlignItems::Start,
-                justify_content: JustifyContent::Start,
-                flex_direction: FlexDirection::Column,
-                row_gap: ui_theme.window.item_spacing,
-                padding: ui_theme.window.padding,
-                ..default()
-            },
-            BackgroundColor(ui_theme.window.colour),
-            BorderColor::all(ui_theme.window.border_colour),
-        ))
-        .with_children(children)
-        .id()
 }
 
 pub fn spawn_panel(
@@ -90,10 +58,8 @@ pub fn spawn_panel(
             parent
                 // Window Node
                 .spawn((
-                    UiWindow {
-                        id,
-                        window_type: UiWindowType::Panel(panel_type),
-                    },
+                    id,
+                    UiWindowPanel(panel_type),
                     Node {
                         width: match panel_type {
                             UiPanelType::Left | UiPanelType::Right => size,
@@ -146,10 +112,8 @@ pub fn spawn_dialog(
         .with_children(|parent| {
             parent
                 .spawn((
-                    UiWindow {
-                        id,
-                        window_type: UiWindowType::Dialog,
-                    },
+                    id,
+                    UiWindowDialog,
                     Node {
                         align_items: AlignItems::Start,
                         justify_content: JustifyContent::Start,

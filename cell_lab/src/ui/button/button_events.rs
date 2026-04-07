@@ -1,23 +1,26 @@
 use bevy::prelude::*;
 
-use crate::{cell_editor::state::CellEditorState, ui::ButtonId};
+use crate::ui::{ButtonId, UiDialogState, UiWindowId};
 
 #[derive(Message)]
 pub struct ButtonEvent {
     pub id: ButtonId,
 }
 
-pub fn button_event_reader(mut events: MessageReader<ButtonEvent>, mut editor_state: ResMut<CellEditorState>) {
+pub fn button_event_reader(mut events: MessageReader<ButtonEvent>, mut dialog_state: ResMut<UiDialogState>) {
     for ev in events.read() {
         match ev.id {
             ButtonId::Save => {
-                editor_state.dialogs.open_save_dialog();
+                dialog_state.open_dialog(&UiWindowId::SaveGenomeDialog);
             }
             ButtonId::Load => {
-                editor_state.dialogs.open_load_dialog();
+                dialog_state.open_dialog(&UiWindowId::LoadGenomeDialog);
             }
             ButtonId::ReplaceModeWithDefault => {
-                editor_state.dialogs.open_default_genome_mode_dialog();
+                dialog_state.open_dialog(&UiWindowId::ReplaceModeWithDefaultDialog);
+            }
+            ButtonId::CloseAllDialogs => {
+                dialog_state.close_all_dialogs();
             }
         }
     }
