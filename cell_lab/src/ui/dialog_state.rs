@@ -11,6 +11,8 @@ use crate::{
     },
 };
 
+use super::ButtonId;
+
 #[derive(Resource, Debug, Default)]
 pub struct UiDialogState {
     pub save: UiSaveDialogState,
@@ -21,6 +23,7 @@ pub struct UiDialogState {
 #[derive(Debug, Default)]
 pub struct UiSaveDialogState {
     open: bool,
+    pub selected_genome: Option<usize>,
 }
 
 #[derive(Debug, Default)]
@@ -51,7 +54,7 @@ impl UiDialogState {
             UiWindowId::CellEditor => panic!("Tried to open a non-dialog window as a dialog"),
             UiWindowId::SaveGenomeDialog => {
                 *self = Self {
-                    save: UiSaveDialogState { open: true },
+                    save: UiSaveDialogState { open: true, ..default() },
                     ..default()
                 };
             }
@@ -77,7 +80,10 @@ impl UiDialogState {
             UiWindowId::CellEditor => panic!("Tried to close a non-dialog window as a dialog"),
             UiWindowId::SaveGenomeDialog => {
                 *self = Self {
-                    save: UiSaveDialogState { open: false },
+                    save: UiSaveDialogState {
+                        open: false,
+                        ..default()
+                    },
                     ..default()
                 };
             }
@@ -125,16 +131,22 @@ pub fn spawn_save_dialog(commands: &mut Commands, _dialog_state: &mut UiDialogSt
 
         spawn_separator(parent, ui_theme);
 
-        spawn_text_input(
-            parent,
-            TextInputId::SaveFilename,
-            "Filename:",
-            "",
-            Some(semi_sanitise_filter_map),
-            ui_theme,
-        );
+        spawn_horizontal(parent, ui_theme, |parent| {
+            spawn_text_input(
+                parent,
+                TextInputId::SaveFilename,
+                "Filename:",
+                "",
+                Some(semi_sanitise_filter_map),
+                ui_theme,
+            );
 
-        spawn_button(parent, "Cancel", super::ButtonId::CloseAllDialogs, ui_theme);
+            spawn_button(parent, "Cancel", ButtonId::CloseAllDialogs, ui_theme);
+
+            spawn_separator(parent, ui_theme);
+
+            // TODO Show genomes that already exist so that their names can be copied (Highlighting the one that matches)
+        });
     });
 }
 
@@ -144,7 +156,7 @@ pub fn spawn_load_dialog(commands: &mut Commands, _dialog_state: &mut UiDialogSt
 
         spawn_separator(parent, ui_theme);
 
-        spawn_button(parent, "Cancel", super::ButtonId::CloseAllDialogs, ui_theme);
+        spawn_button(parent, "Cancel", ButtonId::CloseAllDialogs, ui_theme);
     });
 }
 
@@ -155,9 +167,9 @@ pub fn spawn_replace_mode_with_default_dialog(commands: &mut Commands, _dialog_s
         spawn_separator(parent, ui_theme);
 
         spawn_horizontal(parent, ui_theme, |parent| {
-            spawn_button(parent, "Confirm", super::ButtonId::ConfirmReplaceModeWithDefault, ui_theme);
+            spawn_button(parent, "Confirm", ButtonId::ConfirmReplaceModeWithDefault, ui_theme);
 
-            spawn_button(parent, "Cancel", super::ButtonId::CloseAllDialogs, ui_theme);
+            spawn_button(parent, "Cancel", ButtonId::CloseAllDialogs, ui_theme);
         });
     });
 }

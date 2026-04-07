@@ -111,7 +111,7 @@ pub fn text_input_interaction_system(
 
 #[allow(clippy::needless_pass_by_value, clippy::type_complexity)]
 pub fn text_input_typing_system(
-    input_focus: Res<InputFocus>,
+    mut input_focus: ResMut<InputFocus>,
     ui_theme: Res<UiTheme>,
     mut keyboard_reader: MessageReader<KeyboardInput>,
     mut query: Query<(Entity, &TextInputId, &mut TextInput, &Children)>,
@@ -131,13 +131,15 @@ pub fn text_input_typing_system(
                         Key::Enter => {
                             // Send a TextInputEvent
                             text_input_event_writer.write(TextInputEvent {
-                                entity,
                                 id: *input_id,
                                 new_value: text_input.value.clone(),
                             });
 
                             // Clear the TextInput
                             text_input.value.clear();
+
+                            // Clear the input focus
+                            input_focus.clear();
                         }
                         // Remove text in TextInput
                         Key::Backspace => {

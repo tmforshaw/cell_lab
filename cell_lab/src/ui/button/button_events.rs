@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{input_focus::InputFocus, prelude::*};
 
 use crate::{
     cell_editor::{simulation::CellEditorSimulationClearMessage, state::CellEditorState},
@@ -16,6 +16,7 @@ pub struct ButtonEvent {
 pub fn button_event_reader(
     mut events: MessageReader<ButtonEvent>,
     mut dialog_state: ResMut<UiDialogState>,
+    mut input_focus: ResMut<InputFocus>,
     mut editor_state: ResMut<CellEditorState>,
     mut genome_bank: ResMut<GenomeBank>,
     param: Res<GameParameters>,
@@ -46,6 +47,9 @@ pub fn button_event_reader(
             }
             ButtonId::CloseAllDialogs => {
                 dialog_state.close_all_dialogs();
+
+                // Clear input focus
+                input_focus.clear();
             }
         }
     }
