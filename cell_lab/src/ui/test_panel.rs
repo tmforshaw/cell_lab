@@ -7,8 +7,8 @@ use crate::{
     genomes::{CellSplitType, CellType, GenomeBank, GenomeModeId},
     ui::{
         ButtonId, CheckboxId, ComboboxId, RadioId, SliderId, UiPanelType, UiTheme, UiWindowId, spawn_button, spawn_checkbox,
-        spawn_combobox, spawn_heading, spawn_horizontal, spawn_panel, spawn_radio, spawn_semi_separator, spawn_separator,
-        spawn_slider, spawn_subheading,
+        spawn_combobox, spawn_heading, spawn_horizontal, spawn_panel, spawn_radio_buttonlike, spawn_semi_separator,
+        spawn_separator, spawn_slider, spawn_subheading,
     },
 };
 
@@ -175,7 +175,7 @@ pub fn spawn_cell_editor_panel(
 
             spawn_semi_separator(parent, &ui_theme);
 
-            spawn_radio(
+            spawn_radio_buttonlike(
                 parent,
                 RadioId::SplitType,
                 "Split Type:",

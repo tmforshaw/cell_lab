@@ -79,7 +79,7 @@ pub fn spawn_text_input<S1: AsRef<str>, S2: AsRef<str>>(
 pub fn text_input_interaction_system(
     mut input_focus: ResMut<InputFocus>,
     ui_theme: Res<UiTheme>,
-    mut query: Query<(Entity, &Interaction, &mut BackgroundColor, &mut BorderColor), Changed<Interaction>>,
+    mut query: Query<(Entity, &Interaction, &mut BackgroundColor, &mut BorderColor), (Changed<Interaction>, With<TextInput>)>,
 ) {
     for (entity, interaction, mut colour, mut border) in &mut query {
         match *interaction {

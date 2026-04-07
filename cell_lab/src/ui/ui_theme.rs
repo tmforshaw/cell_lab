@@ -230,6 +230,7 @@ pub struct UiThemeRadio {
     pub padding: UiRect,
     pub option_padding: UiRect,
     pub option_spacing: Val,
+    pub text_selected_colour: TextColor,
 }
 
 impl Default for UiThemeRadio {
@@ -247,6 +248,7 @@ impl Default for UiThemeRadio {
             padding: UiRect::axes(px(2.5), px(2.5)),
             option_padding: UiRect::axes(px(7.5), px(7.5)),
             option_spacing: px(5.),
+            text_selected_colour: TextColor(Color::linear_rgb(1., 1., 0.)),
         }
     }
 }
@@ -436,6 +438,7 @@ impl From<ColourPalette> for UiThemeRadio {
             normal_selected_colour: value.accent,
             hovered_selected_colour: value.accent_hovered,
             pressed_selected_colour: value.accent_pressed,
+            text_selected_colour: TextColor(value.accent),
             ..default()
         }
     }

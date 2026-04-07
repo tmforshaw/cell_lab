@@ -32,7 +32,7 @@ pub use combobox::{
 
 pub use radio::{
     radio_events::{RadioEvent, radio_event_reader},
-    radio_systems::{RadioId, radio_interaction_system, spawn_radio},
+    radio_systems::{RadioId, radio_interaction_system, spawn_radio_buttonlike, spawn_radio_textlike},
 };
 
 pub use slider::{
