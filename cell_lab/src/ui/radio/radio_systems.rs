@@ -5,12 +5,13 @@ use crate::ui::{RadioEvent, UiTheme, spawn_horizontal, spawn_label};
 #[derive(Component, Debug, Copy, Clone)]
 pub enum RadioId {
     SplitType,
+    SaveFileNames,
 }
 
 #[derive(Component)]
 pub struct Radio {
     pub options: Vec<String>,
-    pub selected: usize,
+    pub selected: Option<usize>,
 }
 
 #[derive(Component)]
@@ -33,7 +34,7 @@ fn spawn_radio<S1: AsRef<str>, S2: AsRef<str>>(
     radio_id: RadioId,
     radio_style: RadioStyle,
     label: S1,
-    initial_selected: usize,
+    initial_selected: Option<usize>,
     options: &[S2],
     ui_theme: &UiTheme,
 ) {
@@ -44,7 +45,9 @@ fn spawn_radio<S1: AsRef<str>, S2: AsRef<str>>(
     }
 
     // Ensure that initial selected is within the options length
-    if initial_selected >= options.len() {
+    if let Some(initial_selected) = initial_selected
+        && initial_selected >= options.len()
+    {
         eprintln!("Radio initial selected was outside of options Vec: {radio_id:?}");
         return;
     }
@@ -70,11 +73,15 @@ fn spawn_radio<S1: AsRef<str>, S2: AsRef<str>>(
                             ..default()
                         },
                         // Set the background and border colours
-                        BackgroundColor(if i == initial_selected {
-                            ui_theme.radio.normal_selected_colour
-                        } else {
-                            ui_theme.radio.normal_colour
-                        }),
+                        BackgroundColor(
+                            if let Some(initial_selected) = initial_selected
+                                && i == initial_selected
+                            {
+                                ui_theme.radio.normal_selected_colour
+                            } else {
+                                ui_theme.radio.normal_colour
+                            },
+                        ),
                         BorderColor::all(ui_theme.radio.border_colour),
                     ),
                     RadioStyle::Text => (
@@ -196,7 +203,7 @@ pub fn radio_interaction_system(
                     input_focus.set(entity);
 
                     // Select this radio option
-                    radio.selected = radio_option.index;
+                    radio.selected = Some(radio_option.index);
 
                     match radio_style {
                         RadioStyle::Button => {
@@ -235,7 +242,9 @@ pub fn radio_interaction_system(
                     match radio_style {
                         RadioStyle::Button => {
                             // Change the colour, depending on selection
-                            if radio.selected == radio_option.index {
+                            if let Some(selected) = radio.selected
+                                && selected == radio_option.index
+                            {
                                 colour.0 = ui_theme.radio.hovered_selected_colour;
                             } else {
                                 colour.0 = ui_theme.radio.hovered_colour;
@@ -253,7 +262,9 @@ pub fn radio_interaction_system(
                     match radio_style {
                         RadioStyle::Button => {
                             // Change the colour, depending on selection
-                            if radio.selected == radio_option.index {
+                            if let Some(selected) = radio.selected
+                                && selected == radio_option.index
+                            {
                                 colour.0 = ui_theme.radio.normal_selected_colour;
                             } else {
                                 colour.0 = ui_theme.radio.normal_colour;
@@ -315,7 +326,7 @@ pub fn spawn_radio_buttonlike<S1: AsRef<str>, S2: AsRef<str>>(
         radio_id,
         RadioStyle::Button,
         label,
-        initial_selected,
+        Some(initial_selected),
         options,
         ui_theme,
     );
@@ -325,7 +336,7 @@ pub fn spawn_radio_textlike<S1: AsRef<str>, S2: AsRef<str>>(
     parent: &mut RelatedSpawnerCommands<ChildOf>,
     radio_id: RadioId,
     label: S1,
-    initial_selected: usize,
+    initial_selected: Option<usize>,
     options: &[S2],
     ui_theme: &UiTheme,
 ) {

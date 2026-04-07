@@ -44,7 +44,10 @@ pub use slider::{
 
 pub use text_input::{
     text_input_events::{TextInputEvent, text_input_event_reader},
-    text_input_systems::{TextInput, TextInputId, spawn_text_input, text_input_interaction_system, text_input_typing_system},
+    text_input_systems::{
+        TextInput, TextInputId, spawn_text_input, text_input_interaction_system, text_input_typing_system,
+        text_input_update_display_system,
+    },
 };
 
 pub use ui_theme::UiTheme;

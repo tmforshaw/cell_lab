@@ -1,13 +1,14 @@
-use std::collections::HashSet;
+use std::{collections::HashSet, ops::Deref};
 
 use bevy::prelude::*;
 use strum::IntoEnumIterator;
 
 use crate::{
     helpers::SemiSanitisedString,
-    serialisation::semi_sanitise_filter_map,
+    serialisation::{get_genomes_in_folder_underscore_to_spaces, sanitise_filename, semi_sanitise_filter_map},
     ui::{
-        TextInputId, UiTheme, UiWindowId, spawn_button, spawn_heading, spawn_horizontal, spawn_separator, spawn_text_input,
+        RadioId, TextInputId, UiTheme, UiWindowId, spawn_button, spawn_heading, spawn_horizontal, spawn_radio_textlike,
+        spawn_separator, spawn_text_input,
         window::{UiWindowDialog, spawn_dialog},
     },
 };
@@ -197,28 +198,33 @@ pub fn spawn_save_dialog(commands: &mut Commands, _dialog_state: &mut UiDialogSt
             spawn_button(parent, "Cancel", ButtonId::CloseAllDialogs, ui_theme);
 
             spawn_separator(parent, ui_theme);
-
-            // TODO Show genomes that already exist so that their names can be copied (Highlighting the one that matches)
-            // // If there are genomes already saved
-            // if let Some(genomes) = get_genomes_in_folder_underscore_to_spaces() {
-            //     // Iterate genomes and create a selectable value for each
-            //     if genomes
-            //         .iter()
-            //         .enumerate()
-            //         .map(|(i, genome)| {
-            //             ui.selectable_value(&mut dialogs.save_selected_genome, Some(i), (**genome).clone())
-            //                 .changed()
-            //         })
-            //         .fold(false, |acc, changed| acc | changed)
-            //     {
-            //         // Genome was selected
-            //         if let Some(genome_id) = dialogs.save_selected_genome {
-            //             // This shouldn't ever not be true
-            //             dialogs.save_filename = genomes[genome_id].clone();
-            //         }
-            //     }
-            // }
         });
+
+        // Show the saved genomes if they exist
+        if let Some(genomes) = get_genomes_in_folder_underscore_to_spaces() {
+            parent
+                .spawn(Node {
+                    width: percent(100),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..default()
+                })
+                .with_children(|parent| {
+                    spawn_radio_textlike(
+                        parent,
+                        RadioId::SaveFileNames,
+                        "",
+                        None,
+                        &genomes
+                            .iter()
+                            .map(Deref::deref)
+                            .map(sanitise_filename)
+                            .map(|sanitised| (*sanitised).clone())
+                            .collect::<Vec<_>>(),
+                        ui_theme,
+                    );
+                });
+        }
     });
 }
 

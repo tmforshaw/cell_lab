@@ -79,9 +79,12 @@ pub fn spawn_text_input<S1: AsRef<str>, S2: AsRef<str>>(
 pub fn text_input_interaction_system(
     mut input_focus: ResMut<InputFocus>,
     ui_theme: Res<UiTheme>,
-    mut query: Query<(Entity, &Interaction, &mut BackgroundColor, &mut BorderColor), (Changed<Interaction>, With<TextInput>)>,
+    mut text_input_query: Query<
+        (Entity, &Interaction, &mut BackgroundColor, &mut BorderColor),
+        (Changed<Interaction>, With<TextInput>),
+    >,
 ) {
-    for (entity, interaction, mut colour, mut border) in &mut query {
+    for (entity, interaction, mut colour, mut border) in &mut text_input_query {
         match *interaction {
             Interaction::Pressed => {
                 input_focus.set(entity);
@@ -114,11 +117,10 @@ pub fn text_input_typing_system(
     mut input_focus: ResMut<InputFocus>,
     ui_theme: Res<UiTheme>,
     mut keyboard_reader: MessageReader<KeyboardInput>,
-    mut query: Query<(Entity, &TextInputId, &mut TextInput, &Children)>,
-    mut text_query: Query<&mut Text, (With<TextInputField>, Without<TextInput>)>,
+    mut text_input_query: Query<(Entity, &TextInputId, &mut TextInput)>,
     mut text_input_event_writer: MessageWriter<TextInputEvent>,
 ) {
-    for (entity, input_id, mut text_input, children) in &mut query {
+    for (entity, input_id, mut text_input) in &mut text_input_query {
         // Only process keyboard input if focused
         if input_focus.0 == Some(entity) {
             for input in keyboard_reader.read() {
@@ -148,7 +150,7 @@ pub fn text_input_typing_system(
                         // Add a space to TextInput
                         Key::Space => {
                             // Only add character if it will not be longer than max width
-                            if text_width + font_size_width <= ui_theme.text_input.max_width {
+                            if text_width + font_size_width < ui_theme.text_input.max_width {
                                 text_input.value.push(' ');
                             }
                         }
@@ -163,7 +165,7 @@ pub fn text_input_typing_system(
                             let added_text_width = filtered_chars.len() as f32 * font_size_width;
 
                             // The new text doesn't overflow the maximum size
-                            if text_width + added_text_width <= ui_theme.text_input.max_width {
+                            if text_width + added_text_width < ui_theme.text_input.max_width {
                                 text_input.value.push_str(filtered_chars.as_str());
                             } else {
                                 // Text needs to be clipped
@@ -180,12 +182,21 @@ pub fn text_input_typing_system(
                     }
                 }
             }
+        }
+    }
+}
 
-            // Find the text child, and modify its value to the new value
-            for &child in children {
-                if let Ok(mut text) = text_query.get_mut(child) {
-                    **text = text_input.value.clone();
-                }
+pub fn text_input_update_display_system(
+    text_input_query: Query<(&TextInput, &Children), Changed<TextInput>>,
+    mut text_query: Query<&mut Text, (With<TextInputField>, Without<TextInput>)>,
+) {
+    // Iterate over all text inputs
+    for (text_input, children) in &text_input_query {
+        // Find the child that has the Text
+        for &child in children {
+            if let Ok(mut text) = text_query.get_mut(child) {
+                // Update the text to be the same as text_input.value
+                **text = text_input.value.clone();
             }
         }
     }

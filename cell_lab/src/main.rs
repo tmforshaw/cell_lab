@@ -56,7 +56,7 @@ use crate::{
         combobox_event_reader, combobox_option_select_system, combobox_text_update_system, combobox_toggle_system,
         open_or_close_dialogs, radio_event_reader, radio_interaction_system, slider_begin_drag_system, slider_drag_system,
         slider_event_reader, slider_interaction_system, slider_release_system, test_panel::spawn_cell_editor_panel,
-        text_input_event_reader, text_input_interaction_system, text_input_typing_system,
+        text_input_event_reader, text_input_interaction_system, text_input_typing_system, text_input_update_display_system,
     },
 };
 
@@ -157,7 +157,11 @@ fn main() {
                     combobox_option_select_system.after(combobox_toggle_system),
                     combobox_text_update_system.after(combobox_option_select_system),
                 ),
-                (text_input_typing_system, text_input_interaction_system),
+                (
+                    text_input_typing_system,
+                    text_input_interaction_system,
+                    text_input_update_display_system,
+                ),
             ),
         ) // Despawn after the update in most cases
         //
