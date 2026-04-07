@@ -20,6 +20,7 @@ pub struct UiDialogState {
     pub load: UiLoadDialogState,
     pub replace_mode_with_default: UiReplaceModeWithDefaultDialogState,
     pub overwrite_genome: UiOverwriteGenomeDialogState,
+    pub save_filename_is_empty: UiSaveFilenameIsEmptyDialogState,
 }
 
 #[derive(Debug, Default)]
@@ -43,6 +44,11 @@ pub struct UiOverwriteGenomeDialogState {
     open: bool,
 }
 
+#[derive(Debug, Default)]
+pub struct UiSaveFilenameIsEmptyDialogState {
+    open: bool,
+}
+
 impl UiDialogState {
     #[must_use]
     pub const fn is_open(&self, window_id: &UiWindowId) -> Option<bool> {
@@ -52,6 +58,7 @@ impl UiDialogState {
             UiWindowId::LoadGenomeDialog => Some(self.load.open),
             UiWindowId::ReplaceModeWithDefaultDialog => Some(self.replace_mode_with_default.open),
             UiWindowId::OverwriteGenomeDialog => Some(self.overwrite_genome.open),
+            UiWindowId::SaveFilenameIsEmptyDialog => Some(self.save_filename_is_empty.open),
         }
     }
 
@@ -86,6 +93,12 @@ impl UiDialogState {
                         open: false,
                         filename: self.save.filename.clone(),
                     },
+                    ..default()
+                };
+            }
+            UiWindowId::SaveFilenameIsEmptyDialog => {
+                *self = Self {
+                    save_filename_is_empty: UiSaveFilenameIsEmptyDialogState { open: true },
                     ..default()
                 };
             }
@@ -128,6 +141,13 @@ impl UiDialogState {
                     ..default()
                 };
             }
+            UiWindowId::SaveFilenameIsEmptyDialog => {
+                *self = Self {
+                    save_filename_is_empty: UiSaveFilenameIsEmptyDialogState { open: false },
+                    save: UiSaveDialogState { open: true, ..default() },
+                    ..default()
+                };
+            }
         }
     }
 
@@ -143,6 +163,7 @@ impl UiDialogState {
             UiWindowId::LoadGenomeDialog => Some(spawn_load_dialog),
             UiWindowId::ReplaceModeWithDefaultDialog => Some(spawn_replace_mode_with_default_dialog),
             UiWindowId::OverwriteGenomeDialog => Some(spawn_overwrite_genome_dialog),
+            UiWindowId::SaveFilenameIsEmptyDialog => Some(spawn_save_filename_is_empty_dialog),
         }
     }
 
@@ -154,6 +175,8 @@ impl UiDialogState {
         }
     }
 }
+
+// Save Dialogs -----------------------------------------------------------------------------------------------------------------
 
 pub fn spawn_save_dialog(commands: &mut Commands, _dialog_state: &mut UiDialogState, ui_theme: &UiTheme) {
     spawn_dialog(UiWindowId::SaveGenomeDialog, ui_theme, commands, |parent| {
@@ -218,6 +241,20 @@ pub fn spawn_overwrite_genome_dialog(commands: &mut Commands, dialog_state: &mut
     });
 }
 
+pub fn spawn_save_filename_is_empty_dialog(commands: &mut Commands, _dialog_state: &mut UiDialogState, ui_theme: &UiTheme) {
+    spawn_dialog(UiWindowId::SaveFilenameIsEmptyDialog, ui_theme, commands, |parent| {
+        spawn_heading(parent, "Could Not Save Genome With Empty Name", ui_theme);
+
+        spawn_separator(parent, ui_theme);
+
+        spawn_button(parent, "Ok", ButtonId::CloseSaveFilenameEmptyDialog, ui_theme);
+    });
+}
+
+// ------------------------------------------------------------------------------------------------------------------------------
+
+// Load Dialogs -----------------------------------------------------------------------------------------------------------------
+
 pub fn spawn_load_dialog(commands: &mut Commands, _dialog_state: &mut UiDialogState, ui_theme: &UiTheme) {
     spawn_dialog(UiWindowId::LoadGenomeDialog, ui_theme, commands, |parent| {
         spawn_heading(parent, "Load Genome", ui_theme);
@@ -227,6 +264,8 @@ pub fn spawn_load_dialog(commands: &mut Commands, _dialog_state: &mut UiDialogSt
         spawn_button(parent, "Cancel", ButtonId::CloseAllDialogs, ui_theme);
     });
 }
+
+// ------------------------------------------------------------------------------------------------------------------------------
 
 pub fn spawn_replace_mode_with_default_dialog(commands: &mut Commands, _dialog_state: &mut UiDialogState, ui_theme: &UiTheme) {
     spawn_dialog(UiWindowId::ReplaceModeWithDefaultDialog, ui_theme, commands, |parent| {

@@ -30,30 +30,13 @@ pub fn text_input_event_reader(
                 // Set the save filename to this value
                 dialog_state.save.filename = Some(semi_sanitised_value.clone());
 
-                // TODO For selecting genome in the list of genomes that already exist
-                // // Check if there are genomes with this name already
-                // if let Some(genomes) = get_genomes_in_folder_underscore_to_spaces()
-                //     && let Some((i, _)) = genomes
-                //         .iter()
-                //         .enumerate()
-                //         .find(|&(_, genome)| genome == &semi_sanitised_value)
-                // {
-                //     // Mark this genome as the selected one
-                //     dialog_state.save.selected_genome = Some(i);
-                // } else {
-                //     // Clear the selected genome
-                //     dialog_state.save.selected_genome = None;
-                // }
-
                 // Check if the file already exists
                 if does_genome_exist_in_folder(&semi_sanitised_value) {
                     // Open the overwrite dialog
                     dialog_state.open_dialog(&UiWindowId::OverwriteGenomeDialog);
-
-                    input_focus.clear();
                 } else if semi_sanitised_value.trim().is_empty() {
-                    // TODO Open filename was empty dialog
-                    todo!()
+                    // Open save filename is empty dialog
+                    dialog_state.open_dialog(&UiWindowId::SaveFilenameIsEmptyDialog);
                 } else {
                     // Write genome to file
                     write_genome_to_file(&semi_sanitised_value, editor_state.get_selected_genome(&genome_bank));
@@ -63,5 +46,8 @@ pub fn text_input_event_reader(
                 }
             }
         }
+
+        // Clear the input focus
+        input_focus.clear();
     }
 }

@@ -27,21 +27,12 @@ pub fn button_event_reader(
         match ev.id {
             ButtonId::Save => {
                 dialog_state.open_dialog(&UiWindowId::SaveGenomeDialog);
-
-                // Clear input focus
-                input_focus.clear();
             }
             ButtonId::Load => {
                 dialog_state.open_dialog(&UiWindowId::LoadGenomeDialog);
-
-                // Clear input focus
-                input_focus.clear();
             }
             ButtonId::ReplaceModeWithDefault => {
                 dialog_state.open_dialog(&UiWindowId::ReplaceModeWithDefaultDialog);
-
-                // Clear input focus
-                input_focus.clear();
             }
             ButtonId::ConfirmReplaceModeWithDefault => {
                 // Make default genome of the correct colour
@@ -54,22 +45,13 @@ pub fn button_event_reader(
 
                 // Close all dialogs
                 dialog_state.close_all_dialogs();
-
-                // Clear input focus
-                input_focus.clear();
             }
             ButtonId::CloseAllDialogs => {
                 dialog_state.close_all_dialogs();
-
-                // Clear input focus
-                input_focus.clear();
             }
             ButtonId::CloseOverwriteGenomeDialog => {
                 // Close the overwrite genome dialog
                 dialog_state.close_dialog(&UiWindowId::OverwriteGenomeDialog);
-
-                // Clear input focus
-                input_focus.clear();
             }
             ButtonId::ConfirmOverwriteGenome => {
                 // Write genome to file
@@ -83,10 +65,14 @@ pub fn button_event_reader(
 
                 // Exit the dialog
                 dialog_state.close_all_dialogs();
-
-                // Clear input focus
-                input_focus.clear();
+            }
+            ButtonId::CloseSaveFilenameEmptyDialog => {
+                // Close the save filename empty dialog
+                dialog_state.close_dialog(&UiWindowId::SaveFilenameIsEmptyDialog);
             }
         }
+
+        // Clear input focus
+        input_focus.clear();
     }
 }
