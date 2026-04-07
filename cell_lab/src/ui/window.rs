@@ -9,6 +9,7 @@ pub enum UiWindowId {
     SaveGenomeDialog,
     LoadGenomeDialog,
     ReplaceModeWithDefaultDialog,
+    OverwriteGenomeDialog,
 }
 
 #[derive(Component, Debug, Copy, Clone)]

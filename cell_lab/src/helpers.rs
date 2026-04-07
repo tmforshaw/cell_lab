@@ -33,7 +33,7 @@ impl std::ops::DerefMut for SanitisedString {
     }
 }
 
-#[derive(Default, Clone, PartialEq, PartialOrd, Ord, Eq)]
+#[derive(Default, Debug, Clone, PartialEq, PartialOrd, Ord, Eq)]
 pub struct SemiSanitisedString(String);
 
 impl SemiSanitisedString {

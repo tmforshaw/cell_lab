@@ -2,13 +2,15 @@ use bevy::{ecs::relationship::RelatedSpawnerCommands, input_focus::InputFocus, p
 
 use crate::{ui::ButtonEvent, ui::UiTheme};
 
-#[derive(Component, Debug, Copy, Clone)]
+#[derive(Component, Debug, Copy, Clone, PartialEq, PartialOrd, Ord, Eq)]
 pub enum ButtonId {
     Save,
     Load,
     ReplaceModeWithDefault,
     ConfirmReplaceModeWithDefault,
     CloseAllDialogs,
+    CloseOverwriteGenomeDialog,
+    ConfirmOverwriteGenome,
 }
 
 pub fn spawn_button(parent: &mut RelatedSpawnerCommands<ChildOf>, label: &str, button_id: ButtonId, ui_theme: &UiTheme) {
@@ -71,6 +73,10 @@ pub fn button_interaction_system(
             }
             Interaction::None => {
                 input_focus.clear();
+
+                if *button_id == ButtonId::Save {
+                    println!("SaveId");
+                }
 
                 // Change the colour depending on the interaction type
                 colour.0 = ui_theme.button.normal_colour;

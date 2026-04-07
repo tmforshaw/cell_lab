@@ -1,10 +1,10 @@
-use bevy::prelude::*;
+use bevy::{input_focus::InputFocus, prelude::*};
 
 use crate::{
     cell_editor::state::CellEditorState,
     genomes::GenomeBank,
     serialisation::{does_genome_exist_in_folder, semi_sanitise_filename, write_genome_to_file},
-    ui::{TextInputId, UiDialogState},
+    ui::{TextInputId, UiDialogState, UiWindowId},
 };
 
 #[derive(Message)]
@@ -17,16 +17,18 @@ pub struct TextInputEvent {
 pub fn text_input_event_reader(
     mut events: MessageReader<TextInputEvent>,
     mut dialog_state: ResMut<UiDialogState>,
+    mut input_focus: ResMut<InputFocus>,
     editor_state: Res<CellEditorState>,
     genome_bank: Res<GenomeBank>,
 ) {
     for ev in events.read() {
         match ev.id {
             TextInputId::SaveFilename => {
-                println!("Save filename: '{}'", ev.new_value);
-
                 // Already done in the text input, but for clarity
                 let semi_sanitised_value = semi_sanitise_filename(&ev.new_value);
+
+                // Set the save filename to this value
+                dialog_state.save.filename = Some(semi_sanitised_value.clone());
 
                 // TODO For selecting genome in the list of genomes that already exist
                 // // Check if there are genomes with this name already
@@ -45,8 +47,10 @@ pub fn text_input_event_reader(
 
                 // Check if the file already exists
                 if does_genome_exist_in_folder(&semi_sanitised_value) {
-                    // TODO Open the overwrite dialog
-                    todo!()
+                    // Open the overwrite dialog
+                    dialog_state.open_dialog(&UiWindowId::OverwriteGenomeDialog);
+
+                    input_focus.clear();
                 } else if semi_sanitised_value.trim().is_empty() {
                     // TODO Open filename was empty dialog
                     todo!()

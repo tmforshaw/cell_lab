@@ -4,6 +4,7 @@ use crate::{
     cell_editor::{simulation::CellEditorSimulationClearMessage, state::CellEditorState},
     game::game_parameters::GameParameters,
     genomes::{GenomeBank, GenomeMode, genome_mode::colour_from_genome_mode_id},
+    serialisation::write_genome_to_file,
     ui::{ButtonId, UiDialogState, UiWindowId},
 };
 
@@ -26,12 +27,21 @@ pub fn button_event_reader(
         match ev.id {
             ButtonId::Save => {
                 dialog_state.open_dialog(&UiWindowId::SaveGenomeDialog);
+
+                // Clear input focus
+                input_focus.clear();
             }
             ButtonId::Load => {
                 dialog_state.open_dialog(&UiWindowId::LoadGenomeDialog);
+
+                // Clear input focus
+                input_focus.clear();
             }
             ButtonId::ReplaceModeWithDefault => {
                 dialog_state.open_dialog(&UiWindowId::ReplaceModeWithDefaultDialog);
+
+                // Clear input focus
+                input_focus.clear();
             }
             ButtonId::ConfirmReplaceModeWithDefault => {
                 // Make default genome of the correct colour
@@ -44,8 +54,34 @@ pub fn button_event_reader(
 
                 // Close all dialogs
                 dialog_state.close_all_dialogs();
+
+                // Clear input focus
+                input_focus.clear();
             }
             ButtonId::CloseAllDialogs => {
+                dialog_state.close_all_dialogs();
+
+                // Clear input focus
+                input_focus.clear();
+            }
+            ButtonId::CloseOverwriteGenomeDialog => {
+                // Close the overwrite genome dialog
+                dialog_state.close_dialog(&UiWindowId::OverwriteGenomeDialog);
+
+                // Clear input focus
+                input_focus.clear();
+            }
+            ButtonId::ConfirmOverwriteGenome => {
+                // Write genome to file
+                if let Some(filename) = &dialog_state.save.filename {
+                    write_genome_to_file(filename, editor_state.get_selected_genome(&genome_bank));
+                } else {
+                    eprintln!("Could not overwrite genome since it was None in dialog_state.save");
+
+                    continue;
+                }
+
+                // Exit the dialog
                 dialog_state.close_all_dialogs();
 
                 // Clear input focus

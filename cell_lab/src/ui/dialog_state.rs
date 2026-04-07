@@ -4,6 +4,7 @@ use bevy::prelude::*;
 use strum::IntoEnumIterator;
 
 use crate::{
+    helpers::SemiSanitisedString,
     serialisation::semi_sanitise_filter_map,
     ui::{
         TextInputId, UiTheme, UiWindowId, spawn_button, spawn_heading, spawn_horizontal, spawn_separator, spawn_text_input,
@@ -18,12 +19,13 @@ pub struct UiDialogState {
     pub save: UiSaveDialogState,
     pub load: UiLoadDialogState,
     pub replace_mode_with_default: UiReplaceModeWithDefaultDialogState,
+    pub overwrite_genome: UiOverwriteGenomeDialogState,
 }
 
 #[derive(Debug, Default)]
 pub struct UiSaveDialogState {
     open: bool,
-    pub selected_genome: Option<usize>,
+    pub filename: Option<SemiSanitisedString>,
 }
 
 #[derive(Debug, Default)]
@@ -36,6 +38,11 @@ pub struct UiReplaceModeWithDefaultDialogState {
     open: bool,
 }
 
+#[derive(Debug, Default)]
+pub struct UiOverwriteGenomeDialogState {
+    open: bool,
+}
+
 impl UiDialogState {
     #[must_use]
     pub const fn is_open(&self, window_id: &UiWindowId) -> Option<bool> {
@@ -44,6 +51,7 @@ impl UiDialogState {
             UiWindowId::SaveGenomeDialog => Some(self.save.open),
             UiWindowId::LoadGenomeDialog => Some(self.load.open),
             UiWindowId::ReplaceModeWithDefaultDialog => Some(self.replace_mode_with_default.open),
+            UiWindowId::OverwriteGenomeDialog => Some(self.overwrite_genome.open),
         }
     }
 
@@ -67,6 +75,17 @@ impl UiDialogState {
             UiWindowId::ReplaceModeWithDefaultDialog => {
                 *self = Self {
                     replace_mode_with_default: UiReplaceModeWithDefaultDialogState { open: true },
+                    ..default()
+                };
+            }
+            UiWindowId::OverwriteGenomeDialog => {
+                // Close all dialogs, but keep save.selected genome the same
+                *self = Self {
+                    overwrite_genome: UiOverwriteGenomeDialogState { open: true },
+                    save: UiSaveDialogState {
+                        open: false,
+                        filename: self.save.filename.clone(),
+                    },
                     ..default()
                 };
             }
@@ -99,6 +118,16 @@ impl UiDialogState {
                     ..default()
                 };
             }
+            UiWindowId::OverwriteGenomeDialog => {
+                *self = Self {
+                    overwrite_genome: UiOverwriteGenomeDialogState { open: false },
+                    save: UiSaveDialogState {
+                        open: true,
+                        filename: self.save.filename.clone(),
+                    },
+                    ..default()
+                };
+            }
         }
     }
 
@@ -113,6 +142,7 @@ impl UiDialogState {
             UiWindowId::SaveGenomeDialog => Some(spawn_save_dialog),
             UiWindowId::LoadGenomeDialog => Some(spawn_load_dialog),
             UiWindowId::ReplaceModeWithDefaultDialog => Some(spawn_replace_mode_with_default_dialog),
+            UiWindowId::OverwriteGenomeDialog => Some(spawn_overwrite_genome_dialog),
         }
     }
 
@@ -146,6 +176,44 @@ pub fn spawn_save_dialog(commands: &mut Commands, _dialog_state: &mut UiDialogSt
             spawn_separator(parent, ui_theme);
 
             // TODO Show genomes that already exist so that their names can be copied (Highlighting the one that matches)
+            // // If there are genomes already saved
+            // if let Some(genomes) = get_genomes_in_folder_underscore_to_spaces() {
+            //     // Iterate genomes and create a selectable value for each
+            //     if genomes
+            //         .iter()
+            //         .enumerate()
+            //         .map(|(i, genome)| {
+            //             ui.selectable_value(&mut dialogs.save_selected_genome, Some(i), (**genome).clone())
+            //                 .changed()
+            //         })
+            //         .fold(false, |acc, changed| acc | changed)
+            //     {
+            //         // Genome was selected
+            //         if let Some(genome_id) = dialogs.save_selected_genome {
+            //             // This shouldn't ever not be true
+            //             dialogs.save_filename = genomes[genome_id].clone();
+            //         }
+            //     }
+            // }
+        });
+    });
+}
+
+pub fn spawn_overwrite_genome_dialog(commands: &mut Commands, dialog_state: &mut UiDialogState, ui_theme: &UiTheme) {
+    spawn_dialog(UiWindowId::OverwriteGenomeDialog, ui_theme, commands, |parent| {
+        let Some(selected_genome) = dialog_state.save.filename.clone() else {
+            eprintln!("Could not convert save filename to SemiSanitisedString");
+            return;
+        };
+
+        spawn_heading(parent, format!("Overwrite Genome: '{}'", *selected_genome), ui_theme);
+
+        spawn_separator(parent, ui_theme);
+
+        spawn_horizontal(parent, ui_theme, |parent| {
+            spawn_button(parent, "Confirm", ButtonId::ConfirmOverwriteGenome, ui_theme);
+
+            spawn_button(parent, "Cancel", ButtonId::CloseOverwriteGenomeDialog, ui_theme);
         });
     });
 }

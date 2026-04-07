@@ -232,6 +232,8 @@ pub fn spawn_cell_editor_panel(
                 0.0..=60.0,
                 &ui_theme,
             );
+
+            // spawn_button(parent, "Confirm", ButtonId::ConfirmOverwriteGenome, &ui_theme);
         },
     );
 }
