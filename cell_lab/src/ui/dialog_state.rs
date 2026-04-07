@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use strum::IntoEnumIterator;
 
 use crate::ui::{
-    UiTheme, UiWindowId, spawn_button, spawn_heading, spawn_separator,
+    UiTheme, UiWindowId, spawn_button, spawn_heading, spawn_horizontal, spawn_separator,
     window::{UiWindowDialog, spawn_dialog},
 };
 
@@ -142,17 +142,11 @@ pub fn spawn_replace_mode_with_default_dialog(commands: &mut Commands, _dialog_s
 
         spawn_separator(parent, ui_theme);
 
-        parent
-            .spawn(Node {
-                flex_direction: FlexDirection::Row,
-                column_gap: ui_theme.window.item_spacing,
-                ..default()
-            })
-            .with_children(|parent| {
-                spawn_button(parent, "Confirm", super::ButtonId::ConfirmReplaceModeWithDefault, ui_theme);
+        spawn_horizontal(parent, ui_theme, |parent| {
+            spawn_button(parent, "Confirm", super::ButtonId::ConfirmReplaceModeWithDefault, ui_theme);
 
-                spawn_button(parent, "Cancel", super::ButtonId::CloseAllDialogs, ui_theme);
-            });
+            spawn_button(parent, "Cancel", super::ButtonId::CloseAllDialogs, ui_theme);
+        });
     });
 }
 

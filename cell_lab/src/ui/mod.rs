@@ -2,6 +2,7 @@ pub mod button;
 pub mod checkbox;
 pub mod combobox;
 pub mod dialog_state;
+pub mod directional_node;
 pub mod label;
 pub mod radio;
 pub mod separator;
@@ -48,3 +49,5 @@ pub use separator::{spawn_semi_separator, spawn_separator};
 pub use label::{spawn_heading, spawn_label, spawn_subheading};
 
 pub use dialog_state::{UiDialogState, UiSaveDialogState, open_or_close_dialogs, spawn_save_dialog};
+
+pub use directional_node::{spawn_horizontal, spawn_vertical};

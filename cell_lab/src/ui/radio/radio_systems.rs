@@ -1,6 +1,6 @@
 use bevy::{ecs::relationship::RelatedSpawnerCommands, input_focus::InputFocus, prelude::*};
 
-use crate::ui::{RadioEvent, UiTheme, spawn_label};
+use crate::ui::{RadioEvent, UiTheme, spawn_horizontal, spawn_label};
 
 #[derive(Component, Debug, Copy, Clone)]
 pub enum RadioId {
@@ -84,52 +84,41 @@ pub fn spawn_radio<S1: AsRef<str>, S2: AsRef<str>>(
         })
         .collect();
 
-    parent
-        .spawn(
-            // Create a horizontal flex box for the label and the ui element
-            Node {
-                justify_content: JustifyContent::Start,
-                align_items: AlignItems::Center,
-                flex_direction: FlexDirection::Row,
-                column_gap: ui_theme.label_gap,
-                ..default()
-            },
-        )
-        .with_children(|parent| {
-            // Add a label for the ui element
-            spawn_label(parent, label, ui_theme);
+    spawn_horizontal(parent, ui_theme, |parent| {
+        // Add a label for the ui element
+        spawn_label(parent, label, ui_theme);
 
-            parent
-                .spawn((
-                    // Create a radio root node
-                    Node {
-                        padding: ui_theme.radio.padding,
-                        border: ui_theme.border,
-                        justify_content: JustifyContent::Center,
-                        align_items: AlignItems::Center,
-                        flex_direction: FlexDirection::Row,
-                        border_radius: ui_theme.border_radius,
-                        column_gap: ui_theme.radio.option_spacing,
-                        ..default()
-                    },
-                    // Make it a radio
-                    Radio {
-                        options,
-                        selected: initial_selected,
-                    },
-                    // Mark with ID
-                    radio_id,
-                    // Set the colours
-                    BorderColor::all(ui_theme.radio.border_colour),
-                    BackgroundColor(ui_theme.radio.normal_colour),
-                ))
-                // Add the options
-                .with_children(|parent| {
-                    for child in children {
-                        parent.spawn(child);
-                    }
-                });
-        });
+        parent
+            .spawn((
+                // Create a radio root node
+                Node {
+                    padding: ui_theme.radio.padding,
+                    border: ui_theme.border,
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    flex_direction: FlexDirection::Row,
+                    border_radius: ui_theme.border_radius,
+                    column_gap: ui_theme.radio.option_spacing,
+                    ..default()
+                },
+                // Make it a radio
+                Radio {
+                    options,
+                    selected: initial_selected,
+                },
+                // Mark with ID
+                radio_id,
+                // Set the colours
+                BorderColor::all(ui_theme.radio.border_colour),
+                BackgroundColor(ui_theme.radio.normal_colour),
+            ))
+            // Add the options
+            .with_children(|parent| {
+                for child in children {
+                    parent.spawn(child);
+                }
+            });
+    });
 }
 
 #[allow(clippy::type_complexity, clippy::needless_pass_by_value)]

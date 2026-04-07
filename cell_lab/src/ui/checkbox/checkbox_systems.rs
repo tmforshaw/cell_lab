@@ -1,6 +1,6 @@
 use bevy::{ecs::relationship::RelatedSpawnerCommands, input_focus::InputFocus, prelude::*};
 
-use crate::ui::{CheckboxEvent, UiTheme, spawn_label};
+use crate::ui::{CheckboxEvent, UiTheme, spawn_horizontal, spawn_label};
 
 #[derive(Component, Debug, Copy, Clone)]
 pub enum CheckboxId {
@@ -19,46 +19,35 @@ pub fn spawn_checkbox<S: AsRef<str>>(
     initial_value: bool,
     ui_theme: &UiTheme,
 ) {
-    parent
-        .spawn(
-            // Create a horizontal flex box for the label and the ui element
+    spawn_horizontal(parent, ui_theme, |parent| {
+        // Add a label for the ui element
+        spawn_label(parent, label, ui_theme);
+
+        // Create a checkbox shape
+        parent.spawn((
             Node {
-                justify_content: JustifyContent::Start,
+                padding: ui_theme.checkbox.padding,
+                border: ui_theme.border,
+                justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
-                flex_direction: FlexDirection::Row,
-                column_gap: ui_theme.label_gap,
+                border_radius: ui_theme.border_radius,
                 ..default()
             },
-        )
-        .with_children(|parent| {
-            // Add a label for the ui element
-            spawn_label(parent, label, ui_theme);
-
-            // Create a checkbox shape
-            parent.spawn((
-                Node {
-                    padding: ui_theme.checkbox.padding,
-                    border: ui_theme.border,
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
-                    border_radius: ui_theme.border_radius,
-                    ..default()
-                },
-                // Make it a checkbox
-                Checkbox { selected: initial_value },
-                // Mark with ID
-                checkbox_id,
-                // Add the interaction component
-                Interaction::default(),
-                // Set the colours
-                if initial_value {
-                    BackgroundColor(ui_theme.checkbox.normal_selected_colour)
-                } else {
-                    BackgroundColor(ui_theme.checkbox.normal_colour)
-                },
-                BorderColor::all(ui_theme.checkbox.border_colour),
-            ));
-        });
+            // Make it a checkbox
+            Checkbox { selected: initial_value },
+            // Mark with ID
+            checkbox_id,
+            // Add the interaction component
+            Interaction::default(),
+            // Set the colours
+            if initial_value {
+                BackgroundColor(ui_theme.checkbox.normal_selected_colour)
+            } else {
+                BackgroundColor(ui_theme.checkbox.normal_colour)
+            },
+            BorderColor::all(ui_theme.checkbox.border_colour),
+        ));
+    });
 }
 
 #[allow(clippy::type_complexity, clippy::needless_pass_by_value)]

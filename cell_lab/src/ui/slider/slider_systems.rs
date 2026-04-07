@@ -2,7 +2,7 @@ use std::ops::RangeInclusive;
 
 use bevy::{ecs::relationship::RelatedSpawnerCommands, input_focus::InputFocus, prelude::*};
 
-use crate::ui::{SliderEvent, UiTheme, spawn_label};
+use crate::ui::{SliderEvent, UiTheme, spawn_horizontal, spawn_label};
 
 #[derive(Component, Debug, Copy, Clone)]
 pub enum SliderId {
@@ -50,58 +50,47 @@ pub fn spawn_slider<S: AsRef<str>>(
 
     let percent = (initial_value - range.start()) / (range.end() - range.start());
 
-    parent
-        .spawn(
-            // Create a horizontal flex box for the label and the ui element
+    spawn_horizontal(parent, ui_theme, |parent| {
+        // Add a label for the ui element
+        spawn_label(parent, label, ui_theme);
+
+        parent.spawn((
+            // Create a slider shape
             Node {
-                justify_content: JustifyContent::Start,
+                padding: ui_theme.slider.padding,
+                border: ui_theme.border,
+                justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
-                flex_direction: FlexDirection::Row,
-                column_gap: ui_theme.label_gap,
+                border_radius: ui_theme.border_radius,
+                width: ui_theme.slider.width,
+                height: ui_theme.slider.height,
                 ..default()
             },
-        )
-        .with_children(|parent| {
-            // Add a label for the ui element
-            spawn_label(parent, label, ui_theme);
-
-            parent.spawn((
-                // Create a slider shape
+            // Mark as a slider
+            Slider { percent, range },
+            // Mark with ID
+            slider_id,
+            // Set the colours
+            BorderColor::all(ui_theme.slider.track_border_colour),
+            BackgroundColor(ui_theme.slider.track_colour),
+            // Add the interaction component
+            Interaction::default(),
+            // Add the text
+            children![(
                 Node {
-                    padding: ui_theme.slider.padding,
-                    border: ui_theme.border,
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
+                    width: ui_theme.slider.handle_width,
+                    height: ui_theme.slider.handle_height,
+                    position_type: PositionType::Absolute,
+                    // TODO Need to account for handle width
+                    left: Val::Percent(percent * 100.),
                     border_radius: ui_theme.border_radius,
-                    width: ui_theme.slider.width,
-                    height: ui_theme.slider.height,
                     ..default()
                 },
-                // Mark as a slider
-                Slider { percent, range },
-                // Mark with ID
-                slider_id,
-                // Set the colours
-                BorderColor::all(ui_theme.slider.track_border_colour),
-                BackgroundColor(ui_theme.slider.track_colour),
-                // Add the interaction component
-                Interaction::default(),
-                // Add the text
-                children![(
-                    Node {
-                        width: ui_theme.slider.handle_width,
-                        height: ui_theme.slider.handle_height,
-                        position_type: PositionType::Absolute,
-                        // TODO Need to account for handle width
-                        left: Val::Percent(percent * 100.),
-                        border_radius: ui_theme.border_radius,
-                        ..default()
-                    },
-                    BackgroundColor(ui_theme.slider.handle_colour),
-                    SliderHandle
-                )],
-            ));
-        });
+                BackgroundColor(ui_theme.slider.handle_colour),
+                SliderHandle
+            )],
+        ));
+    });
 }
 
 #[allow(clippy::type_complexity)]

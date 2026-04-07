@@ -7,8 +7,8 @@ use crate::{
     genomes::{CellSplitType, CellType, GenomeBank, GenomeModeId},
     ui::{
         ButtonId, CheckboxId, ComboboxId, RadioId, SliderId, UiPanelType, UiTheme, UiWindowId, spawn_button, spawn_checkbox,
-        spawn_combobox, spawn_heading, spawn_panel, spawn_radio, spawn_semi_separator, spawn_separator, spawn_slider,
-        spawn_subheading,
+        spawn_combobox, spawn_heading, spawn_horizontal, spawn_panel, spawn_radio, spawn_semi_separator, spawn_separator,
+        spawn_slider, spawn_subheading,
     },
 };
 
@@ -59,22 +59,16 @@ pub fn spawn_cell_editor_panel(
 
             spawn_semi_separator(parent, &ui_theme);
 
-            parent
-                .spawn(Node {
-                    flex_direction: FlexDirection::Row,
-                    column_gap: ui_theme.window.item_spacing,
-                    ..default()
-                })
-                .with_children(|parent| {
-                    spawn_button(parent, "Save", ButtonId::Save, &ui_theme);
-                    spawn_button(parent, "Load", ButtonId::Load, &ui_theme);
-                    spawn_button(
-                        parent,
-                        "Replace Mode With Default",
-                        ButtonId::ReplaceModeWithDefault,
-                        &ui_theme,
-                    );
-                });
+            spawn_horizontal(parent, &ui_theme, |parent| {
+                spawn_button(parent, "Save", ButtonId::Save, &ui_theme);
+                spawn_button(parent, "Load", ButtonId::Load, &ui_theme);
+                spawn_button(
+                    parent,
+                    "Replace Mode With Default",
+                    ButtonId::ReplaceModeWithDefault,
+                    &ui_theme,
+                );
+            });
 
             spawn_separator(parent, &ui_theme);
 
