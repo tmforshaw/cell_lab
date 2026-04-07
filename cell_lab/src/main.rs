@@ -72,11 +72,11 @@ pub mod simulation;
 pub mod spatial_partitioning;
 pub mod ui;
 
+// TODO TODO TODO Add vertical and horizontal as ui elements (Like in egui)
+
 // TODO need to show that cell spawned even if it dies instantly (When splitting into a tiny cell)
 // TODO Show value of slider value as child of the handle when the handle is being moved (Or just to the side)
-// TODO Add UiState and add dialogs using that
 // TODO Combobox should close its dialog when click is away from the box
-// TODO Add vertical and horizontal as ui elements (Like in egui)
 // TODO Force UI to update when the values have changed
 // TODO Allow clicking just outside of the slider to adjust value
 // TODO Text input
