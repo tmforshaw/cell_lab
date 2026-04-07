@@ -112,7 +112,7 @@ pub fn spawn_combobox<S1: AsRef<str>, S2: AsRef<str>>(
                     justify_content: JustifyContent::Center,
                     align_items: AlignItems::Center,
                     flex_direction: FlexDirection::Column,
-                    // border_radius: ui_theme.border_radius,
+                    border_radius: ui_theme.border_radius,
                     row_gap: ui_theme.combobox.option_spacing,
                     ..default()
                 },
@@ -164,7 +164,7 @@ pub fn spawn_combobox<S1: AsRef<str>, S2: AsRef<str>>(
                         Node {
                             padding: ui_theme.combobox.padding,
                             border: ui_theme.border,
-                            // border_radius: ui_theme.border_radius,
+                            border_radius: BorderRadius::bottom(px(30)),
                             justify_content: JustifyContent::Center,
                             align_items: AlignItems::Center,
                             top: percent(100), // Move it below the value node
@@ -200,7 +200,7 @@ pub fn combobox_toggle_system(
         (Changed<Interaction>, With<ComboboxValueBox>),
     >,
     mut containers: Query<&mut Node, With<ComboboxOptionContainer>>,
-    comboboxes: Query<(&Node, &Children), (With<Combobox>, Without<ComboboxOptionContainer>)>,
+    mut comboboxes: Query<(&mut Node, &Children), (With<Combobox>, Without<ComboboxOptionContainer>)>,
 ) {
     for (entity, interaction, mut colour, mut border_colour, parent) in &mut valueboxes {
         match *interaction {
@@ -212,14 +212,20 @@ pub fn combobox_toggle_system(
                 *border_colour = BorderColor::all(ui_theme.combobox.border_pressed_colour);
 
                 // Get combobox parent of value box
-                if let Ok((combobox_node, combobox_children)) = comboboxes.get(parent.parent()) {
+                if let Ok((mut combobox_node, combobox_children)) = comboboxes.get_mut(parent.parent()) {
                     // Find container for this combobox
                     for &child in combobox_children {
                         // Toggle the display visibility
                         if let Ok(mut node) = containers.get_mut(child) {
-                            node.display = if node.display == Display::None {
+                            (node.display) = if node.display == Display::None {
+                                // Toggle the border radius
+                                combobox_node.border_radius = BorderRadius::top(BorderRadius::MAX.top_left);
+
                                 combobox_node.display
                             } else {
+                                // Toggle the border radius
+                                combobox_node.border_radius = BorderRadius::MAX;
+
                                 Display::None
                             };
 

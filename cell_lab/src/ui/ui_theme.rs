@@ -1,32 +1,55 @@
 use bevy::prelude::*;
 
-use crate::ui::ui_theme_colour_palette::ColourPalette;
+use crate::ui::ui_theme_colour_palette::{BaseColourPalette, ColourPalette};
 
-// const PALETTE: ColourPalette = ColourPalette {
-//     primary: Color::linear_rgb(0.027, 0.530, 0.950),
-//     secondary: Color::linear_rgb(0.135, 0.402, 0.950),
-//     tertiary: Color::linear_rgb(0.328, 0.509, 0.950),
-//     quaternary: Color::linear_rgb(0.553, 0.746, 0.950),
-//     quinary: Color::linear_rgb(0.486, 0.114, 0.249),
+// const BASE_PALETTE: BaseColourPalette = BaseColourPalette {
+//     primary: Color::linear_rgb(0.380, 0.886, 0.580),    // 61e294
+//     accent: Color::linear_rgb(0.482, 0.804, 0.729),     // 7bcdba
+//     background: Color::linear_rgb(0.592, 0.600, 0.792), // 9799ca
+//     surface: Color::linear_rgb(0.741, 0.576, 0.847),    // bd93d8
+//     text: Color::linear_rgb(0.706, 0.478, 0.918),       // b47aea
 // };
 
-const PALETTE: ColourPalette = ColourPalette {
-    primary: Color::linear_rgb(0.864, 0.694, 0.618),    // EFD9CE
-    secondary: Color::linear_rgb(0.732, 0.527, 0.879),  // DEC0F1
-    tertiary: Color::linear_rgb(0.474, 0.333, 0.847),   // B79CED
-    quaternary: Color::linear_rgb(0.301, 0.212, 0.864), // 957FEF
-    quinary: Color::linear_rgb(0.165, 0.119, 0.864),    // 7161EF};
+// const BASE_PALETTE: BaseColourPalette = BaseColourPalette {
+//     background: Color::linear_rgb(0.035, 0.040, 0.090), // deep blue-black
+//     surface: Color::linear_rgb(0.080, 0.090, 0.160),    // lifted surface
+//     primary: Color::linear_rgb(0.450, 0.350, 0.950),    // vivid blue
+//     accent: Color::linear_rgb(0.750, 0.400, 1.000),     // strong purple
+//     text: Color::linear_rgb(0.920, 0.940, 1.000),       // near-white with slight blue tint
+// };
+
+// const BASE_PALETTE: BaseColourPalette = BaseColourPalette {
+//     // Core surfaces
+//     background: Color::linear_rgb(0.05, 0.05, 0.1), // deep night blue
+//     surface: Color::linear_rgb(0.12, 0.10, 0.20),   // dark purple panel
+//     text: Color::linear_rgb(0.95, 0.95, 1.0),       // off-white
+
+//     // Primary accent / buttons
+//     primary: Color::linear_rgb(0.50, 0.35, 0.90), // bright violet
+//     accent: Color::linear_rgb(0.45, 0.45, 0.95),  // soft periwinkle
+// };
+
+const BASE_PALETTE: BaseColourPalette = BaseColourPalette {
+    // Core surfaces
+    background: Color::linear_rgb(0.04, 0.04, 0.04), // dark gray background
+    surface: Color::linear_rgb(0.1, 0.1, 0.1),       // slightly lighter gray for panels
+    text: Color::linear_rgb(0.95, 0.95, 0.95),       // off-white text
+
+    // Primary accent / interactive
+    primary: Color::linear_rgb(0.55, 0.35, 0.85), // purple for buttons, highlights
+    accent: Color::linear_rgb(0.20, 0.45, 0.75),  // muted blue for selection / highlights
 };
 
 #[derive(Resource)]
 pub struct UiTheme {
-    pub panel_colour: Color,
+    pub background_colour: Color,
     pub text_colour: TextColor,
     pub font: Handle<Font>,
     pub text_shadow: TextShadow,
     pub border: UiRect,
     pub border_radius: BorderRadius,
     pub label_gap: Val,
+    pub heading_padding: UiRect,
     pub heading_font_size: f32,
     pub subheading_font_size: f32,
     pub label_font_size: f32,
@@ -44,7 +67,7 @@ pub struct UiTheme {
 impl UiTheme {
     #[allow(clippy::needless_pass_by_value)]
     pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-        commands.insert_resource(Self::from_colour_palette(&asset_server, PALETTE));
+        commands.insert_resource(Self::from_base_colour_palette(&asset_server, BASE_PALETTE));
     }
 
     #[must_use]
@@ -52,13 +75,14 @@ impl UiTheme {
         let font_handle = asset_server.load("fonts/fira-mono.regular.ttf");
 
         Self {
-            panel_colour: Color::linear_rgb(0.15, 0.15, 0.18),
+            background_colour: Color::BLACK,
             text_colour: TextColor(Color::WHITE),
             font: font_handle,
             text_shadow: TextShadow::default(),
-            border: UiRect::axes(px(0), px(0)),
+            border: UiRect::axes(px(5), px(5)),
             border_radius: BorderRadius::MAX,
             label_gap: px(5.),
+            heading_padding: UiRect::all(px(10)),
             heading_font_size: 30.,
             subheading_font_size: 25.,
             label_font_size: 20.,
@@ -75,29 +99,28 @@ impl UiTheme {
     }
 
     #[must_use]
-    pub fn from_colour_palette(asset_server: &AssetServer, value: ColourPalette) -> Self {
-        let font_handle = asset_server.load("fonts/fira-mono.regular.ttf");
+    pub fn from_base_colour_palette(asset_server: &AssetServer, base_palette: BaseColourPalette) -> Self {
+        let palette = ColourPalette::from(base_palette);
+
+        let default = Self::from_default(asset_server);
 
         Self {
-            panel_colour: value.quaternary,
-            text_colour: TextColor(Color::WHITE),
-            font: font_handle,
-            text_shadow: TextShadow::default(),
-            border: UiRect::axes(px(0), px(0)),
-            border_radius: BorderRadius::MAX,
-            label_gap: px(5.),
-            heading_font_size: 30.,
-            subheading_font_size: 25.,
-            label_font_size: 20.,
-            inner_font_size: 16.,
-            window: UiThemeWindow::from(value),
-            separator: UiThemeSeparator::from(value),
-            semi_separator: UiThemeSemiSeparator::from(value),
-            button: UiThemeButton::from(value),
-            slider: UiThemeSlider::from(value),
-            checkbox: UiThemeCheckbox::from(value),
-            radio: UiThemeRadio::from(value),
-            combobox: UiThemeCombobox::from(value),
+            // Colours
+            background_colour: palette.background,
+            text_colour: TextColor(palette.text_primary),
+
+            // Derive subsections using palette as well
+            window: UiThemeWindow::from(palette),
+            separator: UiThemeSeparator::from(palette),
+            semi_separator: UiThemeSemiSeparator::from(palette),
+            button: UiThemeButton::from(palette),
+            slider: UiThemeSlider::from(palette),
+            checkbox: UiThemeCheckbox::from(palette),
+            radio: UiThemeRadio::from(palette),
+            combobox: UiThemeCombobox::from(palette),
+
+            // Fill in other fields
+            ..default
         }
     }
 }
@@ -268,6 +291,7 @@ impl Default for UiThemeCombobox {
 
 pub struct UiThemeWindow {
     pub colour: Color,
+    pub colour_variant: Color,
     pub border_colour: Color,
     pub item_spacing: Val,
     pub padding: UiRect,
@@ -277,6 +301,7 @@ impl Default for UiThemeWindow {
     fn default() -> Self {
         Self {
             colour: Color::linear_rgb(0.1, 0.1, 0.1),
+            colour_variant: Color::linear_rgb(0.15, 0.15, 0.15),
             border_colour: Color::linear_rgb(0.05, 0.05, 0.05),
             item_spacing: px(5),
             padding: UiRect::axes(px(10), px(10)),
@@ -319,12 +344,12 @@ impl Default for UiThemeSemiSeparator {
 impl From<ColourPalette> for UiThemeButton {
     fn from(value: ColourPalette) -> Self {
         Self {
-            normal_colour: value.primary.with_saturation(value.primary.saturation() * 0.9),
-            hovered_colour: value.primary.with_saturation(value.primary.saturation() * 1.0),
-            pressed_colour: value.primary.with_saturation(value.primary.saturation() * 0.8),
-            border_colour: value.secondary.with_saturation(value.secondary.saturation() * 0.9),
-            border_hovered_colour: value.secondary.with_saturation(value.secondary.saturation() * 1.0),
-            border_pressed_colour: value.secondary.with_saturation(value.secondary.saturation() * 0.8),
+            normal_colour: value.interactive,
+            hovered_colour: value.interactive_hovered,
+            pressed_colour: value.interactive_pressed,
+            border_colour: value.border,
+            border_hovered_colour: value.border_hovered,
+            border_pressed_colour: value.border_pressed,
             ..default()
         }
     }
@@ -333,15 +358,15 @@ impl From<ColourPalette> for UiThemeButton {
 impl From<ColourPalette> for UiThemeCheckbox {
     fn from(value: ColourPalette) -> Self {
         Self {
-            normal_colour: value.primary.with_saturation(value.primary.saturation() * 0.9),
-            hovered_colour: value.primary.with_saturation(value.primary.saturation() * 1.0),
-            pressed_colour: value.primary.with_saturation(value.primary.saturation() * 0.8),
-            border_colour: value.secondary.with_saturation(value.secondary.saturation() * 0.9),
-            border_hovered_colour: value.secondary.with_saturation(value.secondary.saturation() * 1.0),
-            border_pressed_colour: value.secondary.with_saturation(value.secondary.saturation() * 0.8),
-            normal_selected_colour: value.quinary.with_saturation(value.quinary.saturation() * 0.9),
-            hovered_selected_colour: value.quinary.with_saturation(value.quinary.saturation() * 1.0),
-            pressed_selected_colour: value.quinary.with_saturation(value.quinary.saturation() * 0.8),
+            normal_colour: value.interactive,
+            hovered_colour: value.interactive_hovered,
+            pressed_colour: value.interactive_pressed,
+            border_colour: value.border,
+            border_hovered_colour: value.border_hovered,
+            border_pressed_colour: value.border_pressed,
+            normal_selected_colour: value.accent,
+            hovered_selected_colour: value.accent_hovered,
+            pressed_selected_colour: value.accent_pressed,
             ..default()
         }
     }
@@ -350,18 +375,18 @@ impl From<ColourPalette> for UiThemeCheckbox {
 impl From<ColourPalette> for UiThemeCombobox {
     fn from(value: ColourPalette) -> Self {
         Self {
-            normal_colour: value.primary.with_saturation(value.primary.saturation() * 0.9),
-            hovered_colour: value.primary.with_saturation(value.primary.saturation() * 1.0),
-            pressed_colour: value.primary.with_saturation(value.primary.saturation() * 0.8),
-            border_colour: value.secondary.with_saturation(value.secondary.saturation() * 0.9),
-            border_hovered_colour: value.secondary.with_saturation(value.secondary.saturation() * 1.0),
-            border_pressed_colour: value.secondary.with_saturation(value.secondary.saturation() * 0.8),
-            normal_selected_colour: value.quinary.with_saturation(value.quinary.saturation() * 0.9),
-            hovered_selected_colour: value.quinary.with_saturation(value.quinary.saturation() * 1.0),
-            pressed_selected_colour: value.quinary.with_saturation(value.quinary.saturation() * 0.8),
-            normal_valuebox_colour: value.tertiary.with_saturation(value.tertiary.saturation() * 0.9),
-            hovered_valuebox_colour: value.tertiary.with_saturation(value.tertiary.saturation() * 1.0),
-            pressed_valuebox_colour: value.tertiary.with_saturation(value.tertiary.saturation() * 0.8),
+            normal_colour: value.interactive,
+            hovered_colour: value.interactive_hovered,
+            pressed_colour: value.interactive_pressed,
+            border_colour: value.border,
+            border_hovered_colour: value.border_hovered,
+            border_pressed_colour: value.border_pressed,
+            normal_selected_colour: value.accent,
+            hovered_selected_colour: value.accent_hovered,
+            pressed_selected_colour: value.accent_pressed,
+            normal_valuebox_colour: value.surface_accent,
+            hovered_valuebox_colour: value.surface_accent_hovered,
+            pressed_valuebox_colour: value.surface_accent_pressed,
             ..default()
         }
     }
@@ -370,15 +395,15 @@ impl From<ColourPalette> for UiThemeCombobox {
 impl From<ColourPalette> for UiThemeRadio {
     fn from(value: ColourPalette) -> Self {
         Self {
-            normal_colour: value.primary.with_saturation(value.primary.saturation() * 0.9),
-            hovered_colour: value.primary.with_saturation(value.primary.saturation() * 1.0),
-            pressed_colour: value.primary.with_saturation(value.primary.saturation() * 0.8),
-            border_colour: value.secondary.with_saturation(value.secondary.saturation() * 0.9),
-            border_hovered_colour: value.secondary.with_saturation(value.secondary.saturation() * 1.0),
-            border_pressed_colour: value.secondary.with_saturation(value.secondary.saturation() * 0.8),
-            normal_selected_colour: value.quinary.with_saturation(value.quinary.saturation() * 0.9),
-            hovered_selected_colour: value.quinary.with_saturation(value.quinary.saturation() * 1.0),
-            pressed_selected_colour: value.quinary.with_saturation(value.quinary.saturation() * 0.8),
+            normal_colour: value.interactive,
+            hovered_colour: value.interactive_hovered,
+            pressed_colour: value.interactive_pressed,
+            border_colour: value.border,
+            border_hovered_colour: value.border_hovered,
+            border_pressed_colour: value.border_pressed,
+            normal_selected_colour: value.accent,
+            hovered_selected_colour: value.accent_hovered,
+            pressed_selected_colour: value.accent_pressed,
             ..default()
         }
     }
@@ -387,7 +412,7 @@ impl From<ColourPalette> for UiThemeRadio {
 impl From<ColourPalette> for UiThemeSemiSeparator {
     fn from(value: ColourPalette) -> Self {
         Self {
-            colour: value.secondary.with_saturation(value.secondary.saturation() * 0.8),
+            colour: value.separator_subtle,
             ..default()
         }
     }
@@ -396,7 +421,7 @@ impl From<ColourPalette> for UiThemeSemiSeparator {
 impl From<ColourPalette> for UiThemeSeparator {
     fn from(value: ColourPalette) -> Self {
         Self {
-            colour: value.secondary.with_saturation(value.secondary.saturation() * 1.0),
+            colour: value.separator,
             ..default()
         }
     }
@@ -405,14 +430,14 @@ impl From<ColourPalette> for UiThemeSeparator {
 impl From<ColourPalette> for UiThemeSlider {
     fn from(value: ColourPalette) -> Self {
         Self {
-            track_colour: value.primary.with_saturation(value.primary.saturation() * 1.0),
-            track_border_colour: value.primary.with_saturation(value.primary.saturation() * 0.8),
-            handle_colour: value.quinary.with_saturation(value.quinary.saturation() * 0.9),
-            handle_hovered_colour: value.quinary.with_saturation(value.quinary.saturation() * 1.0),
-            handle_pressed_colour: value.quinary.with_saturation(value.quinary.saturation() * 0.8),
-            handle_border_colour: value.quinary.with_saturation(value.quinary.saturation() * 0.6),
-            handle_hovered_border_colour: value.quinary.with_saturation(value.quinary.saturation() * 0.7),
-            handle_pressed_border_colour: value.quinary.with_saturation(value.quinary.saturation() * 0.5),
+            track_colour: value.surface_variant,
+            track_border_colour: value.border,
+            handle_colour: value.interactive,
+            handle_hovered_colour: value.interactive_hovered,
+            handle_pressed_colour: value.interactive_pressed,
+            handle_border_colour: value.border,
+            handle_hovered_border_colour: value.border_hovered,
+            handle_pressed_border_colour: value.border_pressed,
             ..default()
         }
     }
@@ -421,8 +446,9 @@ impl From<ColourPalette> for UiThemeSlider {
 impl From<ColourPalette> for UiThemeWindow {
     fn from(value: ColourPalette) -> Self {
         Self {
-            colour: value.quaternary.with_luminance(value.quaternary.luminance() * 0.2),
-            border_colour: value.quaternary.with_luminance(value.quaternary.luminance() * 0.1),
+            colour: value.surface,
+            colour_variant: value.surface_variant,
+            border_colour: value.border_strong,
             ..default()
         }
     }

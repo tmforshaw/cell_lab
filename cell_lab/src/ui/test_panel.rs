@@ -33,15 +33,19 @@ pub fn spawn_cell_editor_panel(
         &mut commands,
         |parent| {
             parent
-                .spawn(Node {
-                    width: percent(100),
-                    flex_direction: FlexDirection::Row,
-                    align_content: AlignContent::Start,
-                    justify_items: JustifyItems::Start,
-                    justify_content: JustifyContent::SpaceBetween,
-                    column_gap: ui_theme.window.item_spacing,
-                    ..default()
-                })
+                .spawn((
+                    Node {
+                        width: percent(100),
+                        flex_direction: FlexDirection::Row,
+                        align_content: AlignContent::Start,
+                        justify_items: JustifyItems::Start,
+                        justify_content: JustifyContent::SpaceBetween,
+                        column_gap: ui_theme.window.item_spacing,
+                        padding: ui_theme.heading_padding,
+                        ..default()
+                    },
+                    BackgroundColor(ui_theme.window.colour_variant),
+                ))
                 .with_children(|parent| {
                     // Title
                     spawn_heading(parent, "Cell Editor", &ui_theme);

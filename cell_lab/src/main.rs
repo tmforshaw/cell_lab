@@ -218,7 +218,10 @@ fn main() {
 
 // Spawn cells and chemicals
 #[allow(clippy::needless_pass_by_value)]
-fn setup(mut commands: Commands) {
+fn setup(mut commands: Commands, mut clear_colour: ResMut<ClearColor>, ui_theme: Res<UiTheme>) {
     // 2D camera
     commands.spawn(Camera2d);
+
+    // Set the clear colour
+    clear_colour.0 = ui_theme.background_colour;
 }
