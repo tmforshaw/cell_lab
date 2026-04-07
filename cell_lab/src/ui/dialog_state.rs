@@ -118,7 +118,7 @@ impl UiDialogState {
 
 pub fn spawn_save_dialog(commands: &mut Commands, _dialog_state: &mut UiDialogState, ui_theme: &UiTheme) {
     spawn_dialog(UiWindowId::SaveGenomeDialog, ui_theme, commands, |parent| {
-        spawn_heading(parent, "Save Dialog", ui_theme);
+        spawn_heading(parent, "Save Genome", ui_theme);
 
         spawn_separator(parent, ui_theme);
 
@@ -128,7 +128,7 @@ pub fn spawn_save_dialog(commands: &mut Commands, _dialog_state: &mut UiDialogSt
 
 pub fn spawn_load_dialog(commands: &mut Commands, _dialog_state: &mut UiDialogState, ui_theme: &UiTheme) {
     spawn_dialog(UiWindowId::LoadGenomeDialog, ui_theme, commands, |parent| {
-        spawn_heading(parent, "Load Dialog", ui_theme);
+        spawn_heading(parent, "Load Genome", ui_theme);
 
         spawn_separator(parent, ui_theme);
 
@@ -138,11 +138,21 @@ pub fn spawn_load_dialog(commands: &mut Commands, _dialog_state: &mut UiDialogSt
 
 pub fn spawn_replace_mode_with_default_dialog(commands: &mut Commands, _dialog_state: &mut UiDialogState, ui_theme: &UiTheme) {
     spawn_dialog(UiWindowId::ReplaceModeWithDefaultDialog, ui_theme, commands, |parent| {
-        spawn_heading(parent, "Replace Mode With Default Dialog", ui_theme);
+        spawn_heading(parent, "Replace Current Mode With Default", ui_theme);
 
         spawn_separator(parent, ui_theme);
 
-        spawn_button(parent, "Cancel", super::ButtonId::CloseAllDialogs, ui_theme);
+        parent
+            .spawn(Node {
+                flex_direction: FlexDirection::Row,
+                column_gap: ui_theme.window.item_spacing,
+                ..default()
+            })
+            .with_children(|parent| {
+                spawn_button(parent, "Confirm", super::ButtonId::ConfirmReplaceModeWithDefault, ui_theme);
+
+                spawn_button(parent, "Cancel", super::ButtonId::CloseAllDialogs, ui_theme);
+            });
     });
 }
 

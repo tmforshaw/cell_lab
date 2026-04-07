@@ -7,6 +7,7 @@ pub enum ButtonId {
     Save,
     Load,
     ReplaceModeWithDefault,
+    ConfirmReplaceModeWithDefault,
     CloseAllDialogs,
 }
 
