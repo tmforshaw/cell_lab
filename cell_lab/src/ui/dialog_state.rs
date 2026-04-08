@@ -8,7 +8,7 @@ use crate::{
     serialisation::{get_genomes_in_folder_underscore_to_spaces, sanitise_filename, semi_sanitise_filter_map},
     ui::{
         RadioId, TextInputId, UiTheme, UiWindowId, spawn_button, spawn_heading, spawn_horizontal, spawn_radio_textlike,
-        spawn_separator, spawn_text_input,
+        spawn_separator, spawn_subheading, spawn_text_input,
         window::{UiWindowDialog, spawn_dialog},
     },
 };
@@ -17,27 +17,23 @@ use super::ButtonId;
 
 #[derive(Resource, Debug, Default)]
 pub struct UiDialogState {
+    // Save Dialogs
     pub save: UiSaveDialogState,
-    pub load: UiLoadDialogState,
-    pub replace_mode_with_default: UiReplaceModeWithDefaultDialogState,
     pub overwrite_genome: UiOverwriteGenomeDialogState,
     pub save_filename_is_empty: UiSaveFilenameIsEmptyDialogState,
+    // Load Dialogs
+    pub load: UiLoadDialogState,
+    pub delete: UiDeleteDialogState,
+    // Replace Mode With Default Dialogs
+    pub replace_mode_with_default: UiReplaceModeWithDefaultDialogState,
 }
+
+// Save Dialogs
 
 #[derive(Debug, Default)]
 pub struct UiSaveDialogState {
     open: bool,
     pub filename: Option<SemiSanitisedString>,
-}
-
-#[derive(Debug, Default)]
-pub struct UiLoadDialogState {
-    open: bool,
-}
-
-#[derive(Debug, Default)]
-pub struct UiReplaceModeWithDefaultDialogState {
-    open: bool,
 }
 
 #[derive(Debug, Default)]
@@ -50,16 +46,37 @@ pub struct UiSaveFilenameIsEmptyDialogState {
     open: bool,
 }
 
+// Load Dialogs
+
+#[derive(Debug, Default)]
+pub struct UiLoadDialogState {
+    open: bool,
+    pub filename: Option<SemiSanitisedString>,
+}
+
+#[derive(Debug, Default)]
+pub struct UiDeleteDialogState {
+    open: bool,
+}
+
+// Replace Mode With Default Dialogs
+
+#[derive(Debug, Default)]
+pub struct UiReplaceModeWithDefaultDialogState {
+    open: bool,
+}
+
 impl UiDialogState {
     #[must_use]
     pub const fn is_open(&self, window_id: &UiWindowId) -> Option<bool> {
         match window_id {
             UiWindowId::CellEditor => None, // Not a dialog
             UiWindowId::SaveGenomeDialog => Some(self.save.open),
-            UiWindowId::LoadGenomeDialog => Some(self.load.open),
-            UiWindowId::ReplaceModeWithDefaultDialog => Some(self.replace_mode_with_default.open),
             UiWindowId::OverwriteGenomeDialog => Some(self.overwrite_genome.open),
             UiWindowId::SaveFilenameIsEmptyDialog => Some(self.save_filename_is_empty.open),
+            UiWindowId::LoadGenomeDialog => Some(self.load.open),
+            UiWindowId::DeleteGenomeDialog => Some(self.delete.open),
+            UiWindowId::ReplaceModeWithDefaultDialog => Some(self.replace_mode_with_default.open),
         }
     }
 
@@ -71,18 +88,6 @@ impl UiDialogState {
             UiWindowId::SaveGenomeDialog => {
                 *self = Self {
                     save: UiSaveDialogState { open: true, ..default() },
-                    ..default()
-                };
-            }
-            UiWindowId::LoadGenomeDialog => {
-                *self = Self {
-                    load: UiLoadDialogState { open: true },
-                    ..default()
-                };
-            }
-            UiWindowId::ReplaceModeWithDefaultDialog => {
-                *self = Self {
-                    replace_mode_with_default: UiReplaceModeWithDefaultDialogState { open: true },
                     ..default()
                 };
             }
@@ -103,6 +108,28 @@ impl UiDialogState {
                     ..default()
                 };
             }
+            UiWindowId::LoadGenomeDialog => {
+                *self = Self {
+                    load: UiLoadDialogState { open: true, ..default() },
+                    ..default()
+                };
+            }
+            UiWindowId::DeleteGenomeDialog => {
+                *self = Self {
+                    delete: UiDeleteDialogState { open: true },
+                    load: UiLoadDialogState {
+                        open: false,
+                        filename: self.load.filename.clone(),
+                    },
+                    ..default()
+                }
+            }
+            UiWindowId::ReplaceModeWithDefaultDialog => {
+                *self = Self {
+                    replace_mode_with_default: UiReplaceModeWithDefaultDialogState { open: true },
+                    ..default()
+                };
+            }
         }
     }
 
@@ -117,18 +144,6 @@ impl UiDialogState {
                         open: false,
                         ..default()
                     },
-                    ..default()
-                };
-            }
-            UiWindowId::LoadGenomeDialog => {
-                *self = Self {
-                    load: UiLoadDialogState { open: false },
-                    ..default()
-                };
-            }
-            UiWindowId::ReplaceModeWithDefaultDialog => {
-                *self = Self {
-                    replace_mode_with_default: UiReplaceModeWithDefaultDialogState { open: false },
                     ..default()
                 };
             }
@@ -149,6 +164,31 @@ impl UiDialogState {
                     ..default()
                 };
             }
+            UiWindowId::LoadGenomeDialog => {
+                *self = Self {
+                    load: UiLoadDialogState {
+                        open: false,
+                        ..default()
+                    },
+                    ..default()
+                };
+            }
+            UiWindowId::DeleteGenomeDialog => {
+                *self = Self {
+                    delete: UiDeleteDialogState { open: false },
+                    load: UiLoadDialogState {
+                        open: true,
+                        filename: self.load.filename.clone(),
+                    },
+                    ..default()
+                };
+            }
+            UiWindowId::ReplaceModeWithDefaultDialog => {
+                *self = Self {
+                    replace_mode_with_default: UiReplaceModeWithDefaultDialogState { open: false },
+                    ..default()
+                };
+            }
         }
     }
 
@@ -161,10 +201,11 @@ impl UiDialogState {
         match window_id {
             UiWindowId::CellEditor => None, // Not a dialog
             UiWindowId::SaveGenomeDialog => Some(spawn_save_dialog),
-            UiWindowId::LoadGenomeDialog => Some(spawn_load_dialog),
-            UiWindowId::ReplaceModeWithDefaultDialog => Some(spawn_replace_mode_with_default_dialog),
             UiWindowId::OverwriteGenomeDialog => Some(spawn_overwrite_genome_dialog),
             UiWindowId::SaveFilenameIsEmptyDialog => Some(spawn_save_filename_is_empty_dialog),
+            UiWindowId::LoadGenomeDialog => Some(spawn_load_dialog),
+            UiWindowId::DeleteGenomeDialog => Some(spawn_delete_dialog),
+            UiWindowId::ReplaceModeWithDefaultDialog => Some(spawn_replace_mode_with_default_dialog),
         }
     }
 
@@ -206,6 +247,7 @@ pub fn spawn_save_dialog(commands: &mut Commands, _dialog_state: &mut UiDialogSt
         if let Some(genomes) = get_genomes_in_folder_underscore_to_spaces() {
             spawn_separator(parent, ui_theme);
 
+            // Show the genomes that exist as selectable values
             parent
                 .spawn(Node {
                     width: percent(100),
@@ -272,6 +314,58 @@ pub fn spawn_load_dialog(commands: &mut Commands, _dialog_state: &mut UiDialogSt
 
         spawn_separator(parent, ui_theme);
 
+        // Show the saved genomes if they exist
+        if let Some(genomes) = get_genomes_in_folder_underscore_to_spaces() {
+            // Show the genomes that exist as selectable values
+            parent
+                .spawn(Node {
+                    width: percent(100),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..default()
+                })
+                .with_children(|parent| {
+                    spawn_radio_textlike(
+                        parent,
+                        None,
+                        RadioId::LoadFileNames,
+                        "",
+                        None,
+                        &genomes
+                            .iter()
+                            .map(Deref::deref)
+                            .map(sanitise_filename)
+                            .map(|sanitised| (*sanitised).clone())
+                            .collect::<Vec<_>>(),
+                        ui_theme,
+                    );
+                });
+        } else {
+            spawn_subheading(parent, "There Are No Genomes Saved...", ui_theme);
+        }
+
+        spawn_separator(parent, ui_theme);
+
+        // TODO Load default genome
+
+        spawn_horizontal(parent, ui_theme, |parent| {
+            spawn_button(parent, None, "Load Genome", ButtonId::SubmitLoadGenome, ui_theme);
+            spawn_button(parent, None, "Cancel", ButtonId::CloseAllDialogs, ui_theme)
+        });
+    });
+}
+
+pub fn spawn_delete_dialog(commands: &mut Commands, _dialog_state: &mut UiDialogState, ui_theme: &UiTheme) {
+    spawn_dialog(UiWindowId::DeleteGenomeDialog, ui_theme, commands, |parent| {
+        // TODO
+        spawn_heading(parent, "Delete Genome 'placeholder'", ui_theme);
+
+        spawn_separator(parent, ui_theme);
+
+        // TODO Confirm deletion
+        spawn_button(parent, None, "Confirm", ButtonId::CloseAllDialogs, ui_theme);
+
+        // TODO Close delete dialog here
         spawn_button(parent, None, "Cancel", ButtonId::CloseAllDialogs, ui_theme);
     });
 }

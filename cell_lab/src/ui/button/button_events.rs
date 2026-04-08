@@ -4,7 +4,7 @@ use crate::{
     cell_editor::{simulation::CellEditorSimulationClearMessage, state::CellEditorState},
     game::game_parameters::GameParameters,
     genomes::{GenomeBank, GenomeMode, genome_mode::colour_from_genome_mode_id},
-    serialisation::{semi_sanitise_filename, write_genome_to_file},
+    serialisation::{read_genome_file, semi_sanitise_filename, write_genome_to_file},
     ui::{ButtonId, TextInput, UiDialogState, UiWindowId, dialog_events::SaveFilenameEvent},
 };
 
@@ -87,6 +87,21 @@ pub fn button_event_reader(
 
                 // Clear the input focus
                 input_focus.clear();
+            }
+            ButtonId::SubmitLoadGenome => {
+                // If the load filename is set, and that file can be read from the folder
+                if let Some(filename) = dialog_state.load.filename.clone()
+                    && let Some(genome) = read_genome_file(&filename)
+                {
+                    // Set the genome in GenomeBank
+                    *editor_state.get_selected_genome_mut(&mut genome_bank) = genome;
+
+                    // Clear the simulation cache
+                    simulation_cache_message_writer.write(CellEditorSimulationClearMessage);
+                }
+
+                // Close all the dialogs
+                dialog_state.close_all_dialogs();
             }
         }
 

@@ -7,10 +7,11 @@ use crate::ui::UiTheme;
 pub enum UiWindowId {
     CellEditor,
     SaveGenomeDialog,
-    LoadGenomeDialog,
-    ReplaceModeWithDefaultDialog,
     OverwriteGenomeDialog,
     SaveFilenameIsEmptyDialog,
+    LoadGenomeDialog,
+    DeleteGenomeDialog,
+    ReplaceModeWithDefaultDialog,
 }
 
 #[derive(Component, Debug, Copy, Clone)]

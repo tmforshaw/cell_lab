@@ -6,6 +6,7 @@ use crate::ui::{RadioEvent, UiTheme, spawn_horizontal, spawn_label};
 pub enum RadioId {
     SplitType,
     SaveFileNames,
+    LoadFileNames,
 }
 
 #[derive(Component)]

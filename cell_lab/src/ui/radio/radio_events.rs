@@ -4,7 +4,7 @@ use crate::{
     cell_editor::{simulation::CellEditorSimulationClearMessage, state::CellEditorState},
     genomes::{CellSplitType, GenomeBank},
     serialisation::get_genomes_in_folder_underscore_to_spaces,
-    ui::{RadioId, TextInput},
+    ui::{RadioId, TextInput, UiDialogState},
 };
 
 #[derive(Message)]
@@ -17,6 +17,7 @@ pub struct RadioEvent {
 pub fn radio_event_reader(
     mut events: MessageReader<RadioEvent>,
     mut editor_state: ResMut<CellEditorState>,
+    mut dialog_state: ResMut<UiDialogState>,
     mut genome_bank: ResMut<GenomeBank>,
     mut simulation_cache_message_writer: MessageWriter<CellEditorSimulationClearMessage>,
 
@@ -48,6 +49,18 @@ pub fn radio_event_reader(
                             // Copy this name into the text input
                             text_input.value = (**selected_genome).clone();
                         }
+                    }
+                }
+            }
+            RadioId::LoadFileNames => {
+                // Ensure that there actually is a selected index
+                if let Some(selected_index) = ev.new_value_index {
+                    // Get the genomes which are saved in the folder, and select the correct genome
+                    if let Some(genomes) = get_genomes_in_folder_underscore_to_spaces()
+                        && let Some(selected_genome) = genomes.get(selected_index)
+                    {
+                        // Set the filename to load in the dialog state
+                        dialog_state.load.filename = Some(selected_genome.clone());
                     }
                 }
             }
