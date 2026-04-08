@@ -1,5 +1,6 @@
 pub mod button;
 pub mod checkbox;
+pub mod colour_picker;
 pub mod combobox;
 pub mod dialog_events;
 pub mod dialog_state;
@@ -14,6 +15,8 @@ pub mod ui_theme;
 pub mod ui_theme_colour_palette;
 pub mod window;
 
+// UI Elements ------------------------------------------------------------------------------------------------------------------
+
 pub use button::{
     button_events::{ButtonEvent, button_event_reader},
     button_systems::{ButtonId, button_interaction_system, spawn_button},
@@ -22,6 +25,11 @@ pub use button::{
 pub use checkbox::{
     checkbox_events::{CheckboxEvent, checkbox_event_reader},
     checkbox_systems::{CheckboxId, checkbox_interaction_system, spawn_checkbox},
+};
+
+pub use colour_picker::{
+    colour_picker_events::{ColourPickerEvent, colour_picker_event_reader},
+    colour_picker_systems::{ColourPickerId, colour_picker_interaction_system, spawn_colour_picker},
 };
 
 pub use combobox::{
@@ -51,18 +59,13 @@ pub use text_input::{
     },
 };
 
-pub use ui_theme::UiTheme;
-
-pub use window::{UiPanelType, UiWindowId, spawn_dialog, spawn_panel};
-
-pub use separator::{spawn_semi_separator, spawn_separator};
-
-pub use label::{spawn_heading, spawn_label, spawn_subheading};
-
-pub use dialog_state::{UiDialogState, UiSaveDialogState, open_or_close_dialogs, spawn_save_dialog};
+// ------------------------------------------------------------------------------------------------------------------------------
 
 pub use dialog_events::{SaveFilenameEvent, save_filename_event_reader};
-
+pub use dialog_state::{UiDialogState, UiSaveDialogState, open_or_close_dialogs, spawn_save_dialog};
 pub use directional_node::{spawn_horizontal, spawn_vertical};
-
+pub use label::{spawn_heading, spawn_label, spawn_subheading};
+pub use separator::{spawn_semi_separator, spawn_separator};
 pub use ui_build::{UiRebuildState, build_ui};
+pub use ui_theme::UiTheme;
+pub use window::{UiPanelType, UiWindowId, spawn_dialog, spawn_panel};

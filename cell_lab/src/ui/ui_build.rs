@@ -6,9 +6,9 @@ use crate::{
     game::{game_mode::GameMode, game_parameters::GameParameters},
     genomes::{CellSplitType, CellType, GenomeBank, GenomeModeId},
     ui::{
-        ButtonId, CheckboxId, ComboboxId, RadioId, SliderId, UiPanelType, UiTheme, UiWindowId, spawn_button, spawn_checkbox,
-        spawn_combobox, spawn_heading, spawn_horizontal, spawn_panel, spawn_radio_buttonlike, spawn_semi_separator,
-        spawn_separator, spawn_slider, spawn_subheading, window::spawn_floating,
+        ButtonId, CheckboxId, ColourPickerId, ComboboxId, RadioId, SliderId, UiPanelType, UiTheme, UiWindowId, spawn_button,
+        spawn_checkbox, spawn_colour_picker, spawn_combobox, spawn_heading, spawn_horizontal, spawn_panel,
+        spawn_radio_buttonlike, spawn_semi_separator, spawn_separator, spawn_slider, spawn_subheading, window::spawn_floating,
     },
 };
 
@@ -61,6 +61,7 @@ pub fn build_ui(
                     |parent| {
                         spawn_slider(
                             parent,
+                            None,
                             SliderId::CellEditorAge,
                             "Age",
                             editor_state.editor_age.get_age(),
@@ -188,6 +189,7 @@ pub fn spawn_cell_editor_panel(
 
             spawn_slider(
                 parent,
+                None,
                 SliderId::Daughter1Angle,
                 "Angle",
                 -editor_state
@@ -218,6 +220,7 @@ pub fn spawn_cell_editor_panel(
 
             spawn_slider(
                 parent,
+                None,
                 SliderId::Daughter2Angle,
                 "Angle",
                 -editor_state
@@ -231,9 +234,14 @@ pub fn spawn_cell_editor_panel(
 
             spawn_separator(parent, ui_theme);
 
-            // TODO Colour
-
             spawn_subheading(parent, "Colour", ui_theme);
+
+            spawn_colour_picker(
+                parent,
+                editor_state.get_selected_genome_mode(genome_bank).colour,
+                ColourPickerId::SelectedCellColour,
+                ui_theme,
+            );
 
             spawn_separator(parent, ui_theme);
 
@@ -256,6 +264,7 @@ pub fn spawn_cell_editor_panel(
             if editor_state.get_selected_genome_mode(genome_bank).split_type == CellSplitType::Energy {
                 spawn_slider(
                     parent,
+                    None,
                     SliderId::SplitEnergy,
                     "Split Energy:",
                     editor_state.get_selected_genome_mode(genome_bank).split_energy,
@@ -265,6 +274,7 @@ pub fn spawn_cell_editor_panel(
             } else if editor_state.get_selected_genome_mode(genome_bank).split_type == CellSplitType::Age {
                 spawn_slider(
                     parent,
+                    None,
                     SliderId::SplitAge,
                     "Split Age:",
                     editor_state.get_selected_genome_mode(genome_bank).split_age,
@@ -275,6 +285,7 @@ pub fn spawn_cell_editor_panel(
 
             spawn_slider(
                 parent,
+                None,
                 SliderId::SplitFraction,
                 "Split Fraction:",
                 editor_state.get_selected_genome_mode(genome_bank).split_fraction,
@@ -284,6 +295,7 @@ pub fn spawn_cell_editor_panel(
 
             spawn_slider(
                 parent,
+                None,
                 SliderId::SplitAngle,
                 "Split Angle:",
                 -editor_state.get_selected_genome_mode(genome_bank).split_angle.to_degrees(),
@@ -293,6 +305,7 @@ pub fn spawn_cell_editor_panel(
 
             spawn_slider(
                 parent,
+                None,
                 SliderId::SplitForce,
                 "Split Force:",
                 editor_state.get_selected_genome_mode(genome_bank).split_force,

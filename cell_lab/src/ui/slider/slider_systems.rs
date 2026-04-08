@@ -14,6 +14,7 @@ pub enum SliderId {
     Daughter1Angle,
     Daughter2Angle,
     CellEditorAge,
+    ColourPickerHue,
 }
 
 #[derive(Component)]
@@ -35,8 +36,12 @@ pub struct SliderHandle;
 #[derive(Component)]
 pub struct ActiveSlider;
 
+#[derive(Component, Debug)]
+pub struct SliderTarget(pub Option<Entity>);
+
 pub fn spawn_slider<S: AsRef<str>>(
     parent: &mut RelatedSpawnerCommands<ChildOf>,
+    target_entity: Option<Entity>,
     slider_id: SliderId,
     label: S,
     initial_value: f32,
@@ -93,6 +98,7 @@ pub fn spawn_slider<S: AsRef<str>>(
                         SliderHandle
                     )],
                 ))
+                .insert_if(SliderTarget(target_entity), || target_entity.is_some())
                 .id(),
         )
     })
@@ -110,9 +116,20 @@ pub fn slider_begin_drag_system(
     }
 }
 
+#[allow(clippy::type_complexity)]
 pub fn slider_drag_system(
     windows: Query<&Window>,
-    mut sliders: Query<(&mut Slider, &SliderId, &Node, &UiGlobalTransform, &Children), With<ActiveSlider>>,
+    mut sliders: Query<
+        (
+            &mut Slider,
+            &SliderId,
+            Option<&SliderTarget>,
+            &Node,
+            &UiGlobalTransform,
+            &Children,
+        ),
+        With<ActiveSlider>,
+    >,
     mut handles: Query<&mut Node, (With<SliderHandle>, Without<Slider>)>,
     mut slider_event_writer: MessageWriter<SliderEvent>,
 ) {
@@ -124,7 +141,7 @@ pub fn slider_drag_system(
     // Get the mouse position
     if let Some(cursor_pos) = window.cursor_position() {
         // Iterate over active sliders (should only be one) to adjust handle position
-        for (mut slider, slider_id, node, transform, children) in &mut sliders {
+        for (mut slider, slider_id, slider_target, node, transform, children) in &mut sliders {
             // Find the slider handle for this slider
             for &child in children {
                 // Get the node for the slider handle
@@ -165,6 +182,7 @@ pub fn slider_drag_system(
 
                     // Send an event for this slider drag
                     slider_event_writer.write(SliderEvent {
+                        target_entity: slider_target.and_then(|target| target.0),
                         id: *slider_id,
                         new_value: slider.get_value(),
                     });

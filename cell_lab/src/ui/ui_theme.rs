@@ -2,33 +2,6 @@ use bevy::prelude::*;
 
 use crate::ui::ui_theme_colour_palette::{BaseColourPalette, ColourPalette};
 
-// const BASE_PALETTE: BaseColourPalette = BaseColourPalette {
-//     primary: Color::linear_rgb(0.380, 0.886, 0.580),    // 61e294
-//     accent: Color::linear_rgb(0.482, 0.804, 0.729),     // 7bcdba
-//     background: Color::linear_rgb(0.592, 0.600, 0.792), // 9799ca
-//     surface: Color::linear_rgb(0.741, 0.576, 0.847),    // bd93d8
-//     text: Color::linear_rgb(0.706, 0.478, 0.918),       // b47aea
-// };
-
-// const BASE_PALETTE: BaseColourPalette = BaseColourPalette {
-//     background: Color::linear_rgb(0.035, 0.040, 0.090), // deep blue-black
-//     surface: Color::linear_rgb(0.080, 0.090, 0.160),    // lifted surface
-//     primary: Color::linear_rgb(0.450, 0.350, 0.950),    // vivid blue
-//     accent: Color::linear_rgb(0.750, 0.400, 1.000),     // strong purple
-//     text: Color::linear_rgb(0.920, 0.940, 1.000),       // near-white with slight blue tint
-// };
-
-// const BASE_PALETTE: BaseColourPalette = BaseColourPalette {
-//     // Core surfaces
-//     background: Color::linear_rgb(0.05, 0.05, 0.1), // deep night blue
-//     surface: Color::linear_rgb(0.12, 0.10, 0.20),   // dark purple panel
-//     text: Color::linear_rgb(0.95, 0.95, 1.0),       // off-white
-
-//     // Primary accent / buttons
-//     primary: Color::linear_rgb(0.50, 0.35, 0.90), // bright violet
-//     accent: Color::linear_rgb(0.45, 0.45, 0.95),  // soft periwinkle
-// };
-
 const BASE_PALETTE: BaseColourPalette = BaseColourPalette {
     // Core surfaces
     background: Color::linear_rgb(0.04, 0.04, 0.04), // dark gray background
@@ -63,6 +36,7 @@ pub struct UiTheme {
     pub radio: UiThemeRadio,
     pub combobox: UiThemeCombobox,
     pub text_input: UiThemeTextInput,
+    pub colour_picker: UiThemeColourPicker,
 }
 
 impl UiTheme {
@@ -97,6 +71,7 @@ impl UiTheme {
             radio: UiThemeRadio::default(),
             combobox: UiThemeCombobox::default(),
             text_input: UiThemeTextInput::default(),
+            colour_picker: UiThemeColourPicker::default(),
         }
     }
 
@@ -120,6 +95,8 @@ impl UiTheme {
             checkbox: UiThemeCheckbox::from(palette),
             radio: UiThemeRadio::from(palette),
             combobox: UiThemeCombobox::from(palette),
+            text_input: UiThemeTextInput::from(palette),
+            colour_picker: UiThemeColourPicker::from(palette),
 
             // Fill in other fields
             ..default
@@ -375,6 +352,34 @@ impl Default for UiThemeTextInput {
     }
 }
 
+pub struct UiThemeColourPicker {
+    pub normal_colour: Color,
+    pub hovered_colour: Color,
+    pub pressed_colour: Color,
+    pub border_colour: Color,
+    pub border_hovered_colour: Color,
+    pub border_pressed_colour: Color,
+    pub padding: UiRect,
+    pub minimised_size: Val,
+    pub expanded_size: Val,
+}
+
+impl Default for UiThemeColourPicker {
+    fn default() -> Self {
+        Self {
+            normal_colour: Color::linear_rgb(0.25, 0.25, 0.3),
+            hovered_colour: Color::linear_rgb(0.35, 0.35, 0.4),
+            pressed_colour: Color::linear_rgb(0.2, 0.2, 0.3),
+            border_colour: Color::linear_rgb(0.1, 0.1, 0.1),
+            border_hovered_colour: Color::linear_rgb(0.2, 0.2, 0.2),
+            border_pressed_colour: Color::linear_rgb(0.4, 0.4, 0.4),
+            padding: UiRect::axes(px(2.5), px(2.5)),
+            minimised_size: px(50),
+            expanded_size: px(200),
+        }
+    }
+}
+
 impl From<ColourPalette> for UiThemeButton {
     fn from(value: ColourPalette) -> Self {
         Self {
@@ -494,6 +499,20 @@ impl From<ColourPalette> for UiThemeTextInput {
         Self {
             normal_colour: value.surface_variant,
             focused_colour: value.surface_accent,
+            hovered_colour: value.surface_accent_hovered,
+            pressed_colour: value.surface_accent_pressed,
+            border_colour: value.border,
+            border_hovered_colour: value.border_hovered,
+            border_pressed_colour: value.border_pressed,
+            ..default()
+        }
+    }
+}
+
+impl From<ColourPalette> for UiThemeColourPicker {
+    fn from(value: ColourPalette) -> Self {
+        Self {
+            normal_colour: value.surface_variant,
             hovered_colour: value.surface_accent_hovered,
             pressed_colour: value.surface_accent_pressed,
             border_colour: value.border,

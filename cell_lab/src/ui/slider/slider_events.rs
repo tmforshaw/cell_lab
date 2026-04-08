@@ -3,11 +3,12 @@ use bevy::prelude::*;
 use crate::{
     cell_editor::{simulation::CellEditorSimulationClearMessage, state::CellEditorState},
     genomes::GenomeBank,
-    ui::SliderId,
+    ui::{SliderId, colour_picker::colour_picker_systems::ColourPicker},
 };
 
 #[derive(Message)]
 pub struct SliderEvent {
+    pub target_entity: Option<Entity>,
     pub id: SliderId,
     pub new_value: f32,
 }
@@ -17,6 +18,8 @@ pub fn slider_event_reader(
     mut editor_state: ResMut<CellEditorState>,
     mut genome_bank: ResMut<GenomeBank>,
     mut simulation_cache_message_writer: MessageWriter<CellEditorSimulationClearMessage>,
+
+    mut colour_picker_query: Query<&mut ColourPicker>,
 ) {
     for ev in events.read() {
         match ev.id {
@@ -51,6 +54,21 @@ pub fn slider_event_reader(
             SliderId::CellEditorAge => {
                 // Set the cell editor age
                 editor_state.editor_age.set_age(ev.new_value);
+            }
+            SliderId::ColourPickerHue => {
+                // If there is a target entity set, and it is found in the query
+                if let Some(target_entity) = ev.target_entity
+                    && let Ok(mut colour_picker) = colour_picker_query.get_mut(target_entity)
+                {
+                    // Set the hue in the colour picker
+                    colour_picker.hue = ev.new_value;
+
+                    // Set the cell colour in the genome mode
+                    editor_state.get_selected_genome_mode_mut(&mut genome_bank).colour = colour_picker.to_colour();
+
+                    // Clear the simulation cache
+                    simulation_cache_message_writer.write(CellEditorSimulationClearMessage);
+                }
             }
         }
 

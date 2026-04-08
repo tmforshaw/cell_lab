@@ -50,12 +50,13 @@ use crate::{
         systems::{build_quadtree, visualise_quadtree},
     },
     ui::{
-        ButtonEvent, CheckboxEvent, ComboboxEvent, RadioEvent, SaveFilenameEvent, SliderEvent, TextInputEvent, UiDialogState,
-        UiRebuildState, UiTheme, build_ui, button_event_reader, button_interaction_system, checkbox_event_reader,
-        checkbox_interaction_system, combobox_event_reader, combobox_option_select_system, combobox_text_update_system,
-        combobox_toggle_system, open_or_close_dialogs, radio_event_reader, radio_interaction_system, save_filename_event_reader,
-        slider_begin_drag_system, slider_drag_system, slider_event_reader, slider_interaction_system, slider_release_system,
-        text_input_event_reader, text_input_interaction_system, text_input_typing_system, text_input_update_display_system,
+        ButtonEvent, CheckboxEvent, ColourPickerEvent, ComboboxEvent, RadioEvent, SaveFilenameEvent, SliderEvent, TextInputEvent,
+        UiDialogState, UiRebuildState, UiTheme, build_ui, button_event_reader, button_interaction_system, checkbox_event_reader,
+        checkbox_interaction_system, colour_picker_event_reader, colour_picker_interaction_system, combobox_event_reader,
+        combobox_option_select_system, combobox_text_update_system, combobox_toggle_system, open_or_close_dialogs,
+        radio_event_reader, radio_interaction_system, save_filename_event_reader, slider_begin_drag_system, slider_drag_system,
+        slider_event_reader, slider_interaction_system, slider_release_system, text_input_event_reader,
+        text_input_interaction_system, text_input_typing_system, text_input_update_display_system,
     },
 };
 
@@ -110,6 +111,7 @@ fn main() {
         .add_message::<SliderEvent>()
         .add_message::<ComboboxEvent>()
         .add_message::<TextInputEvent>()
+        .add_message::<ColourPickerEvent>()
         // Dialog Events
         .add_message::<SaveFilenameEvent>()
         // Other Events
@@ -139,6 +141,7 @@ fn main() {
                 slider_event_reader,
                 combobox_event_reader,
                 text_input_event_reader,
+                colour_picker_event_reader,
                 // Dialog Events
                 open_or_close_dialogs,
                 save_filename_event_reader,
@@ -168,6 +171,7 @@ fn main() {
                     text_input_interaction_system,
                     text_input_update_display_system,
                 ),
+                colour_picker_interaction_system,
             ),
         ) // Despawn after the update in most cases
         //
