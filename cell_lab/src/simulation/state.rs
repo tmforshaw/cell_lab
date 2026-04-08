@@ -6,7 +6,7 @@ use crate::{
     genomes::{GenomeBank, GenomeId, GenomeModeId},
     helpers::random_vec2,
     simulation::{chemical::Chemical, dish::DishMarker},
-    ui::ui_build::UiRebuildState,
+    ui::UiRebuildState,
 };
 
 #[allow(clippy::needless_pass_by_value)]

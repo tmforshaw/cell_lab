@@ -12,7 +12,7 @@
 #![allow(clippy::assigning_clones)]
 
 use bevy::{input_focus::InputFocus, prelude::*, sprite_render::Material2dPlugin};
-use bevy_egui::{EguiPlugin, EguiPrimaryContextPass};
+use bevy_egui::EguiPlugin;
 
 use crate::{
     cell_editor::{
@@ -27,7 +27,6 @@ use crate::{
             simulate_to_editor_age, spawn_cells_from_simulation,
         },
         state::{CellEditorState, exit_cell_editor_mode, init_cell_editor_mode},
-        ui::{CellEditorUiStyleApplied, cell_editor_ui_update},
     },
     cells::{Cell, CellMaterial, SelectionCellMaterial},
     collision::systems::collision_system,
@@ -51,14 +50,12 @@ use crate::{
         systems::{build_quadtree, visualise_quadtree},
     },
     ui::{
-        ButtonEvent, CheckboxEvent, ComboboxEvent, RadioEvent, SliderEvent, TextInputEvent, UiDialogState, UiTheme, build_ui,
-        button_event_reader, button_interaction_system, checkbox_event_reader, checkbox_interaction_system,
-        combobox_event_reader, combobox_option_select_system, combobox_text_update_system, combobox_toggle_system,
-        dialog_events::{SaveFilenameEvent, save_filename_event_reader},
-        open_or_close_dialogs, radio_event_reader, radio_interaction_system, slider_begin_drag_system, slider_drag_system,
-        slider_event_reader, slider_interaction_system, slider_release_system, text_input_event_reader,
-        text_input_interaction_system, text_input_typing_system, text_input_update_display_system,
-        ui_build::UiRebuildState,
+        ButtonEvent, CheckboxEvent, ComboboxEvent, RadioEvent, SaveFilenameEvent, SliderEvent, TextInputEvent, UiDialogState,
+        UiRebuildState, UiTheme, build_ui, button_event_reader, button_interaction_system, checkbox_event_reader,
+        checkbox_interaction_system, combobox_event_reader, combobox_option_select_system, combobox_text_update_system,
+        combobox_toggle_system, open_or_close_dialogs, radio_event_reader, radio_interaction_system, save_filename_event_reader,
+        slider_begin_drag_system, slider_drag_system, slider_event_reader, slider_interaction_system, slider_release_system,
+        text_input_event_reader, text_input_interaction_system, text_input_typing_system, text_input_update_display_system,
     },
 };
 
@@ -78,12 +75,9 @@ pub mod ui;
 // TODO need to show that cell spawned even if it dies instantly (When splitting into a tiny cell)
 // TODO Show value of slider value as child of the handle when the handle is being moved (Or just to the side)
 // TODO Combobox should close its dialog when click is away from the box
-// TODO Force UI to update when the values have changed
 // TODO Allow clicking just outside of the slider to adjust value
 // TODO Remove selection of radio box when save filename is different
-// TODO Add Age slider
-
-// TODO Remove Old UI System
+// TODO Add a cap on cell editor cell-density so that crashes don't happen from a ridiculous number of collisions
 
 #[allow(clippy::too_many_lines)]
 fn main() {
@@ -106,7 +100,6 @@ fn main() {
         .init_state::<CellEditorSimulationStatus>()
         .init_resource::<UiDialogState>()
         .init_resource::<InputFocus>()
-        .init_resource::<CellEditorUiStyleApplied>()
         .init_resource::<CellEditorState>()
         .init_resource::<ShowCellQuadTree>()
         .init_resource::<ShowChemicalQuadTree>()
@@ -225,10 +218,6 @@ fn main() {
                 visualise_quadtree::<Entity, CellQuadTree, ShowCellQuadTree, CellQuadTreeDebug>,
             )
                 .run_if(in_state(GameMode::CellEditor)),
-        )
-        .add_systems(
-            EguiPrimaryContextPass,
-            cell_editor_ui_update.run_if(in_state(GameMode::CellEditor)),
         )
         .add_systems(OnExit(GameMode::CellEditor), exit_cell_editor_mode)
         //

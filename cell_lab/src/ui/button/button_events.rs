@@ -5,7 +5,7 @@ use crate::{
     game::game_parameters::GameParameters,
     genomes::{Genome, GenomeBank, GenomeMode, genome_mode::colour_from_genome_mode_id},
     serialisation::{delete_genome_file, read_genome_file, semi_sanitise_filename, write_genome_to_file},
-    ui::{ButtonId, TextInput, UiDialogState, UiWindowId, dialog_events::SaveFilenameEvent, ui_build::UiRebuildState},
+    ui::{ButtonId, SaveFilenameEvent, TextInput, UiDialogState, UiRebuildState, UiWindowId},
 };
 
 #[derive(Message)]

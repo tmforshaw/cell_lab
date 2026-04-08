@@ -5,13 +5,12 @@ use crate::{
         editor_age::CellEditorAge,
         simulation::CellEditorSimulationStatus,
         snapshot::{CellEditorSimulationState, CellHistoryCache},
-        ui_dialog::CellEditorUiDialogState,
     },
     cells::Cell,
     game::game_parameters::GameParameters,
     genomes::{Genome, GenomeBank, GenomeId, GenomeMode, GenomeModeId},
     simulation::dish::DishMarker,
-    ui::ui_build::UiRebuildState,
+    ui::UiRebuildState,
 };
 
 #[derive(Resource, Default)]
@@ -19,7 +18,6 @@ pub struct CellEditorState {
     pub selected_genome_mode: GenomeModeId,
     pub selected_genome: GenomeId,
     pub editor_age: CellEditorAge,
-    pub dialogs: CellEditorUiDialogState,
 }
 
 impl CellEditorState {
@@ -60,23 +58,17 @@ pub fn init_cell_editor_mode(mut commands: Commands, param: Res<GameParameters>)
     commands.spawn(param.cell_editor_mode.dish_parameters.get_dish_bundle());
 }
 
-pub fn exit_cell_editor_mode(
-    mut commands: Commands,
-    dishes: Query<Entity, With<DishMarker>>,
-    cells: Query<Entity, With<Cell>>,
-    mut state: ResMut<CellEditorState>,
-) {
+pub fn exit_cell_editor_mode(mut commands: Commands, dishes: Query<Entity, With<DishMarker>>, cells: Query<Entity, With<Cell>>) {
     // Remove the simulation resources
     commands.remove_resource::<CellHistoryCache>();
     commands.remove_resource::<CellEditorSimulationState>();
 
-    // Close all dialogs
-    state.dialogs.close_all_dialogs();
-
+    // Remove the dish
     for entity in dishes {
         commands.entity(entity).despawn();
     }
 
+    // Remove all cells
     for entity in cells {
         commands.entity(entity).despawn();
     }

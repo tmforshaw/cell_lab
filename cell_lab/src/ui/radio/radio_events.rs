@@ -4,7 +4,7 @@ use crate::{
     cell_editor::{simulation::CellEditorSimulationClearMessage, state::CellEditorState},
     genomes::{CellSplitType, GenomeBank},
     serialisation::get_genomes_in_folder_underscore_to_spaces,
-    ui::{RadioId, TextInput, UiDialogState, ui_build::UiRebuildState},
+    ui::{RadioId, TextInput, UiDialogState, UiRebuildState},
 };
 
 #[derive(Message)]

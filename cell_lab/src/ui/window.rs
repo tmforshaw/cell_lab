@@ -145,7 +145,6 @@ pub fn spawn_floating(
     commands: &mut Commands,
     children: impl FnOnce(&mut RelatedSpawnerCommands<ChildOf>),
 ) -> Entity {
-    // Make the position relative to the centre
     commands
         .spawn(Node {
             position_type: PositionType::Absolute,

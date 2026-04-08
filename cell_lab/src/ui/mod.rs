@@ -61,6 +61,8 @@ pub use label::{spawn_heading, spawn_label, spawn_subheading};
 
 pub use dialog_state::{UiDialogState, UiSaveDialogState, open_or_close_dialogs, spawn_save_dialog};
 
+pub use dialog_events::{SaveFilenameEvent, save_filename_event_reader};
+
 pub use directional_node::{spawn_horizontal, spawn_vertical};
 
-pub use ui_build::build_ui;
+pub use ui_build::{UiRebuildState, build_ui};

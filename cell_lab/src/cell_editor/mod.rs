@@ -4,5 +4,3 @@ pub mod logical_cell;
 pub mod simulation;
 pub mod snapshot;
 pub mod state;
-pub mod ui;
-pub mod ui_dialog;

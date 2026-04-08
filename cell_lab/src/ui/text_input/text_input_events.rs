@@ -2,7 +2,7 @@ use bevy::{input_focus::InputFocus, prelude::*};
 
 use crate::{
     serialisation::semi_sanitise_filename,
-    ui::{TextInputId, dialog_events::SaveFilenameEvent},
+    ui::{SaveFilenameEvent, TextInputId},
 };
 
 #[derive(Message)]

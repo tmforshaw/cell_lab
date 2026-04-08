@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::{
     cell_editor::{simulation::CellEditorSimulationClearMessage, state::CellEditorState},
     genomes::{CellType, GenomeBank, GenomeModeId},
-    ui::{ComboboxId, ui_build::UiRebuildState},
+    ui::{ComboboxId, UiRebuildState},
 };
 
 #[derive(Message)]
