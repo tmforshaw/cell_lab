@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::{
     cell_editor::{simulation::CellEditorSimulationClearMessage, state::CellEditorState},
     genomes::GenomeBank,
-    ui::{SliderId, colour_picker::colour_picker_systems::ColourPicker},
+    ui::{ColourPickerMaterial, SliderId, colour_picker::colour_picker_systems::ColourPicker},
 };
 
 #[derive(Message)]
@@ -19,7 +19,8 @@ pub fn slider_event_reader(
     mut genome_bank: ResMut<GenomeBank>,
     mut simulation_cache_message_writer: MessageWriter<CellEditorSimulationClearMessage>,
 
-    mut colour_picker_query: Query<&mut ColourPicker>,
+    mut colour_picker_query: Query<(&mut ColourPicker, &MaterialNode<ColourPickerMaterial>)>,
+    mut ui_materials: ResMut<Assets<ColourPickerMaterial>>,
 ) {
     for ev in events.read() {
         match ev.id {
@@ -58,13 +59,19 @@ pub fn slider_event_reader(
             SliderId::ColourPickerHue => {
                 // If there is a target entity set, and it is found in the query
                 if let Some(target_entity) = ev.target_entity
-                    && let Ok(mut colour_picker) = colour_picker_query.get_mut(target_entity)
+                    && let Ok((mut colour_picker, material_handle)) = colour_picker_query.get_mut(target_entity)
                 {
                     // Set the hue in the colour picker
                     colour_picker.hue = ev.new_value;
 
                     // Set the cell colour in the genome mode
                     editor_state.get_selected_genome_mode_mut(&mut genome_bank).colour = colour_picker.to_colour();
+
+                    // If the material can be gotten by its handle
+                    if let Some(material) = ui_materials.get_mut(material_handle.id()) {
+                        // Set the hue in the colour picker area's material
+                        material.hue = colour_picker.hue;
+                    }
 
                     // Clear the simulation cache
                     simulation_cache_message_writer.write(CellEditorSimulationClearMessage);

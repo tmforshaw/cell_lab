@@ -6,9 +6,10 @@ use crate::{
     game::{game_mode::GameMode, game_parameters::GameParameters},
     genomes::{CellSplitType, CellType, GenomeBank, GenomeModeId},
     ui::{
-        ButtonId, CheckboxId, ColourPickerId, ComboboxId, RadioId, SliderId, UiPanelType, UiTheme, UiWindowId, spawn_button,
-        spawn_checkbox, spawn_colour_picker, spawn_combobox, spawn_heading, spawn_horizontal, spawn_panel,
-        spawn_radio_buttonlike, spawn_semi_separator, spawn_separator, spawn_slider, spawn_subheading, window::spawn_floating,
+        ButtonId, CheckboxId, ColourPickerId, ColourPickerMaterial, ComboboxId, RadioId, SliderId, UiPanelType, UiTheme,
+        UiWindowId, spawn_button, spawn_checkbox, spawn_colour_picker, spawn_combobox, spawn_heading, spawn_horizontal,
+        spawn_panel, spawn_radio_buttonlike, spawn_semi_separator, spawn_separator, spawn_slider, spawn_subheading,
+        window::spawn_floating,
     },
 };
 
@@ -32,6 +33,8 @@ pub fn build_ui(
     param: Res<GameParameters>,
     ui_theme: Res<UiTheme>,
 
+    mut ui_materials: ResMut<Assets<ColourPickerMaterial>>,
+
     all_windows: Query<Entity, With<UiWindowId>>,
 ) {
     // If the UI needs to be rebuilt
@@ -46,7 +49,14 @@ pub fn build_ui(
             GameMode::Simulation => {}
             GameMode::CellEditor => {
                 // Spawn the panel
-                spawn_cell_editor_panel(&mut commands, &editor_state, &genome_bank, &param, &ui_theme);
+                spawn_cell_editor_panel(
+                    &mut commands,
+                    &editor_state,
+                    &genome_bank,
+                    &param,
+                    &ui_theme,
+                    &mut ui_materials,
+                );
 
                 // Spawn the age slider
                 spawn_floating(
@@ -85,6 +95,8 @@ pub fn spawn_cell_editor_panel(
     genome_bank: &GenomeBank,
     param: &GameParameters,
     ui_theme: &UiTheme,
+
+    ui_materials: &mut Assets<ColourPickerMaterial>,
 ) {
     let genome_mode_strings = GenomeModeId::iter()
         .map(|variant| variant.as_ref().to_string())
@@ -241,6 +253,7 @@ pub fn spawn_cell_editor_panel(
                 editor_state.get_selected_genome_mode(genome_bank).colour,
                 ColourPickerId::SelectedCellColour,
                 ui_theme,
+                ui_materials,
             );
 
             spawn_separator(parent, ui_theme);

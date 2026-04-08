@@ -50,13 +50,13 @@ use crate::{
         systems::{build_quadtree, visualise_quadtree},
     },
     ui::{
-        ButtonEvent, CheckboxEvent, ColourPickerEvent, ComboboxEvent, RadioEvent, SaveFilenameEvent, SliderEvent, TextInputEvent,
-        UiDialogState, UiRebuildState, UiTheme, build_ui, button_event_reader, button_interaction_system, checkbox_event_reader,
-        checkbox_interaction_system, colour_picker_event_reader, colour_picker_interaction_system, combobox_event_reader,
-        combobox_option_select_system, combobox_text_update_system, combobox_toggle_system, open_or_close_dialogs,
-        radio_event_reader, radio_interaction_system, save_filename_event_reader, slider_begin_drag_system, slider_drag_system,
-        slider_event_reader, slider_interaction_system, slider_release_system, text_input_event_reader,
-        text_input_interaction_system, text_input_typing_system, text_input_update_display_system,
+        ButtonEvent, CheckboxEvent, ColourPickerEvent, ColourPickerMaterial, ComboboxEvent, RadioEvent, SaveFilenameEvent,
+        SliderEvent, TextInputEvent, UiDialogState, UiRebuildState, UiTheme, build_ui, button_event_reader,
+        button_interaction_system, checkbox_event_reader, checkbox_interaction_system, colour_picker_event_reader,
+        colour_picker_interaction_system, combobox_event_reader, combobox_option_select_system, combobox_text_update_system,
+        combobox_toggle_system, open_or_close_dialogs, radio_event_reader, radio_interaction_system, save_filename_event_reader,
+        slider_begin_drag_system, slider_drag_system, slider_event_reader, slider_interaction_system, slider_release_system,
+        text_input_event_reader, text_input_interaction_system, text_input_typing_system, text_input_update_display_system,
     },
 };
 
@@ -91,6 +91,7 @@ fn main() {
         .add_plugins(Material2dPlugin::<CellMaterial>::default())
         .add_plugins(Material2dPlugin::<SelectionCellMaterial>::default())
         .add_plugins(Material2dPlugin::<ChemicalMaterial>::default())
+        .add_plugins(UiMaterialPlugin::<ColourPickerMaterial>::default())
         .insert_resource(CellQuadTree::new_from_parameters(&param, &game_mode))
         .insert_resource(ChemicalQuadTree::new_from_parameters(&param, &game_mode))
         .insert_resource(ChemicalTimer::new_from_parameters(&param))

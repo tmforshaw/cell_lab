@@ -1,6 +1,6 @@
 use bevy::{ecs::relationship::RelatedSpawnerCommands, prelude::*};
 
-use crate::ui::{ColourPickerEvent, SliderId, UiTheme, colour_picker::rgb_to_hsv, spawn_slider, spawn_vertical};
+use crate::ui::{ColourPickerEvent, ColourPickerMaterial, SliderId, UiTheme, rgb_to_hsv, spawn_slider, spawn_vertical};
 
 #[derive(Component, Debug, Copy, Clone, PartialEq, PartialOrd, Ord, Eq)]
 pub enum ColourPickerId {
@@ -32,6 +32,7 @@ pub fn spawn_colour_picker(
     initial_value: Color,
     colour_picker_id: ColourPickerId,
     ui_theme: &UiTheme,
+    materials: &mut Assets<ColourPickerMaterial>,
 ) -> Option<Entity> {
     let (hue, saturation, value) = rgb_to_hsv(initial_value);
 
@@ -54,7 +55,11 @@ pub fn spawn_colour_picker(
                 Interaction::default(),
                 // Set the colours
                 BorderColor::all(ui_theme.colour_picker.border_colour),
-                BackgroundColor(ui_theme.colour_picker.normal_colour),
+                // Add the UiMaterial
+                MaterialNode(materials.add(ColourPickerMaterial {
+                    hue,
+                    selected_uv: Vec2::new(saturation, 1.0 - value),
+                })),
             ))
             .id();
 
@@ -75,8 +80,16 @@ pub fn spawn_colour_picker(
 #[allow(clippy::needless_pass_by_value, clippy::type_complexity)]
 pub fn colour_picker_interaction_system(
     windows: Query<&Window>,
-    mut interaction_query: Query<(&Node, &UiGlobalTransform, &Interaction, &ColourPickerId, &mut ColourPicker)>,
+    mut interaction_query: Query<(
+        &Node,
+        &UiGlobalTransform,
+        &Interaction,
+        &ColourPickerId,
+        &mut ColourPicker,
+        &MaterialNode<ColourPickerMaterial>,
+    )>,
     mut colour_picker_event_writer: MessageWriter<ColourPickerEvent>,
+    mut ui_materials: ResMut<Assets<ColourPickerMaterial>>,
 ) {
     // Get window and its properties
     let Ok(window) = windows.single() else { return };
@@ -86,7 +99,7 @@ pub fn colour_picker_interaction_system(
     // Get the cursor position
     let Some(cursor_pos) = window.cursor_position() else { return };
 
-    for (node, transform, interaction, colour_picker_id, mut colour_picker) in &mut interaction_query {
+    for (node, transform, interaction, colour_picker_id, mut colour_picker, material_handle) in &mut interaction_query {
         match *interaction {
             Interaction::Pressed | Interaction::Hovered => {
                 let Ok(node_size) = node.width.resolve(scale, win_size, Vec2::splat(win_size)) else {
@@ -106,12 +119,15 @@ pub fn colour_picker_interaction_system(
 
                 let (u, v) = ((cursor_pos.x - min.x) / node_size, (cursor_pos.y - min.y) / node_size);
 
-                // TODO Set the cursor position within the colour picker material
-
                 if *interaction == Interaction::Pressed {
                     // Set the saturation and value based on cursor position
                     colour_picker.saturation = u.clamp(0.0, 1.0);
                     colour_picker.value = (1.0 - v).clamp(0.0, 1.0);
+
+                    // Set the cursor position within the colour picker material
+                    if let Some(material) = ui_materials.get_mut(material_handle) {
+                        material.selected_uv = Vec2::new(colour_picker.saturation, 1.0 - colour_picker.value);
+                    }
 
                     // Fire an event to trigger this colour_picker
                     colour_picker_event_writer.write(ColourPickerEvent {

@@ -28,7 +28,9 @@ pub use checkbox::{
 };
 
 pub use colour_picker::{
+    colour_conversion::{rgb_to_hsv, rgba_to_hsva},
     colour_picker_events::{ColourPickerEvent, colour_picker_event_reader},
+    colour_picker_material::ColourPickerMaterial,
     colour_picker_systems::{ColourPickerId, colour_picker_interaction_system, spawn_colour_picker},
 };
 
