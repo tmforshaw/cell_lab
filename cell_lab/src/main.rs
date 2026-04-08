@@ -36,6 +36,7 @@ use crate::{
     input::{
         cell_editor_mode_keyboard_event_reader, mode_independent_keyboard_event_reader, simulation_mode_keyboard_event_reader,
     },
+    shader_loader::ShaderLoaderPlugin,
     simulation::{
         chemical::{Chemical, ChemicalMaterial, ChemicalTimer},
         state::{exit_simulation_mode, init_simulation_mode},
@@ -69,6 +70,7 @@ pub mod genomes;
 pub mod helpers;
 pub mod input;
 pub mod serialisation;
+pub mod shader_loader;
 pub mod simulation;
 pub mod spatial_partitioning;
 pub mod ui;
@@ -92,6 +94,7 @@ fn main() {
         .add_plugins(Material2dPlugin::<SelectionCellMaterial>::default())
         .add_plugins(Material2dPlugin::<ChemicalMaterial>::default())
         .add_plugins(UiMaterialPlugin::<ColourPickerMaterial>::default())
+        .add_plugins(ShaderLoaderPlugin)
         .insert_resource(CellQuadTree::new_from_parameters(&param, &game_mode))
         .insert_resource(ChemicalQuadTree::new_from_parameters(&param, &game_mode))
         .insert_resource(ChemicalTimer::new_from_parameters(&param))
