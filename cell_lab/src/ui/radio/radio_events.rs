@@ -4,7 +4,7 @@ use crate::{
     cell_editor::{simulation::CellEditorSimulationClearMessage, state::CellEditorState},
     genomes::{CellSplitType, GenomeBank},
     serialisation::get_genomes_in_folder_underscore_to_spaces,
-    ui::{RadioId, TextInput, UiDialogState},
+    ui::{RadioId, TextInput, UiDialogState, ui_build::UiRebuildState},
 };
 
 #[derive(Message)]
@@ -19,6 +19,8 @@ pub fn radio_event_reader(
     mut editor_state: ResMut<CellEditorState>,
     mut dialog_state: ResMut<UiDialogState>,
     mut genome_bank: ResMut<GenomeBank>,
+
+    mut next_ui_needs_rebuild: ResMut<NextState<UiRebuildState>>,
     mut simulation_cache_message_writer: MessageWriter<CellEditorSimulationClearMessage>,
 
     mut text_input_query: Query<&mut TextInput>,
@@ -34,6 +36,9 @@ pub fn radio_event_reader(
 
                 // Clear the simulation cache
                 simulation_cache_message_writer.write(CellEditorSimulationClearMessage);
+
+                // Set the Ui to NeedsRebuild
+                next_ui_needs_rebuild.set(UiRebuildState::NeedsRebuild);
             }
             RadioId::SaveFileNames => {
                 // Ensure that there actually is a selected index, and the target entity is set

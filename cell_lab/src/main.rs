@@ -51,14 +51,14 @@ use crate::{
         systems::{build_quadtree, visualise_quadtree},
     },
     ui::{
-        ButtonEvent, CheckboxEvent, ComboboxEvent, RadioEvent, SliderEvent, TextInputEvent, UiDialogState, UiTheme,
+        ButtonEvent, CheckboxEvent, ComboboxEvent, RadioEvent, SliderEvent, TextInputEvent, UiDialogState, UiTheme, build_ui,
         button_event_reader, button_interaction_system, checkbox_event_reader, checkbox_interaction_system,
         combobox_event_reader, combobox_option_select_system, combobox_text_update_system, combobox_toggle_system,
         dialog_events::{SaveFilenameEvent, save_filename_event_reader},
         open_or_close_dialogs, radio_event_reader, radio_interaction_system, slider_begin_drag_system, slider_drag_system,
-        slider_event_reader, slider_interaction_system, slider_release_system,
-        test_panel::spawn_cell_editor_panel,
-        text_input_event_reader, text_input_interaction_system, text_input_typing_system, text_input_update_display_system,
+        slider_event_reader, slider_interaction_system, slider_release_system, text_input_event_reader,
+        text_input_interaction_system, text_input_typing_system, text_input_update_display_system,
+        ui_build::UiRebuildState,
     },
 };
 
@@ -102,6 +102,7 @@ fn main() {
         .insert_resource(GenomeBank::new_from_parameters(&param))
         .insert_resource(param)
         .insert_state(game_mode)
+        .init_state::<UiRebuildState>()
         .init_state::<CellEditorSimulationStatus>()
         .init_resource::<UiDialogState>()
         .init_resource::<InputFocus>()
@@ -126,11 +127,14 @@ fn main() {
         //
         // --------------------- Mode Independent Systems ----------------------
         //
+        .add_systems(Startup, (UiTheme::setup.before(setup), setup, build_ui.after(setup)))
         .add_systems(
-            Startup,
-            (UiTheme::setup.before(setup), setup, spawn_cell_editor_panel.after(setup)),
-        )
-        .add_systems(PreUpdate, apply_pending_despawns.run_if(state_changed::<GameMode>)) // Need to do despawning right now when GameMode changes
+            PreUpdate,
+            (
+                apply_pending_despawns.run_if(state_changed::<GameMode>),
+                build_ui.run_if(state_changed::<UiRebuildState>),
+            ),
+        ) // Need to do despawning right now when GameMode changes
         .add_systems(
             Update,
             (

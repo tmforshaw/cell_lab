@@ -5,7 +5,7 @@ use crate::{
     game::game_parameters::GameParameters,
     genomes::{Genome, GenomeBank, GenomeMode, genome_mode::colour_from_genome_mode_id},
     serialisation::{delete_genome_file, read_genome_file, semi_sanitise_filename, write_genome_to_file},
-    ui::{ButtonId, TextInput, UiDialogState, UiWindowId, dialog_events::SaveFilenameEvent},
+    ui::{ButtonId, TextInput, UiDialogState, UiWindowId, dialog_events::SaveFilenameEvent, ui_build::UiRebuildState},
 };
 
 #[derive(Message)]
@@ -23,6 +23,8 @@ pub fn button_event_reader(
     mut genome_bank: ResMut<GenomeBank>,
     param: Res<GameParameters>,
     mut simulation_cache_message_writer: MessageWriter<CellEditorSimulationClearMessage>,
+
+    mut next_ui_needs_rebuild: ResMut<NextState<UiRebuildState>>,
 
     text_input_query: Query<&TextInput>,
     mut save_filename_event_writer: MessageWriter<SaveFilenameEvent>,
@@ -46,6 +48,9 @@ pub fn button_event_reader(
 
                 // Clear the simulation cache
                 simulation_cache_message_writer.write(CellEditorSimulationClearMessage);
+
+                // Set the Ui to NeedsRebuild
+                next_ui_needs_rebuild.set(UiRebuildState::NeedsRebuild);
 
                 // Close all dialogs
                 dialog_state.close_all_dialogs();
@@ -95,6 +100,9 @@ pub fn button_event_reader(
 
                     // Clear the simulation cache
                     simulation_cache_message_writer.write(CellEditorSimulationClearMessage);
+
+                    // Set the Ui to NeedsRebuild
+                    next_ui_needs_rebuild.set(UiRebuildState::NeedsRebuild);
                 }
 
                 // Close all the dialogs
@@ -127,6 +135,9 @@ pub fn button_event_reader(
 
                 // Clear the simulation cache
                 simulation_cache_message_writer.write(CellEditorSimulationClearMessage);
+
+                // Set the Ui to NeedsRebuild
+                next_ui_needs_rebuild.set(UiRebuildState::NeedsRebuild);
 
                 // Close all the dialogs
                 dialog_state.close_all_dialogs();

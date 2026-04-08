@@ -8,8 +8,8 @@ pub mod label;
 pub mod radio;
 pub mod separator;
 pub mod slider;
-pub mod test_panel;
 pub mod text_input;
+pub mod ui_build;
 pub mod ui_theme;
 pub mod ui_theme_colour_palette;
 pub mod window;
@@ -62,3 +62,5 @@ pub use label::{spawn_heading, spawn_label, spawn_subheading};
 pub use dialog_state::{UiDialogState, UiSaveDialogState, open_or_close_dialogs, spawn_save_dialog};
 
 pub use directional_node::{spawn_horizontal, spawn_vertical};
+
+pub use ui_build::build_ui;

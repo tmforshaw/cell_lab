@@ -11,6 +11,7 @@ use crate::{
     game::game_parameters::GameParameters,
     genomes::{Genome, GenomeBank, GenomeId, GenomeMode, GenomeModeId},
     simulation::dish::DishMarker,
+    ui::ui_build::UiRebuildState,
 };
 
 #[derive(Resource, Default)]
@@ -51,6 +52,9 @@ pub fn init_cell_editor_mode(mut commands: Commands, param: Res<GameParameters>)
 
     // Set the simulation to NeedsRecompute
     commands.set_state(CellEditorSimulationStatus::NeedsRecompute);
+
+    // Set the Ui to NeedsRebuild
+    commands.set_state(UiRebuildState::NeedsRebuild);
 
     // Spawn dish
     commands.spawn(param.cell_editor_mode.dish_parameters.get_dish_bundle());

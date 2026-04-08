@@ -6,6 +6,7 @@ use crate::{
     genomes::{GenomeBank, GenomeId, GenomeModeId},
     helpers::random_vec2,
     simulation::{chemical::Chemical, dish::DishMarker},
+    ui::ui_build::UiRebuildState,
 };
 
 #[allow(clippy::needless_pass_by_value)]
@@ -19,6 +20,9 @@ pub fn init_simulation_mode(
 ) {
     // Show dish
     commands.spawn(param.simulation_mode.dish_parameters.get_dish_bundle());
+
+    // Set the Ui to NeedsRebuild
+    commands.set_state(UiRebuildState::NeedsRebuild);
 
     // Spawn cells
     for _ in 0..param.simulation_mode.starting_cell_num {

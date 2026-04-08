@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::{
     cell_editor::{simulation::CellEditorSimulationClearMessage, state::CellEditorState},
     genomes::{CellType, GenomeBank, GenomeModeId},
-    ui::ComboboxId,
+    ui::{ComboboxId, ui_build::UiRebuildState},
 };
 
 #[derive(Message)]
@@ -16,6 +16,8 @@ pub fn combobox_event_reader(
     mut events: MessageReader<ComboboxEvent>,
     mut editor_state: ResMut<CellEditorState>,
     mut genome_bank: ResMut<GenomeBank>,
+
+    mut next_ui_needs_rebuild: ResMut<NextState<UiRebuildState>>,
     mut simulation_cache_message_writer: MessageWriter<CellEditorSimulationClearMessage>,
 ) {
     for ev in events.read() {
@@ -29,6 +31,9 @@ pub fn combobox_event_reader(
                         if editor_state.selected_genome_mode != new_mode {
                             // Set the new editor genome mode
                             editor_state.selected_genome_mode = new_mode;
+
+                            // Set the Ui to NeedsRebuild
+                            next_ui_needs_rebuild.set(UiRebuildState::NeedsRebuild);
                         }
                     }
                     ComboboxId::Daughter1Mode => {
