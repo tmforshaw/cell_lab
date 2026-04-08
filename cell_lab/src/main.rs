@@ -80,7 +80,10 @@ pub mod ui;
 // TODO Combobox should close its dialog when click is away from the box
 // TODO Force UI to update when the values have changed
 // TODO Allow clicking just outside of the slider to adjust value
-// TODO Text input
+// TODO Remove selection of radio box when save filename is different
+// TODO Add Age slider
+
+// TODO Remove Old UI System
 
 #[allow(clippy::too_many_lines)]
 fn main() {

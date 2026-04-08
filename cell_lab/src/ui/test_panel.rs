@@ -48,7 +48,7 @@ pub fn spawn_cell_editor_panel(
                 ))
                 .with_children(|parent| {
                     // Title
-                    spawn_heading(parent, "Cell Editor", &ui_theme);
+                    spawn_heading(parent, "Genome Editor", &ui_theme);
 
                     // Mode selection
                     spawn_combobox(

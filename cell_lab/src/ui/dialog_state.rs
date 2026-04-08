@@ -258,7 +258,7 @@ pub fn spawn_save_dialog(commands: &mut Commands, _dialog_state: &mut UiDialogSt
             let text_input_entity = spawn_text_input(
                 parent,
                 TextInputId::SaveFilename,
-                "Filename:",
+                "Genome Name:",
                 "",
                 Some(semi_sanitise_filter_map),
                 ui_theme,
