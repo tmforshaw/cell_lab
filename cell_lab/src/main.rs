@@ -81,6 +81,7 @@ pub mod ui;
 // TODO Allow clicking just outside of the slider to adjust value
 // TODO Remove selection of radio box when save filename is different
 // TODO Add a cap on cell editor cell-density so that crashes don't happen from a ridiculous number of collisions
+// TODO Allow shrinking of colour picker so it isn't always large
 
 #[allow(clippy::too_many_lines)]
 fn main() {
