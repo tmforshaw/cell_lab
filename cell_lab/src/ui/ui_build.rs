@@ -172,7 +172,13 @@ pub fn spawn_cell_editor_panel(
                     ..default()
                 })
                 .with_children(|parent| {
-                    spawn_checkbox(parent, CheckboxId::InitialMode, "Initial Mode:", true, ui_theme);
+                    spawn_checkbox(
+                        parent,
+                        CheckboxId::InitialMode,
+                        "Initial Mode:",
+                        editor_state.get_selected_genome(genome_bank).initial == editor_state.selected_genome_mode,
+                        ui_theme,
+                    );
 
                     spawn_combobox(
                         parent,
