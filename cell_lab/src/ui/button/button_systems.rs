@@ -13,7 +13,13 @@ pub enum ButtonId {
     ConfirmOverwriteGenome,
     CloseSaveFilenameEmptyDialog,
     SubmitSaveFilename,
-    SubmitLoadGenome,
+    ConfirmLoadGenome,
+    DeleteSelectedGenome,
+    CloseDeleteDialog,
+    LoadDefaultGenome,
+    ConfirmDeleteGenome,
+    ConfirmLoadDefaultGenome,
+    CloseLoadDefaultGenome,
 }
 
 #[derive(Component, Debug)]

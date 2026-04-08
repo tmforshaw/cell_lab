@@ -23,7 +23,7 @@ pub fn spawn_horizontal(
 }
 
 pub fn spawn_vertical(
-    mut parent: RelatedSpawnerCommands<ChildOf>,
+    parent: &mut RelatedSpawnerCommands<ChildOf>,
     ui_theme: &UiTheme,
     children: impl FnOnce(&mut RelatedSpawnerCommands<ChildOf>) -> Option<Entity>,
 ) -> Option<Entity> {

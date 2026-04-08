@@ -3,8 +3,8 @@ use bevy::{input_focus::InputFocus, prelude::*};
 use crate::{
     cell_editor::{simulation::CellEditorSimulationClearMessage, state::CellEditorState},
     game::game_parameters::GameParameters,
-    genomes::{GenomeBank, GenomeMode, genome_mode::colour_from_genome_mode_id},
-    serialisation::{read_genome_file, semi_sanitise_filename, write_genome_to_file},
+    genomes::{Genome, GenomeBank, GenomeMode, genome_mode::colour_from_genome_mode_id},
+    serialisation::{delete_genome_file, read_genome_file, semi_sanitise_filename, write_genome_to_file},
     ui::{ButtonId, TextInput, UiDialogState, UiWindowId, dialog_events::SaveFilenameEvent},
 };
 
@@ -84,11 +84,8 @@ pub fn button_event_reader(
                         filename: semi_sanitise_filename(text_input.value.clone()),
                     });
                 }
-
-                // Clear the input focus
-                input_focus.clear();
             }
-            ButtonId::SubmitLoadGenome => {
+            ButtonId::ConfirmLoadGenome => {
                 // If the load filename is set, and that file can be read from the folder
                 if let Some(filename) = dialog_state.load.filename.clone()
                     && let Some(genome) = read_genome_file(&filename)
@@ -103,6 +100,38 @@ pub fn button_event_reader(
                 // Close all the dialogs
                 dialog_state.close_all_dialogs();
             }
+            ButtonId::DeleteSelectedGenome => {
+                // If there is a file selected for deletion
+                if dialog_state.load.filename.clone().is_some() {
+                    // Open the delete dialog
+                    dialog_state.open_dialog(&UiWindowId::DeleteGenomeDialog);
+                }
+            }
+            ButtonId::CloseDeleteDialog => {
+                dialog_state.close_dialog(&UiWindowId::DeleteGenomeDialog);
+            }
+            ButtonId::ConfirmDeleteGenome => {
+                // If there is a selected filename to delete
+                if let Some(filename) = dialog_state.load.filename.clone() {
+                    // Delete the genome
+                    delete_genome_file(&filename);
+
+                    // Close all the dialogs
+                    dialog_state.close_all_dialogs();
+                }
+            }
+            ButtonId::LoadDefaultGenome => dialog_state.open_dialog(&UiWindowId::LoadDefaultGenomeDialog),
+            ButtonId::ConfirmLoadDefaultGenome => {
+                // Set the selected genome as the default genome
+                *editor_state.get_selected_genome_mut(&mut genome_bank) = Genome::new_from_parameters(&param);
+
+                // Clear the simulation cache
+                simulation_cache_message_writer.write(CellEditorSimulationClearMessage);
+
+                // Close all the dialogs
+                dialog_state.close_all_dialogs();
+            }
+            ButtonId::CloseLoadDefaultGenome => dialog_state.close_dialog(&UiWindowId::LoadDefaultGenomeDialog),
         }
 
         // Clear input focus
