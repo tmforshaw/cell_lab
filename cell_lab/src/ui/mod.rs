@@ -48,8 +48,10 @@ pub use radio::{
 
 pub use slider::{
     slider_events::{SliderEvent, slider_event_reader},
+    slider_material::SliderHueMaterial,
     slider_systems::{
         SliderId, slider_begin_drag_system, slider_drag_system, slider_interaction_system, slider_release_system, spawn_slider,
+        spawn_slider_with_material,
     },
 };
 

@@ -52,7 +52,7 @@ use crate::{
     },
     ui::{
         ButtonEvent, CheckboxEvent, ColourPickerEvent, ColourPickerMaterial, ComboboxEvent, RadioEvent, SaveFilenameEvent,
-        SliderEvent, TextInputEvent, UiDialogState, UiRebuildState, UiTheme, build_ui, button_event_reader,
+        SliderEvent, SliderHueMaterial, TextInputEvent, UiDialogState, UiRebuildState, UiTheme, build_ui, button_event_reader,
         button_interaction_system, checkbox_event_reader, checkbox_interaction_system, colour_picker_event_reader,
         colour_picker_interaction_system, combobox_event_reader, combobox_option_select_system, combobox_text_update_system,
         combobox_toggle_system, open_or_close_dialogs, radio_event_reader, radio_interaction_system, save_filename_event_reader,
@@ -94,6 +94,7 @@ fn main() {
         .add_plugins(Material2dPlugin::<SelectionCellMaterial>::default())
         .add_plugins(Material2dPlugin::<ChemicalMaterial>::default())
         .add_plugins(UiMaterialPlugin::<ColourPickerMaterial>::default())
+        .add_plugins(UiMaterialPlugin::<SliderHueMaterial>::default())
         .add_plugins(ShaderLoaderPlugin)
         .insert_resource(CellQuadTree::new_from_parameters(&param, &game_mode))
         .insert_resource(ChemicalQuadTree::new_from_parameters(&param, &game_mode))

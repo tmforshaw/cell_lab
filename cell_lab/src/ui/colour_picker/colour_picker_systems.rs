@@ -1,6 +1,9 @@
 use bevy::{ecs::relationship::RelatedSpawnerCommands, prelude::*};
 
-use crate::ui::{ColourPickerEvent, ColourPickerMaterial, SliderId, UiTheme, rgb_to_hsv, spawn_slider, spawn_vertical};
+use crate::ui::{
+    ColourPickerEvent, ColourPickerMaterial, SliderHueMaterial, SliderId, UiTheme, rgb_to_hsv, spawn_slider_with_material,
+    spawn_vertical,
+};
 
 #[derive(Component, Debug, Copy, Clone, PartialEq, PartialOrd, Ord, Eq)]
 pub enum ColourPickerId {
@@ -27,12 +30,18 @@ impl ColourPicker {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn spawn_colour_picker(
     parent: &mut RelatedSpawnerCommands<ChildOf>,
     initial_value: Color,
     colour_picker_id: ColourPickerId,
     ui_theme: &UiTheme,
-    materials: &mut Assets<ColourPickerMaterial>,
+
+    window_scale: f32,
+    window_width: f32,
+
+    colour_picker_materials: &mut Assets<ColourPickerMaterial>,
+    slider_hue_materials: &mut Assets<SliderHueMaterial>,
 ) -> Option<Entity> {
     let (hue, saturation, value) = rgb_to_hsv(initial_value);
 
@@ -56,20 +65,23 @@ pub fn spawn_colour_picker(
                 // Set the colours
                 BorderColor::all(ui_theme.colour_picker.border_colour),
                 // Add the UiMaterial
-                MaterialNode(materials.add(ColourPickerMaterial {
+                MaterialNode(colour_picker_materials.add(ColourPickerMaterial {
                     hue,
                     selected_uv: Vec2::new(saturation, 1.0 - value),
                 })),
             ))
             .id();
 
-        spawn_slider(
+        spawn_slider_with_material(
             parent,
             Some(colour_picker_entity),
             SliderId::ColourPickerHue,
             "",
             hue,
             0.0..=360.0,
+            window_scale,
+            window_width,
+            slider_hue_materials,
             ui_theme,
         );
 
@@ -94,7 +106,7 @@ pub fn colour_picker_interaction_system(
     // Get window and its properties
     let Ok(window) = windows.single() else { return };
     let scale = window.scale_factor();
-    let win_size = window.width(); // Should be square
+    let win_size = window.width();
 
     // Get the cursor position
     let Some(cursor_pos) = window.cursor_position() else { return };

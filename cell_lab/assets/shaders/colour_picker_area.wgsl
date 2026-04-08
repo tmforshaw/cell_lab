@@ -16,8 +16,8 @@ fn fragment(in: UiVertexOutput) -> @location(0) vec4<f32> {
     let value = 1.0 - uv.y; // Make the bottom left the origin
 
     // Modify Saturation and Value to be closer to how they are perceived
-    let perceptual_saturation = pow(uv.x, 0.9); // Compress white area
-    let perceptual_value = pow(value, 2.2); // Expand dark area
+    let perceptual_saturation = pow(uv.x, 0.8); // Compress white area
+    let perceptual_value = pow(value, 2.1); // Expand dark area
 
     let hue_colour = hsv_to_rgb(hue, perceptual_saturation, perceptual_value);
 

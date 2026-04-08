@@ -8,6 +8,7 @@ use crate::{
 
 #[derive(Message)]
 pub struct SliderEvent {
+    pub self_entity: Entity,
     pub target_entity: Option<Entity>,
     pub id: SliderId,
     pub new_value: f32,

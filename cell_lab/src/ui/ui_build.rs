@@ -6,10 +6,10 @@ use crate::{
     game::{game_mode::GameMode, game_parameters::GameParameters},
     genomes::{CellSplitType, CellType, GenomeBank, GenomeModeId},
     ui::{
-        ButtonId, CheckboxId, ColourPickerId, ColourPickerMaterial, ComboboxId, RadioId, SliderId, UiPanelType, UiTheme,
-        UiWindowId, spawn_button, spawn_checkbox, spawn_colour_picker, spawn_combobox, spawn_heading, spawn_horizontal,
-        spawn_panel, spawn_radio_buttonlike, spawn_semi_separator, spawn_separator, spawn_slider, spawn_subheading,
-        window::spawn_floating,
+        ButtonId, CheckboxId, ColourPickerId, ColourPickerMaterial, ComboboxId, RadioId, SliderHueMaterial, SliderId,
+        UiPanelType, UiTheme, UiWindowId, spawn_button, spawn_checkbox, spawn_colour_picker, spawn_combobox, spawn_heading,
+        spawn_horizontal, spawn_panel, spawn_radio_buttonlike, spawn_semi_separator, spawn_separator, spawn_slider,
+        spawn_subheading, window::spawn_floating,
     },
 };
 
@@ -33,14 +33,17 @@ pub fn build_ui(
     param: Res<GameParameters>,
     ui_theme: Res<UiTheme>,
 
-    mut ui_materials: ResMut<Assets<ColourPickerMaterial>>,
+    mut colour_picker_materials: ResMut<Assets<ColourPickerMaterial>>,
+    mut slider_hue_materials: ResMut<Assets<SliderHueMaterial>>,
 
-    all_windows: Query<Entity, With<UiWindowId>>,
+    all_ui_windows: Query<Entity, With<UiWindowId>>,
+
+    windows: Query<&Window>,
 ) {
     // If the UI needs to be rebuilt
     if **needs_rebuild == UiRebuildState::NeedsRebuild {
         // Despawn all the windows
-        for window_entity in &all_windows {
+        for window_entity in &all_ui_windows {
             commands.entity(window_entity).despawn();
         }
 
@@ -55,7 +58,9 @@ pub fn build_ui(
                     &genome_bank,
                     &param,
                     &ui_theme,
-                    &mut ui_materials,
+                    &mut colour_picker_materials,
+                    &mut slider_hue_materials,
+                    windows,
                 );
 
                 // Spawn the age slider
@@ -88,7 +93,7 @@ pub fn build_ui(
     }
 }
 
-#[allow(clippy::too_many_lines, clippy::needless_pass_by_value)]
+#[allow(clippy::too_many_lines, clippy::needless_pass_by_value, clippy::too_many_arguments)]
 pub fn spawn_cell_editor_panel(
     commands: &mut Commands,
     editor_state: &CellEditorState,
@@ -96,7 +101,10 @@ pub fn spawn_cell_editor_panel(
     param: &GameParameters,
     ui_theme: &UiTheme,
 
-    ui_materials: &mut Assets<ColourPickerMaterial>,
+    colour_picker_materials: &mut Assets<ColourPickerMaterial>,
+    slider_hue_materials: &mut Assets<SliderHueMaterial>,
+
+    windows: Query<&Window>,
 ) {
     let genome_mode_strings = GenomeModeId::iter()
         .map(|variant| variant.as_ref().to_string())
@@ -244,17 +252,26 @@ pub fn spawn_cell_editor_panel(
                 ui_theme,
             );
 
-            spawn_separator(parent, ui_theme);
+            // Have to get window properties
+            if let Ok(window) = windows.single() {
+                let scale = window.scale_factor();
+                let win_size = window.width();
 
-            spawn_subheading(parent, "Colour", ui_theme);
+                spawn_separator(parent, ui_theme);
 
-            spawn_colour_picker(
-                parent,
-                editor_state.get_selected_genome_mode(genome_bank).colour,
-                ColourPickerId::SelectedCellColour,
-                ui_theme,
-                ui_materials,
-            );
+                spawn_subheading(parent, "Colour", ui_theme);
+
+                spawn_colour_picker(
+                    parent,
+                    editor_state.get_selected_genome_mode(genome_bank).colour,
+                    ColourPickerId::SelectedCellColour,
+                    ui_theme,
+                    scale,
+                    win_size,
+                    colour_picker_materials,
+                    slider_hue_materials,
+                );
+            }
 
             spawn_separator(parent, ui_theme);
 

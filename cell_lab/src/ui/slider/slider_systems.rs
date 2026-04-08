@@ -2,7 +2,7 @@ use std::ops::RangeInclusive;
 
 use bevy::{ecs::relationship::RelatedSpawnerCommands, input_focus::InputFocus, prelude::*};
 
-use crate::ui::{SliderEvent, UiTheme, spawn_horizontal, spawn_label};
+use crate::ui::{SliderEvent, SliderHueMaterial, UiTheme, spawn_horizontal, spawn_label};
 
 #[derive(Component, Debug, Copy, Clone)]
 pub enum SliderId {
@@ -104,6 +104,112 @@ pub fn spawn_slider<S: AsRef<str>>(
     })
 }
 
+// TODO LOTS OF DUPLICATED CODE
+#[allow(clippy::too_many_arguments)]
+pub fn spawn_slider_with_material<S: AsRef<str>>(
+    parent: &mut RelatedSpawnerCommands<ChildOf>,
+    target_entity: Option<Entity>,
+    slider_id: SliderId,
+    label: S,
+    initial_value: f32,
+    range: RangeInclusive<f32>,
+    window_scale: f32,
+    window_width: f32,
+    ui_materials: &mut Assets<SliderHueMaterial>,
+    ui_theme: &UiTheme,
+) -> Option<Entity> {
+    // Ensure that inital value is within the range
+    if !range.contains(&initial_value) {
+        eprintln!("Slider initial value was outside of values range: {slider_id:?}");
+        return None;
+    }
+
+    let Ok(parent_width) = ui_theme
+        .slider
+        .width
+        .resolve(window_scale, window_width, Vec2::splat(window_width))
+    else {
+        eprintln!("Could not resolve slider parent width into physical size");
+        return None;
+    };
+
+    let (Ok(border_left), Ok(border_right), Ok(border_top), Ok(border_bottom)) = (
+        ui_theme
+            .border
+            .left
+            .resolve(window_scale, window_width, Vec2::splat(window_width)),
+        ui_theme
+            .border
+            .right
+            .resolve(window_scale, window_width, Vec2::splat(window_width)),
+        ui_theme
+            .border
+            .top
+            .resolve(window_scale, window_width, Vec2::splat(window_width)),
+        ui_theme
+            .border
+            .bottom
+            .resolve(window_scale, window_width, Vec2::splat(window_width)),
+    ) else {
+        eprintln!("Could not resolve border sizes into physical size");
+        return None;
+    };
+
+    let border_percents = Vec4::new(border_left, border_right, border_top, border_bottom) / parent_width;
+
+    let percent = (initial_value - range.start()) / (range.end() - range.start());
+
+    spawn_horizontal(parent, ui_theme, |parent| {
+        // Add a label for the ui element
+        spawn_label(parent, label, ui_theme);
+
+        Some(
+            parent
+                .spawn((
+                    // Create a slider shape
+                    Node {
+                        padding: ui_theme.slider.padding,
+                        border: ui_theme.border,
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        border_radius: ui_theme.border_radius,
+                        width: ui_theme.slider.width,
+                        height: ui_theme.slider.height,
+                        ..default()
+                    },
+                    // Mark as a slider
+                    Slider { percent, range },
+                    // Mark with ID
+                    slider_id,
+                    // Set the colours
+                    BorderColor::all(ui_theme.slider.track_border_colour),
+                    // Add the material
+                    MaterialNode(ui_materials.add(SliderHueMaterial {
+                        border_size: border_percents,
+                    })),
+                    // Add the interaction component
+                    Interaction::default(),
+                    // Add the text
+                    children![(
+                        Node {
+                            width: ui_theme.slider.handle_width,
+                            height: ui_theme.slider.handle_height,
+                            position_type: PositionType::Absolute,
+                            // TODO Need to account for handle width
+                            left: Val::Percent(percent * 100.),
+                            border_radius: ui_theme.border_radius,
+                            ..default()
+                        },
+                        BackgroundColor(ui_theme.slider.handle_colour),
+                        SliderHandle
+                    )],
+                ))
+                .insert_if(SliderTarget(target_entity), || target_entity.is_some())
+                .id(),
+        )
+    })
+}
+
 #[allow(clippy::type_complexity)]
 pub fn slider_begin_drag_system(
     mut commands: Commands,
@@ -121,6 +227,7 @@ pub fn slider_drag_system(
     windows: Query<&Window>,
     mut sliders: Query<
         (
+            Entity,
             &mut Slider,
             &SliderId,
             Option<&SliderTarget>,
@@ -141,7 +248,7 @@ pub fn slider_drag_system(
     // Get the mouse position
     if let Some(cursor_pos) = window.cursor_position() {
         // Iterate over active sliders (should only be one) to adjust handle position
-        for (mut slider, slider_id, slider_target, node, transform, children) in &mut sliders {
+        for (slider_entity, mut slider, slider_id, slider_target, node, transform, children) in &mut sliders {
             // Find the slider handle for this slider
             for &child in children {
                 // Get the node for the slider handle
@@ -182,6 +289,7 @@ pub fn slider_drag_system(
 
                     // Send an event for this slider drag
                     slider_event_writer.write(SliderEvent {
+                        self_entity: slider_entity,
                         target_entity: slider_target.and_then(|target| target.0),
                         id: *slider_id,
                         new_value: slider.get_value(),
