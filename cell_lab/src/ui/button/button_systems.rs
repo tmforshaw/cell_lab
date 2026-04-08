@@ -12,10 +12,15 @@ pub enum ButtonId {
     CloseOverwriteGenomeDialog,
     ConfirmOverwriteGenome,
     CloseSaveFilenameEmptyDialog,
+    SubmitSaveFilename,
 }
+
+#[derive(Component, Debug)]
+pub struct ButtonTarget(pub Option<Entity>);
 
 pub fn spawn_button(
     parent: &mut RelatedSpawnerCommands<ChildOf>,
+    target_entity: Option<Entity>,
     label: &str,
     button_id: ButtonId,
     ui_theme: &UiTheme,
@@ -51,18 +56,29 @@ pub fn spawn_button(
                     ui_theme.text_shadow,
                 )],
             ))
+            .insert_if(ButtonTarget(target_entity), || target_entity.is_some())
             .id(),
     )
 }
 
-#[allow(clippy::needless_pass_by_value)]
+#[allow(clippy::needless_pass_by_value, clippy::type_complexity)]
 pub fn button_interaction_system(
     mut input_focus: ResMut<InputFocus>,
     ui_theme: Res<UiTheme>,
-    mut interaction_query: Query<(Entity, &Interaction, &mut BackgroundColor, &mut BorderColor, &ButtonId), Changed<Interaction>>,
+    mut interaction_query: Query<
+        (
+            Entity,
+            &Interaction,
+            &mut BackgroundColor,
+            &mut BorderColor,
+            &ButtonId,
+            Option<&ButtonTarget>,
+        ),
+        Changed<Interaction>,
+    >,
     mut button_event_writer: MessageWriter<ButtonEvent>,
 ) {
-    for (entity, interaction, mut colour, mut border_colour, button_id) in &mut interaction_query {
+    for (entity, interaction, mut colour, mut border_colour, button_id, button_target) in &mut interaction_query {
         match *interaction {
             Interaction::Pressed => {
                 input_focus.set(entity);
@@ -72,7 +88,10 @@ pub fn button_interaction_system(
                 *border_colour = ui_theme.button.border_pressed_colour.into();
 
                 // Fire an event to trigger this button
-                button_event_writer.write(ButtonEvent { id: *button_id });
+                button_event_writer.write(ButtonEvent {
+                    target_entity: button_target.and_then(|target| target.0),
+                    id: *button_id,
+                });
             }
             Interaction::Hovered => {
                 input_focus.set(entity);

@@ -1,10 +1,8 @@
 use bevy::{input_focus::InputFocus, prelude::*};
 
 use crate::{
-    cell_editor::state::CellEditorState,
-    genomes::GenomeBank,
-    serialisation::{does_genome_exist_in_folder, semi_sanitise_filename, write_genome_to_file},
-    ui::{TextInputId, UiDialogState, UiWindowId},
+    serialisation::semi_sanitise_filename,
+    ui::{TextInputId, dialog_events::SaveFilenameEvent},
 };
 
 #[derive(Message)]
@@ -16,34 +14,16 @@ pub struct TextInputEvent {
 #[allow(clippy::needless_pass_by_value)]
 pub fn text_input_event_reader(
     mut events: MessageReader<TextInputEvent>,
-    mut dialog_state: ResMut<UiDialogState>,
     mut input_focus: ResMut<InputFocus>,
-    editor_state: Res<CellEditorState>,
-    genome_bank: Res<GenomeBank>,
+    mut save_filename_event_writer: MessageWriter<SaveFilenameEvent>,
 ) {
     for ev in events.read() {
         match ev.id {
             TextInputId::SaveFilename => {
-                // Already done in the text input, but for clarity
-                let semi_sanitised_value = semi_sanitise_filename(&ev.new_value);
-
-                // Set the save filename to this value
-                dialog_state.save.filename = Some(semi_sanitised_value.clone());
-
-                // Check if the file already exists
-                if does_genome_exist_in_folder(&semi_sanitised_value) {
-                    // Open the overwrite dialog
-                    dialog_state.open_dialog(&UiWindowId::OverwriteGenomeDialog);
-                } else if semi_sanitised_value.trim().is_empty() {
-                    // Open save filename is empty dialog
-                    dialog_state.open_dialog(&UiWindowId::SaveFilenameIsEmptyDialog);
-                } else {
-                    // Write genome to file
-                    write_genome_to_file(&semi_sanitised_value, editor_state.get_selected_genome(&genome_bank));
-
-                    // Exit the dialog
-                    dialog_state.close_all_dialogs();
-                }
+                // Semi-sanitise the filename and trigger an event
+                save_filename_event_writer.write(SaveFilenameEvent {
+                    filename: semi_sanitise_filename(&ev.new_value),
+                });
             }
         }
 

@@ -1,6 +1,7 @@
 pub mod button;
 pub mod checkbox;
 pub mod combobox;
+pub mod dialog_events;
 pub mod dialog_state;
 pub mod directional_node;
 pub mod label;

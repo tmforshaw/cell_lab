@@ -54,8 +54,10 @@ use crate::{
         ButtonEvent, CheckboxEvent, ComboboxEvent, RadioEvent, SliderEvent, TextInputEvent, UiDialogState, UiTheme,
         button_event_reader, button_interaction_system, checkbox_event_reader, checkbox_interaction_system,
         combobox_event_reader, combobox_option_select_system, combobox_text_update_system, combobox_toggle_system,
+        dialog_events::{SaveFilenameEvent, save_filename_event_reader},
         open_or_close_dialogs, radio_event_reader, radio_interaction_system, slider_begin_drag_system, slider_drag_system,
-        slider_event_reader, slider_interaction_system, slider_release_system, test_panel::spawn_cell_editor_panel,
+        slider_event_reader, slider_interaction_system, slider_release_system,
+        test_panel::spawn_cell_editor_panel,
         text_input_event_reader, text_input_interaction_system, text_input_typing_system, text_input_update_display_system,
     },
 };
@@ -111,6 +113,8 @@ fn main() {
         .add_message::<SliderEvent>()
         .add_message::<ComboboxEvent>()
         .add_message::<TextInputEvent>()
+        // Dialog Events
+        .add_message::<SaveFilenameEvent>()
         // Other Events
         .add_message::<CellEditorInitialGenomeModeMessage>()
         .add_message::<CellEditorSelectedGenomeModeMessage>()
@@ -135,7 +139,9 @@ fn main() {
                 slider_event_reader,
                 combobox_event_reader,
                 text_input_event_reader,
+                // Dialog Events
                 open_or_close_dialogs,
+                save_filename_event_reader,
             ),
         )
         .add_systems(

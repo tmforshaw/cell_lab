@@ -195,7 +195,9 @@ pub fn spawn_save_dialog(commands: &mut Commands, _dialog_state: &mut UiDialogSt
                 ui_theme,
             );
 
-            spawn_button(parent, "Cancel", ButtonId::CloseAllDialogs, ui_theme);
+            spawn_button(parent, text_input_entity, "Submit", ButtonId::SubmitSaveFilename, ui_theme);
+
+            spawn_button(parent, None, "Cancel", ButtonId::CloseAllDialogs, ui_theme);
 
             text_input_entity
         });
@@ -243,9 +245,9 @@ pub fn spawn_overwrite_genome_dialog(commands: &mut Commands, dialog_state: &mut
         spawn_separator(parent, ui_theme);
 
         spawn_horizontal(parent, ui_theme, |parent| {
-            spawn_button(parent, "Confirm", ButtonId::ConfirmOverwriteGenome, ui_theme);
+            spawn_button(parent, None, "Confirm", ButtonId::ConfirmOverwriteGenome, ui_theme);
 
-            spawn_button(parent, "Cancel", ButtonId::CloseOverwriteGenomeDialog, ui_theme)
+            spawn_button(parent, None, "Cancel", ButtonId::CloseOverwriteGenomeDialog, ui_theme)
         });
     });
 }
@@ -256,7 +258,7 @@ pub fn spawn_save_filename_is_empty_dialog(commands: &mut Commands, _dialog_stat
 
         spawn_separator(parent, ui_theme);
 
-        spawn_button(parent, "Ok", ButtonId::CloseSaveFilenameEmptyDialog, ui_theme);
+        spawn_button(parent, None, "Ok", ButtonId::CloseSaveFilenameEmptyDialog, ui_theme);
     });
 }
 
@@ -270,7 +272,7 @@ pub fn spawn_load_dialog(commands: &mut Commands, _dialog_state: &mut UiDialogSt
 
         spawn_separator(parent, ui_theme);
 
-        spawn_button(parent, "Cancel", ButtonId::CloseAllDialogs, ui_theme);
+        spawn_button(parent, None, "Cancel", ButtonId::CloseAllDialogs, ui_theme);
     });
 }
 
@@ -283,9 +285,9 @@ pub fn spawn_replace_mode_with_default_dialog(commands: &mut Commands, _dialog_s
         spawn_separator(parent, ui_theme);
 
         spawn_horizontal(parent, ui_theme, |parent| {
-            spawn_button(parent, "Confirm", ButtonId::ConfirmReplaceModeWithDefault, ui_theme);
+            spawn_button(parent, None, "Confirm", ButtonId::ConfirmReplaceModeWithDefault, ui_theme);
 
-            spawn_button(parent, "Cancel", ButtonId::CloseAllDialogs, ui_theme)
+            spawn_button(parent, None, "Cancel", ButtonId::CloseAllDialogs, ui_theme)
         });
     });
 }

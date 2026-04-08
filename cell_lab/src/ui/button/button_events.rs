@@ -4,16 +4,17 @@ use crate::{
     cell_editor::{simulation::CellEditorSimulationClearMessage, state::CellEditorState},
     game::game_parameters::GameParameters,
     genomes::{GenomeBank, GenomeMode, genome_mode::colour_from_genome_mode_id},
-    serialisation::write_genome_to_file,
-    ui::{ButtonId, UiDialogState, UiWindowId},
+    serialisation::{semi_sanitise_filename, write_genome_to_file},
+    ui::{ButtonId, TextInput, UiDialogState, UiWindowId, dialog_events::SaveFilenameEvent},
 };
 
 #[derive(Message)]
 pub struct ButtonEvent {
+    pub target_entity: Option<Entity>,
     pub id: ButtonId,
 }
 
-#[allow(clippy::needless_pass_by_value)]
+#[allow(clippy::needless_pass_by_value, clippy::too_many_arguments)]
 pub fn button_event_reader(
     mut events: MessageReader<ButtonEvent>,
     mut dialog_state: ResMut<UiDialogState>,
@@ -22,6 +23,9 @@ pub fn button_event_reader(
     mut genome_bank: ResMut<GenomeBank>,
     param: Res<GameParameters>,
     mut simulation_cache_message_writer: MessageWriter<CellEditorSimulationClearMessage>,
+
+    text_input_query: Query<&TextInput>,
+    mut save_filename_event_writer: MessageWriter<SaveFilenameEvent>,
 ) {
     for ev in events.read() {
         match ev.id {
@@ -69,6 +73,20 @@ pub fn button_event_reader(
             ButtonId::CloseSaveFilenameEmptyDialog => {
                 // Close the save filename empty dialog
                 dialog_state.close_dialog(&UiWindowId::SaveFilenameIsEmptyDialog);
+            }
+            ButtonId::SubmitSaveFilename => {
+                // If the target entity is specified
+                if let Some(target_entity) = ev.target_entity
+                    && let Ok(text_input) = text_input_query.get(target_entity)
+                {
+                    // Semi-sanitise the filename and trigger an event
+                    save_filename_event_writer.write(SaveFilenameEvent {
+                        filename: semi_sanitise_filename(text_input.value.clone()),
+                    });
+                }
+
+                // Clear the input focus
+                input_focus.clear();
             }
         }
 

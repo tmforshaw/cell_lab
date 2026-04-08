@@ -64,10 +64,11 @@ pub fn spawn_cell_editor_panel(
             spawn_semi_separator(parent, &ui_theme);
 
             spawn_horizontal(parent, &ui_theme, |parent| {
-                spawn_button(parent, "Save", ButtonId::Save, &ui_theme);
-                spawn_button(parent, "Load", ButtonId::Load, &ui_theme);
+                spawn_button(parent, None, "Save", ButtonId::Save, &ui_theme);
+                spawn_button(parent, None, "Load", ButtonId::Load, &ui_theme);
                 spawn_button(
                     parent,
+                    None,
                     "Replace Mode With Default",
                     ButtonId::ReplaceModeWithDefault,
                     &ui_theme,
