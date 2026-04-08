@@ -5,7 +5,7 @@ use crate::ui::UiTheme;
 
 #[derive(Component, Debug, Copy, Clone, EnumIter, Hash, PartialEq, PartialOrd, Ord, Eq)]
 pub enum UiWindowId {
-    CellEditor,
+    CellEditorPanel,
     SaveGenomeDialog,
     OverwriteGenomeDialog,
     SaveFilenameIsEmptyDialog,
@@ -13,6 +13,7 @@ pub enum UiWindowId {
     DeleteGenomeDialog,
     ReplaceModeWithDefaultDialog,
     LoadDefaultGenomeDialog,
+    AgeSliderFloating,
 }
 
 #[derive(Component, Debug, Copy, Clone)]
@@ -20,6 +21,9 @@ pub struct UiWindowPanel(pub UiPanelType);
 
 #[derive(Component, Debug, Copy, Clone)]
 pub struct UiWindowDialog;
+
+#[derive(Component, Debug, Copy, Clone)]
+pub struct UiWindowFloating;
 
 #[derive(Debug, Copy, Clone)]
 pub enum UiPanelType {
@@ -118,6 +122,42 @@ pub fn spawn_dialog(
                 .spawn((
                     id,
                     UiWindowDialog,
+                    Node {
+                        align_items: AlignItems::Start,
+                        justify_content: JustifyContent::Start,
+                        flex_direction: FlexDirection::Column,
+                        row_gap: ui_theme.window.item_spacing,
+                        padding: ui_theme.window.padding,
+                        ..default()
+                    },
+                    BackgroundColor(ui_theme.window.colour),
+                    BorderColor::all(ui_theme.window.border_colour),
+                ))
+                .with_children(children);
+        })
+        .id()
+}
+
+pub fn spawn_floating(
+    id: UiWindowId,
+    aligning_node: Node,
+    ui_theme: &UiTheme,
+    commands: &mut Commands,
+    children: impl FnOnce(&mut RelatedSpawnerCommands<ChildOf>),
+) -> Entity {
+    // Make the position relative to the centre
+    commands
+        .spawn(Node {
+            position_type: PositionType::Absolute,
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::Center,
+            ..aligning_node
+        })
+        .with_children(|parent| {
+            parent
+                .spawn((
+                    id,
+                    UiWindowFloating,
                     Node {
                         align_items: AlignItems::Start,
                         justify_content: JustifyContent::Start,

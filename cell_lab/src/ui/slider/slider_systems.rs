@@ -13,6 +13,7 @@ pub enum SliderId {
     SplitForce,
     Daughter1Angle,
     Daughter2Angle,
+    CellEditorAge,
 }
 
 #[derive(Component)]

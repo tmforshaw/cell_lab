@@ -48,6 +48,10 @@ pub fn slider_event_reader(
                 // Set the daughter 2 split angle in the selected genome
                 editor_state.get_selected_genome_mode_mut(&mut genome_bank).daughter_angles.1 = -ev.new_value.to_radians();
             }
+            SliderId::CellEditorAge => {
+                // Set the cell editor age
+                editor_state.editor_age.set_age(ev.new_value);
+            }
         }
 
         // Clear the simulation cache

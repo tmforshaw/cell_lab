@@ -8,7 +8,7 @@ use crate::{
     ui::{
         ButtonId, CheckboxId, ComboboxId, RadioId, SliderId, UiPanelType, UiTheme, UiWindowId, spawn_button, spawn_checkbox,
         spawn_combobox, spawn_heading, spawn_horizontal, spawn_panel, spawn_radio_buttonlike, spawn_semi_separator,
-        spawn_separator, spawn_slider, spawn_subheading,
+        spawn_separator, spawn_slider, spawn_subheading, window::spawn_floating,
     },
 };
 
@@ -47,6 +47,28 @@ pub fn build_ui(
             GameMode::CellEditor => {
                 // Spawn the panel
                 spawn_cell_editor_panel(&mut commands, &editor_state, &genome_bank, &param, &ui_theme);
+
+                // Spawn the age slider
+                spawn_floating(
+                    UiWindowId::AgeSliderFloating,
+                    Node {
+                        margin: UiRect::horizontal(Val::Auto),
+                        bottom: px(70),
+                        ..default()
+                    },
+                    &ui_theme,
+                    &mut commands,
+                    |parent| {
+                        spawn_slider(
+                            parent,
+                            SliderId::CellEditorAge,
+                            "Age",
+                            editor_state.editor_age.get_age(),
+                            0.0..=param.cell_editor_mode.max_editor_age,
+                            &ui_theme,
+                        );
+                    },
+                );
             }
         }
 
@@ -69,7 +91,7 @@ pub fn spawn_cell_editor_panel(
 
     // Spawn a panel for the cell editor
     spawn_panel(
-        UiWindowId::CellEditor,
+        UiWindowId::CellEditorPanel,
         UiPanelType::Left,
         percent(20),
         ui_theme,

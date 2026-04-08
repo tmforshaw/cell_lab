@@ -76,7 +76,7 @@ impl UiDialogState {
     #[must_use]
     pub const fn is_open(&self, window_id: &UiWindowId) -> Option<bool> {
         match window_id {
-            UiWindowId::CellEditor => None, // Not a dialog
+            UiWindowId::CellEditorPanel | UiWindowId::AgeSliderFloating => None, // Not a dialog
             UiWindowId::SaveGenomeDialog => Some(self.save.open),
             UiWindowId::OverwriteGenomeDialog => Some(self.overwrite_genome.open),
             UiWindowId::SaveFilenameIsEmptyDialog => Some(self.save_filename_is_empty.open),
@@ -91,7 +91,9 @@ impl UiDialogState {
     /// Panics if a non-dialog window is attempted to be opened as a dialog
     pub fn open_dialog(&mut self, window_id: &UiWindowId) {
         match window_id {
-            UiWindowId::CellEditor => panic!("Tried to open a non-dialog window as a dialog"),
+            UiWindowId::CellEditorPanel | UiWindowId::AgeSliderFloating => {
+                panic!("Tried to open a non-dialog window as a dialog")
+            }
             UiWindowId::SaveGenomeDialog => {
                 *self = Self {
                     save: UiSaveDialogState { open: true, ..default() },
@@ -154,7 +156,9 @@ impl UiDialogState {
     /// Panics if a non-dialog window is attempted to be closed as a dialog
     pub fn close_dialog(&mut self, window_id: &UiWindowId) {
         match window_id {
-            UiWindowId::CellEditor => panic!("Tried to close a non-dialog window as a dialog"),
+            UiWindowId::CellEditorPanel | UiWindowId::AgeSliderFloating => {
+                panic!("Tried to close a non-dialog window as a dialog")
+            }
             UiWindowId::SaveGenomeDialog => {
                 *self = Self {
                     save: UiSaveDialogState {
@@ -226,7 +230,7 @@ impl UiDialogState {
     #[must_use]
     pub fn spawn_dialog(&self, window_id: &UiWindowId) -> Option<fn(&mut Commands, &mut Self, &UiTheme)> {
         match window_id {
-            UiWindowId::CellEditor => None, // Not a dialog
+            UiWindowId::CellEditorPanel | UiWindowId::AgeSliderFloating => None, // Not a dialog
             UiWindowId::SaveGenomeDialog => Some(spawn_save_dialog),
             UiWindowId::OverwriteGenomeDialog => Some(spawn_overwrite_genome_dialog),
             UiWindowId::SaveFilenameIsEmptyDialog => Some(spawn_save_filename_is_empty_dialog),
