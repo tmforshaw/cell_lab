@@ -31,9 +31,11 @@ pub fn spawn_text_input<S1: AsRef<str>, S2: AsRef<str>>(
     initial_value: S2,
     filter_map: Option<fn(&char) -> Option<char>>,
     ui_theme: &UiTheme,
-) {
+) -> Option<Entity> {
     spawn_horizontal(parent, ui_theme, |parent| {
         spawn_label(parent, label.as_ref(), ui_theme);
+
+        let mut text_input_entity = None;
 
         parent
             .spawn(Node {
@@ -42,37 +44,45 @@ pub fn spawn_text_input<S1: AsRef<str>, S2: AsRef<str>>(
                 flex_grow: 0.,
                 ..default()
             })
-            .with_child((
-                Node {
-                    min_width: percent(100),
-                    padding: ui_theme.text_input.padding,
-                    border: ui_theme.border,
-                    border_radius: ui_theme.border_radius,
-                    justify_content: JustifyContent::FlexStart,
-                    align_items: AlignItems::Center,
-                    ..default()
-                },
-                TextInput {
-                    value: initial_value.as_ref().to_string(),
-                    filter_map,
-                },
-                input_id,
-                Interaction::default(),
-                BackgroundColor(ui_theme.text_input.normal_colour),
-                BorderColor::all(ui_theme.text_input.border_colour),
-                children![(
-                    Text::new(initial_value.as_ref()),
-                    TextFont {
-                        font: ui_theme.font.clone(),
-                        font_size: ui_theme.inner_font_size,
-                        ..default()
-                    },
-                    ui_theme.text_colour,
-                    ui_theme.text_shadow,
-                    TextInputField
-                )],
-            ));
-    });
+            .with_children(|parent| {
+                text_input_entity = Some(
+                    parent
+                        .spawn((
+                            Node {
+                                min_width: percent(100),
+                                padding: ui_theme.text_input.padding,
+                                border: ui_theme.border,
+                                border_radius: ui_theme.border_radius,
+                                justify_content: JustifyContent::FlexStart,
+                                align_items: AlignItems::Center,
+                                ..default()
+                            },
+                            TextInput {
+                                value: initial_value.as_ref().to_string(),
+                                filter_map,
+                            },
+                            input_id,
+                            Interaction::default(),
+                            BackgroundColor(ui_theme.text_input.normal_colour),
+                            BorderColor::all(ui_theme.text_input.border_colour),
+                            children![(
+                                Text::new(initial_value.as_ref()),
+                                TextFont {
+                                    font: ui_theme.font.clone(),
+                                    font_size: ui_theme.inner_font_size,
+                                    ..default()
+                                },
+                                ui_theme.text_colour,
+                                ui_theme.text_shadow,
+                                TextInputField
+                            )],
+                        ))
+                        .id(),
+                );
+            });
+
+        text_input_entity
+    })
 }
 
 #[allow(clippy::needless_pass_by_value, clippy::type_complexity)]

@@ -18,36 +18,40 @@ pub fn spawn_checkbox<S: AsRef<str>>(
     label: S,
     initial_value: bool,
     ui_theme: &UiTheme,
-) {
+) -> Option<Entity> {
     spawn_horizontal(parent, ui_theme, |parent| {
         // Add a label for the ui element
         spawn_label(parent, label, ui_theme);
 
         // Create a checkbox shape
-        parent.spawn((
-            Node {
-                padding: ui_theme.checkbox.padding,
-                border: ui_theme.border,
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                border_radius: ui_theme.border_radius,
-                ..default()
-            },
-            // Make it a checkbox
-            Checkbox { selected: initial_value },
-            // Mark with ID
-            checkbox_id,
-            // Add the interaction component
-            Interaction::default(),
-            // Set the colours
-            if initial_value {
-                BackgroundColor(ui_theme.checkbox.normal_selected_colour)
-            } else {
-                BackgroundColor(ui_theme.checkbox.normal_colour)
-            },
-            BorderColor::all(ui_theme.checkbox.border_colour),
-        ));
-    });
+        Some(
+            parent
+                .spawn((
+                    Node {
+                        padding: ui_theme.checkbox.padding,
+                        border: ui_theme.border,
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        border_radius: ui_theme.border_radius,
+                        ..default()
+                    },
+                    // Make it a checkbox
+                    Checkbox { selected: initial_value },
+                    // Mark with ID
+                    checkbox_id,
+                    // Add the interaction component
+                    Interaction::default(),
+                    // Set the colours
+                    if initial_value {
+                        BackgroundColor(ui_theme.checkbox.normal_selected_colour)
+                    } else {
+                        BackgroundColor(ui_theme.checkbox.normal_colour)
+                    },
+                    BorderColor::all(ui_theme.checkbox.border_colour),
+                ))
+                .id(),
+        )
+    })
 }
 
 #[allow(clippy::type_complexity, clippy::needless_pass_by_value)]

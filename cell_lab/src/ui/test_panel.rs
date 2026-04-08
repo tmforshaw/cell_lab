@@ -71,7 +71,7 @@ pub fn spawn_cell_editor_panel(
                     "Replace Mode With Default",
                     ButtonId::ReplaceModeWithDefault,
                     &ui_theme,
-                );
+                )
             });
 
             spawn_separator(parent, &ui_theme);
@@ -177,6 +177,7 @@ pub fn spawn_cell_editor_panel(
 
             spawn_radio_buttonlike(
                 parent,
+                None,
                 RadioId::SplitType,
                 "Split Type:",
                 editor_state.get_selected_genome_mode(&genome_bank).split_type.into(),

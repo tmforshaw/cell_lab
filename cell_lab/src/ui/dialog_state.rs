@@ -185,8 +185,8 @@ pub fn spawn_save_dialog(commands: &mut Commands, _dialog_state: &mut UiDialogSt
 
         spawn_separator(parent, ui_theme);
 
-        spawn_horizontal(parent, ui_theme, |parent| {
-            spawn_text_input(
+        let text_input_entity = spawn_horizontal(parent, ui_theme, |parent| {
+            let text_input_entity = spawn_text_input(
                 parent,
                 TextInputId::SaveFilename,
                 "Filename:",
@@ -197,11 +197,13 @@ pub fn spawn_save_dialog(commands: &mut Commands, _dialog_state: &mut UiDialogSt
 
             spawn_button(parent, "Cancel", ButtonId::CloseAllDialogs, ui_theme);
 
-            spawn_separator(parent, ui_theme);
+            text_input_entity
         });
 
         // Show the saved genomes if they exist
         if let Some(genomes) = get_genomes_in_folder_underscore_to_spaces() {
+            spawn_separator(parent, ui_theme);
+
             parent
                 .spawn(Node {
                     width: percent(100),
@@ -212,6 +214,7 @@ pub fn spawn_save_dialog(commands: &mut Commands, _dialog_state: &mut UiDialogSt
                 .with_children(|parent| {
                     spawn_radio_textlike(
                         parent,
+                        text_input_entity,
                         RadioId::SaveFileNames,
                         "",
                         None,
@@ -242,7 +245,7 @@ pub fn spawn_overwrite_genome_dialog(commands: &mut Commands, dialog_state: &mut
         spawn_horizontal(parent, ui_theme, |parent| {
             spawn_button(parent, "Confirm", ButtonId::ConfirmOverwriteGenome, ui_theme);
 
-            spawn_button(parent, "Cancel", ButtonId::CloseOverwriteGenomeDialog, ui_theme);
+            spawn_button(parent, "Cancel", ButtonId::CloseOverwriteGenomeDialog, ui_theme)
         });
     });
 }
@@ -282,7 +285,7 @@ pub fn spawn_replace_mode_with_default_dialog(commands: &mut Commands, _dialog_s
         spawn_horizontal(parent, ui_theme, |parent| {
             spawn_button(parent, "Confirm", ButtonId::ConfirmReplaceModeWithDefault, ui_theme);
 
-            spawn_button(parent, "Cancel", ButtonId::CloseAllDialogs, ui_theme);
+            spawn_button(parent, "Cancel", ButtonId::CloseAllDialogs, ui_theme)
         });
     });
 }

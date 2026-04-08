@@ -28,20 +28,24 @@ pub enum RadioStyle {
     Text,
 }
 
-#[allow(clippy::too_many_lines)]
+#[derive(Component, Debug)]
+pub struct RadioTarget(pub Option<Entity>);
+
+#[allow(clippy::too_many_lines, clippy::too_many_arguments)]
 fn spawn_radio<S1: AsRef<str>, S2: AsRef<str>>(
     parent: &mut RelatedSpawnerCommands<ChildOf>,
+    target_entity: Option<Entity>,
     radio_id: RadioId,
     radio_style: RadioStyle,
     label: S1,
     initial_selected: Option<usize>,
     options: &[S2],
     ui_theme: &UiTheme,
-) {
+) -> Option<Entity> {
     // Ensure that the options Vec has at least one option
     if options.is_empty() {
         eprintln!("Radio options was an empty Vec: {radio_id:?}");
-        return;
+        return None;
     }
 
     // Ensure that initial selected is within the options length
@@ -49,7 +53,7 @@ fn spawn_radio<S1: AsRef<str>, S2: AsRef<str>>(
         && initial_selected >= options.len()
     {
         eprintln!("Radio initial selected was outside of options Vec: {radio_id:?}");
-        return;
+        return None;
     }
 
     let options: Vec<_> = options.iter().map(AsRef::as_ref).map(ToString::to_string).collect();
@@ -117,62 +121,68 @@ fn spawn_radio<S1: AsRef<str>, S2: AsRef<str>>(
         // Add a label for the ui element
         spawn_label(parent, label, ui_theme);
 
-        parent
-            .spawn((
-                // Create a radio root node
-                match radio_style {
-                    RadioStyle::Button => (
-                        Node {
-                            padding: ui_theme.radio.padding,
-                            border: ui_theme.border,
-                            justify_content: JustifyContent::Center,
-                            align_items: AlignItems::Center,
-                            flex_direction: FlexDirection::Row,
-                            border_radius: ui_theme.border_radius,
-                            column_gap: ui_theme.radio.option_spacing,
-                            ..default()
-                        },
-                        // Set the colours
-                        BorderColor::all(ui_theme.radio.border_colour),
-                        BackgroundColor(ui_theme.radio.normal_colour),
-                    ),
-                    RadioStyle::Text => (
-                        Node {
-                            padding: UiRect::all(px(0)),
-                            justify_content: JustifyContent::Center,
-                            align_items: AlignItems::Center,
-                            flex_direction: FlexDirection::Column,
-                            row_gap: ui_theme.window.item_spacing,
-                            ..default()
-                        },
-                        BorderColor::default(),
-                        BackgroundColor(Color::NONE),
-                    ),
-                },
-                // Make it a radio
-                Radio {
-                    options,
-                    selected: initial_selected,
-                },
-                // Give the RadioStyle
-                radio_style,
-                // Mark with ID
-                radio_id,
-            ))
-            // Add the options
-            .with_children(|parent| {
-                for child in children {
-                    parent.spawn(child);
-                }
-            });
-    });
+        #[allow(clippy::unwrap_used)]
+        Some(
+            parent
+                .spawn((
+                    // Create a radio root node
+                    match radio_style {
+                        RadioStyle::Button => (
+                            Node {
+                                padding: ui_theme.radio.padding,
+                                border: ui_theme.border,
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                flex_direction: FlexDirection::Row,
+                                border_radius: ui_theme.border_radius,
+                                column_gap: ui_theme.radio.option_spacing,
+                                ..default()
+                            },
+                            // Set the colours
+                            BorderColor::all(ui_theme.radio.border_colour),
+                            BackgroundColor(ui_theme.radio.normal_colour),
+                        ),
+                        RadioStyle::Text => (
+                            Node {
+                                padding: UiRect::all(px(0)),
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                flex_direction: FlexDirection::Column,
+                                row_gap: ui_theme.window.item_spacing,
+                                ..default()
+                            },
+                            BorderColor::default(),
+                            BackgroundColor(Color::NONE),
+                        ),
+                    },
+                    // Make it a radio
+                    Radio {
+                        options,
+                        selected: initial_selected,
+                    },
+                    // Give the RadioStyle
+                    radio_style,
+                    // Mark with ID
+                    radio_id,
+                ))
+                // Conditionally Add RadioTarget
+                .insert_if(RadioTarget(target_entity), || target_entity.is_some())
+                // Add the options
+                .with_children(|parent| {
+                    for child in children {
+                        parent.spawn(child);
+                    }
+                })
+                .id(),
+        )
+    })
 }
 
 #[allow(clippy::type_complexity, clippy::needless_pass_by_value)]
 pub fn radio_interaction_system(
     mut input_focus: ResMut<InputFocus>,
     ui_theme: Res<UiTheme>,
-    mut radio_query: Query<(&RadioId, &mut Radio, &RadioStyle, &Children), Without<RadioOption>>,
+    mut radio_query: Query<(&RadioId, &mut Radio, &RadioStyle, Option<&RadioTarget>, &Children), Without<RadioOption>>,
     mut radio_options_queries: ParamSet<(
         Query<
             (
@@ -197,7 +207,7 @@ pub fn radio_interaction_system(
         &mut radio_options_queries.p0()
     {
         // Get the parent of the radio option, and get its components
-        if let Ok((radio_id, mut radio, radio_style, parent_children)) = radio_query.get_mut(parent.parent()) {
+        if let Ok((radio_id, mut radio, radio_style, radio_target, parent_children)) = radio_query.get_mut(parent.parent()) {
             match *interaction {
                 Interaction::Pressed => {
                     input_focus.set(entity);
@@ -231,6 +241,7 @@ pub fn radio_interaction_system(
 
                     // Trigger an event for the radio value change
                     radio_event_writer.write(RadioEvent {
+                        target_entity: radio_target.and_then(|target| target.0),
                         id: *radio_id,
                         new_value_index: radio.selected,
                     });
@@ -286,7 +297,7 @@ pub fn radio_interaction_system(
             radio_options_queries.p1().get_mut(sibling)
         {
             // Get the parent components (Radio Ui Element)
-            if let Ok((_, _, radio_style, _)) = radio_query.get(parent.parent()) {
+            if let Ok((_, _, radio_style, _, _)) = radio_query.get(parent.parent()) {
                 // This sibling is not actually the radio option that was just selected
                 if sibling_radio_option.index != selected_index {
                     match radio_style {
@@ -315,30 +326,42 @@ pub fn radio_interaction_system(
 
 pub fn spawn_radio_buttonlike<S1: AsRef<str>, S2: AsRef<str>>(
     parent: &mut RelatedSpawnerCommands<ChildOf>,
+    target_entity: Option<Entity>,
     radio_id: RadioId,
     label: S1,
     initial_selected: usize,
     options: &[S2],
     ui_theme: &UiTheme,
-) {
+) -> Option<Entity> {
     spawn_radio(
         parent,
+        target_entity,
         radio_id,
         RadioStyle::Button,
         label,
         Some(initial_selected),
         options,
         ui_theme,
-    );
+    )
 }
 
 pub fn spawn_radio_textlike<S1: AsRef<str>, S2: AsRef<str>>(
     parent: &mut RelatedSpawnerCommands<ChildOf>,
+    target_entity: Option<Entity>,
     radio_id: RadioId,
     label: S1,
     initial_selected: Option<usize>,
     options: &[S2],
     ui_theme: &UiTheme,
-) {
-    spawn_radio(parent, radio_id, RadioStyle::Text, label, initial_selected, options, ui_theme);
+) -> Option<Entity> {
+    spawn_radio(
+        parent,
+        target_entity,
+        radio_id,
+        RadioStyle::Text,
+        label,
+        initial_selected,
+        options,
+        ui_theme,
+    )
 }
