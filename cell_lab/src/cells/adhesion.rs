@@ -58,9 +58,9 @@ fn apply_adhesion_force(
     let total_moment_of_intertia = mass_1 * relative_pos_1.length_squared() + mass_2 * relative_pos_2.length_squared();
     let angular_velocity = angular_momentum / total_moment_of_intertia; // In radians per second
 
-    // Update positions based on angular velocity
-    *pos_1 = (centre_of_mass + relative_pos_1.rotate(Vec2::from_angle(angular_velocity * delta_time))).extend(pos_1.z);
-    *pos_2 = (centre_of_mass + relative_pos_2.rotate(Vec2::from_angle(angular_velocity * delta_time))).extend(pos_2.z);
+    // // Update positions based on angular velocity
+    // *pos_1 = (centre_of_mass + relative_pos_1.rotate(Vec2::from_angle(angular_velocity * delta_time))).extend(pos_1.z);
+    // *pos_2 = (centre_of_mass + relative_pos_2.rotate(Vec2::from_angle(angular_velocity * delta_time))).extend(pos_2.z);
 
     let new_relative_pos_1 = pos_1.xy() - centre_of_mass;
     let new_relative_pos_2 = pos_2.xy() - centre_of_mass;
@@ -125,7 +125,7 @@ pub fn apply_adhesion_system(
     // }
 
     let delta_time = time.delta_secs();
-    let iterations = 1; // more = stiffer
+    let iterations = 5; // more = stiffer
 
     for _ in 0..iterations {
         for (entity, adhesions) in &adhesions {

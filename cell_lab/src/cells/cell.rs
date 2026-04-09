@@ -10,7 +10,7 @@ use crate::{
 #[derive(Component, Debug, Clone)]
 pub struct Velocity(pub Vec2);
 
-#[derive(Bundle)]
+#[derive(Bundle, Clone)]
 pub struct CellBundle {
     pub cell: Cell,
     pub velocity: Velocity,

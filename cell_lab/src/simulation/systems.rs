@@ -142,13 +142,12 @@ pub fn cells_do_meiosis(
             &mut materials,
         ) {
             // Spawn the daughters
-            let d1_entity = commands.spawn(d1_bundle).id();
-            let d2_entity = commands.spawn(d2_bundle).id();
+            let d1_entity = commands.spawn(d1_bundle.clone()).id();
+            let d2_entity = commands.spawn(d2_bundle.clone()).id();
 
             // Add adhesion if parent says it's neccessary
             if parent.get_genome_mode(&genome_bank).daughters_adhere {
                 const MAX_CONNECTIONS: usize = 3; // TODO
-                let connection_dist: f32 = parent.get_size(&param, &game_mode).x;
 
                 // New links for daughters
                 let mut d1_links = vec![d2_entity];
@@ -156,44 +155,74 @@ pub fn cells_do_meiosis(
 
                 // If the parent was already adhered to some cells
                 if let Some(parent_adhesion) = parent_adhesion {
-                    // Link daughters to parent’s neighbors
-                    for &neighbor in &parent_adhesion.links {
+                    // Link daughters to parent’s neighbours
+                    for &neighbour in &parent_adhesion.links {
                         // Skip the parent itself
-                        if neighbor == parent_entity {
+                        if neighbour == parent_entity {
                             continue;
                         }
 
-                        // Check if neighbor is still valid
-                        if let Ok((neighbor_adhesion, neighbour_transform)) = adhesion_query.get(neighbor) {
-                            // Ensure neighbor still has parent link
-                            if neighbor_adhesion.links.contains(&parent_entity) {
-                                let neighbour_pos = neighbour_transform.translation.xy();
-
-                                if (transform.translation.xy() - neighbour_pos).length() < connection_dist {
-                                    // Link neighbor to daughters
-                                    if d1_links.len() < MAX_CONNECTIONS {
-                                        d1_links.push(neighbor);
-                                    }
-                                    if d2_links.len() < MAX_CONNECTIONS {
-                                        d2_links.push(neighbor);
-                                    }
-
-                                    // Update neighbor to link to daughters instead of parent
-                                    commands.entity(neighbor).insert(Adhesions {
-                                        links: neighbor_adhesion
+                        // Check if neighbour is still valid
+                        if let Ok((neighbour_adhesion, neighbour_transform)) = adhesion_query.get(neighbour) {
+                            // Ensure neighbour still has parent link
+                            if neighbour_adhesion.links.contains(&parent_entity) {
+                                fn connect_to_parent_connections(
+                                    commands: &mut Commands,
+                                    neighbour: Entity,
+                                    neighbour_adhesion: &Adhesions,
+                                    parent_entity: Entity,
+                                    daughter_entity: Entity,
+                                ) {
+                                    // Update neighbour to link to daughters instead of parent
+                                    commands.entity(neighbour).insert(Adhesions {
+                                        links: neighbour_adhesion
                                             .links
                                             .iter()
                                             .map(|&neighbour_link| {
                                                 if neighbour_link == parent_entity {
-                                                    d1_entity
+                                                    daughter_entity
                                                 } else {
                                                     neighbour_link
                                                 }
                                             })
-                                            .chain(Some(d2_entity)) // optionally link both daughters
                                             .collect(),
-                                        params: neighbor_adhesion.params.clone(),
+                                        params: neighbour_adhesion.params.clone(),
                                     });
+                                }
+
+                                let neighbour_pos = neighbour_transform.translation.xy();
+
+                                let d1_touching = (d1_bundle.transform.translation.xy() - neighbour_pos).length()
+                                    < d1_bundle.cell.get_size(&param, &game_mode).x * 1.5; // TODO use neighbour size
+                                let d2_touching = (d2_bundle.transform.translation.xy() - neighbour_pos).length()
+                                    < d2_bundle.cell.get_size(&param, &game_mode).x * 1.5;
+
+                                // Link neighbour to daughters if the daughter is touching that neighbour
+                                if d1_touching || d2_touching {
+                                    if d1_touching && d1_links.len() < MAX_CONNECTIONS {
+                                        d1_links.push(neighbour);
+
+                                        // Update neighbour to link to daughters instead of parent
+                                        connect_to_parent_connections(
+                                            &mut commands,
+                                            neighbour,
+                                            neighbour_adhesion,
+                                            parent_entity,
+                                            d1_entity,
+                                        );
+                                    }
+                                    if d2_touching && d2_links.len() < MAX_CONNECTIONS {
+                                        d2_links.push(neighbour);
+
+                                        // Update neighbour to link to daughters instead of parent
+                                        connect_to_parent_connections(
+                                            &mut commands,
+                                            neighbour,
+                                            neighbour_adhesion,
+                                            parent_entity,
+                                            d2_entity,
+                                        );
+                                    }
                                 }
                             }
                         }
