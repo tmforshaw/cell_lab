@@ -1,3 +1,4 @@
+pub mod adhesion;
 pub mod cell;
 pub mod cell_material;
 pub mod selection_cell_material;

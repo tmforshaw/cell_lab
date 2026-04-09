@@ -1,7 +1,10 @@
 use bevy::{math::bounding::Aabb2d, prelude::*};
 
 use crate::{
-    cells::{Cell, CellMaterial, Velocity},
+    cells::{
+        Cell, CellMaterial, Velocity,
+        adhesion::{Adhesion, AdhesionParameters},
+    },
     despawning::PendingDespawn,
     game::{game_mode::GameMode, game_parameters::GameParameters},
     genomes::GenomeBank,
@@ -138,8 +141,27 @@ pub fn cells_do_meiosis(
             &mut materials,
         ) {
             // Spawn the daughters
-            commands.spawn(d1_bundle);
-            commands.spawn(d2_bundle);
+            let d1_entity = commands.spawn(d1_bundle).id();
+            let d2_entity = commands.spawn(d2_bundle).id();
+
+            // Add adhesion if parent says to neccessary
+            if parent.get_genome_mode(&genome_bank).daughters_adhere {
+                let adhesion_param = AdhesionParameters::default();
+
+                let adhesion_1 = Adhesion {
+                    other: d2_entity,
+                    params: adhesion_param.clone(),
+                };
+
+                let adhesion_2 = Adhesion {
+                    other: d1_entity,
+                    params: adhesion_param,
+                };
+
+                // Attach the adhesion components
+                commands.entity(d1_entity).insert(adhesion_1);
+                commands.entity(d2_entity).insert(adhesion_2);
+            }
 
             // Despawn the parent cell
             commands.entity(entity).insert(PendingDespawn);

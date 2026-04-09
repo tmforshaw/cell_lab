@@ -116,7 +116,7 @@ impl Default for SimulationModeParameters {
                 draw_colour: Color::linear_rgba(1., 0., 1., 0.5),
             },
             chemical_parameters: ChemicalParameters::default(),
-            starting_cell_num: 100,
+            starting_cell_num: 5,
             cell_size_scale_factor: 10.,
         }
     }
@@ -162,7 +162,7 @@ impl Default for ChemicalParameters {
         Self {
             size: 10.,
             energy: 10.,
-            spawn_rate: 100.,
+            spawn_rate: 50.,
             max_instances: 400,
             colour: Color::linear_rgba(0.5, 0.1, 0.1, 0.75),
         }

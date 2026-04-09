@@ -28,7 +28,7 @@ use crate::{
         },
         state::{CellEditorState, exit_cell_editor_mode, init_cell_editor_mode},
     },
-    cells::{Cell, CellMaterial, SelectionCellMaterial},
+    cells::{Cell, CellMaterial, SelectionCellMaterial, adhesion::apply_adhesion_system},
     collision::systems::collision_system,
     despawning::apply_pending_despawns,
     game::{game_mode::GameMode, game_parameters::GameParameters},
@@ -82,6 +82,7 @@ pub mod ui;
 // TODO Remove selection of radio box when save filename is different
 // TODO Add a cap on cell editor cell-density so that crashes don't happen from a ridiculous number of collisions
 // TODO Allow shrinking of colour picker so it isn't always large
+// TODO Fix bug where M6 colour seems to have a hue of -28.88014
 
 #[allow(clippy::too_many_lines)]
 fn main() {
@@ -197,6 +198,7 @@ fn main() {
                 cells_do_meiosis,
                 bound_cells,
                 collision_system,
+                apply_adhesion_system.after(collision_system),
                 visualise_quadtree::<Entity, CellQuadTree, ShowCellQuadTree, CellQuadTreeDebug>,
                 visualise_quadtree::<Entity, ChemicalQuadTree, ShowChemicalQuadTree, ChemicalQuadTreeDebug>,
             )

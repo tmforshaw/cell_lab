@@ -120,7 +120,7 @@ pub fn spawn_slider_with_material<S: AsRef<str>>(
 ) -> Option<Entity> {
     // Ensure that inital value is within the range
     if !range.contains(&initial_value) {
-        eprintln!("Slider initial value was outside of values range: {slider_id:?}");
+        eprintln!("Slider initial value was outside of values range: {slider_id:?} [{initial_value}]");
         return None;
     }
 

@@ -220,7 +220,7 @@ pub fn combobox_toggle_system(
                     for &child in combobox_children {
                         // Toggle the display visibility
                         if let Ok(mut node) = containers.get_mut(child) {
-                            (node.display) = if node.display == Display::None {
+                            node.display = if node.display == Display::None {
                                 // Toggle the border radius
                                 combobox_node.border_radius = BorderRadius::top(BorderRadius::MAX.top_left);
 
