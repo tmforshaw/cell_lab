@@ -3,7 +3,7 @@ use bevy::{math::bounding::Aabb2d, prelude::*};
 use crate::{
     cells::{
         Cell, CellMaterial, Velocity,
-        adhesion::{Adhesion, AdhesionParameters},
+        adhesion::{AdhesionParameters, Adhesions},
     },
     despawning::PendingDespawn,
     game::{game_mode::GameMode, game_parameters::GameParameters},
@@ -120,7 +120,7 @@ pub fn cells_absorb_chemical(
     }
 }
 
-#[allow(clippy::needless_pass_by_value)]
+#[allow(clippy::needless_pass_by_value, clippy::too_many_arguments, clippy::type_complexity)]
 pub fn cells_do_meiosis(
     mut commands: Commands,
     param: Res<GameParameters>,
@@ -128,9 +128,10 @@ pub fn cells_do_meiosis(
     genome_bank: Res<GenomeBank>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<CellMaterial>>,
-    cells: Query<(Entity, &mut Cell, &Transform, &Velocity), Without<PendingDespawn>>,
+    cells: Query<(Entity, &mut Cell, &Transform, &Velocity, Option<&Adhesions>), Without<PendingDespawn>>,
+    adhesion_query: Query<(&Adhesions, &Transform), Without<PendingDespawn>>,
 ) {
-    for (entity, parent, transform, velocity) in cells {
+    for (parent_entity, parent, transform, velocity, parent_adhesion) in cells {
         if let Some((d1_bundle, d2_bundle)) = parent.split_into_daughter_bundles(
             &genome_bank,
             transform,
@@ -144,27 +145,89 @@ pub fn cells_do_meiosis(
             let d1_entity = commands.spawn(d1_bundle).id();
             let d2_entity = commands.spawn(d2_bundle).id();
 
-            // Add adhesion if parent says to neccessary
+            // Add adhesion if parent says it's neccessary
             if parent.get_genome_mode(&genome_bank).daughters_adhere {
-                let adhesion_param = AdhesionParameters::default();
+                const MAX_CONNECTIONS: usize = 3; // TODO
+                let connection_dist: f32 = parent.get_size(&param, &game_mode).x;
 
-                let adhesion_1 = Adhesion {
-                    other: d2_entity,
-                    params: adhesion_param.clone(),
-                };
+                // New links for daughters
+                let mut d1_links = vec![d2_entity];
+                let mut d2_links = vec![d1_entity];
 
-                let adhesion_2 = Adhesion {
-                    other: d1_entity,
-                    params: adhesion_param,
-                };
+                // If the parent was already adhered to some cells
+                if let Some(parent_adhesion) = parent_adhesion {
+                    // Link daughters to parent’s neighbors
+                    for &neighbor in &parent_adhesion.links {
+                        // Skip the parent itself
+                        if neighbor == parent_entity {
+                            continue;
+                        }
 
-                // Attach the adhesion components
-                commands.entity(d1_entity).insert(adhesion_1);
-                commands.entity(d2_entity).insert(adhesion_2);
+                        // Check if neighbor is still valid
+                        if let Ok((neighbor_adhesion, neighbour_transform)) = adhesion_query.get(neighbor) {
+                            // Ensure neighbor still has parent link
+                            if neighbor_adhesion.links.contains(&parent_entity) {
+                                let neighbour_pos = neighbour_transform.translation.xy();
+
+                                if (transform.translation.xy() - neighbour_pos).length() < connection_dist {
+                                    // Link neighbor to daughters
+                                    if d1_links.len() < MAX_CONNECTIONS {
+                                        d1_links.push(neighbor);
+                                    }
+                                    if d2_links.len() < MAX_CONNECTIONS {
+                                        d2_links.push(neighbor);
+                                    }
+
+                                    // Update neighbor to link to daughters instead of parent
+                                    commands.entity(neighbor).insert(Adhesions {
+                                        links: neighbor_adhesion
+                                            .links
+                                            .iter()
+                                            .map(|&neighbour_link| {
+                                                if neighbour_link == parent_entity {
+                                                    d1_entity
+                                                } else {
+                                                    neighbour_link
+                                                }
+                                            })
+                                            .chain(Some(d2_entity)) // optionally link both daughters
+                                            .collect(),
+                                        params: neighbor_adhesion.params.clone(),
+                                    });
+                                }
+                            }
+                        }
+                    }
+
+                    // Insert adhesion components for daughters
+                    commands.entity(d1_entity).insert(Adhesions {
+                        links: d1_links,
+                        params: parent_adhesion.params.clone(),
+                    });
+
+                    commands.entity(d2_entity).insert(Adhesions {
+                        links: d2_links,
+                        params: parent_adhesion.params.clone(),
+                    });
+                } else {
+                    // TODO Remove this
+                    let adhesion_params = AdhesionParameters::default();
+
+                    // Spawn the daughters with default links
+                    commands.entity(d1_entity).insert(Adhesions {
+                        links: d1_links,
+                        params: adhesion_params.clone(),
+                    });
+
+                    commands.entity(d2_entity).insert(Adhesions {
+                        links: d2_links,
+                        params: adhesion_params,
+                    });
+                }
             }
 
             // Despawn the parent cell
-            commands.entity(entity).insert(PendingDespawn);
+            commands.entity(parent_entity).insert(PendingDespawn);
         } else {
             // Didn't split
         }
@@ -177,11 +240,11 @@ pub fn cell_decay(
     param: Res<GameParameters>,
     game_mode: Res<State<GameMode>>,
     time: Res<Time>,
-    mut query: Query<(&mut Transform, &mut Cell, Entity), Without<PendingDespawn>>,
+    mut query: Query<(Entity, &mut Transform, &mut Cell), Without<PendingDespawn>>,
 ) {
     let dt = time.delta().as_secs_f32();
 
-    for (mut transform, mut cell, entity) in &mut query {
+    for (entity, mut transform, mut cell) in &mut query {
         // Reduce energy
         cell.energy -= param.cell_energy_decay_rate * dt;
 

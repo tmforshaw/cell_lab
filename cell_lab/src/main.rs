@@ -28,7 +28,10 @@ use crate::{
         },
         state::{CellEditorState, exit_cell_editor_mode, init_cell_editor_mode},
     },
-    cells::{Cell, CellMaterial, SelectionCellMaterial, adhesion::apply_adhesion_system},
+    cells::{
+        Cell, CellMaterial, SelectionCellMaterial,
+        adhesion::{adhesion_cleanup, apply_adhesion_system},
+    },
     collision::systems::collision_system,
     despawning::apply_pending_despawns,
     game::{game_mode::GameMode, game_parameters::GameParameters},
@@ -83,6 +86,7 @@ pub mod ui;
 // TODO Add a cap on cell editor cell-density so that crashes don't happen from a ridiculous number of collisions
 // TODO Allow shrinking of colour picker so it isn't always large
 // TODO Fix bug where M6 colour seems to have a hue of -28.88014
+// TODO Adhesion can be added multiple times to allow children of children to stay connected
 
 #[allow(clippy::too_many_lines)]
 fn main() {
@@ -196,15 +200,16 @@ fn main() {
                 build_quadtree::<ChemicalQuadTree, Chemical>,
                 cells_absorb_chemical,
                 cells_do_meiosis,
+                cell_decay,
                 bound_cells,
                 collision_system,
+                adhesion_cleanup,
                 apply_adhesion_system.after(collision_system),
                 visualise_quadtree::<Entity, CellQuadTree, ShowCellQuadTree, CellQuadTreeDebug>,
                 visualise_quadtree::<Entity, ChemicalQuadTree, ShowChemicalQuadTree, ChemicalQuadTreeDebug>,
             )
                 .run_if(in_state(GameMode::Simulation)),
         )
-        .add_systems(PostUpdate, (cell_decay).run_if(in_state(GameMode::Simulation)))
         .add_systems(OnExit(GameMode::Simulation), exit_simulation_mode)
         //
         // ------------------------- Cell Editor Mode --------------------------

@@ -116,7 +116,7 @@ impl Default for SimulationModeParameters {
                 draw_colour: Color::linear_rgba(1., 0., 1., 0.5),
             },
             chemical_parameters: ChemicalParameters::default(),
-            starting_cell_num: 5,
+            starting_cell_num: 20,
             cell_size_scale_factor: 10.,
         }
     }
