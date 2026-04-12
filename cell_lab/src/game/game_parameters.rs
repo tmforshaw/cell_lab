@@ -117,7 +117,7 @@ impl Default for SimulationModeParameters {
             },
             chemical_parameters: ChemicalParameters::default(),
             starting_cell_num: 1,
-            cell_size_scale_factor: 10.,
+            cell_size_scale_factor: 30.,
         }
     }
 }
@@ -151,7 +151,7 @@ impl Default for CellParameters {
             max_split_age: 25.,
             max_energy: 50.,
             min_energy: 2.,
-            mass_energy_scale_power: 0.5,
+            mass_energy_scale_power: 0.125,
             split_padding: 1.1, // Multipllier for offset of daughters from each other (Multiplies radius)
         }
     }

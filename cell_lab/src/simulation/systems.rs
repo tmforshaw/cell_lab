@@ -3,7 +3,7 @@ use bevy::{math::bounding::Aabb2d, prelude::*};
 use crate::{
     cells::{
         Cell, CellMaterial, Velocity,
-        adhesion::{AdhesionParameters, Adhesions},
+        adhesion::{Adhesion, AdhesionLink},
     },
     despawning::PendingDespawn,
     game::{game_mode::GameMode, game_parameters::GameParameters},
@@ -120,7 +120,12 @@ pub fn cells_absorb_chemical(
     }
 }
 
-#[allow(clippy::needless_pass_by_value, clippy::too_many_arguments, clippy::type_complexity)]
+#[allow(
+    clippy::needless_pass_by_value,
+    clippy::too_many_arguments,
+    clippy::type_complexity,
+    clippy::too_many_lines
+)]
 pub fn cells_do_meiosis(
     mut commands: Commands,
     param: Res<GameParameters>,
@@ -128,10 +133,27 @@ pub fn cells_do_meiosis(
     genome_bank: Res<GenomeBank>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<CellMaterial>>,
-    cells: Query<(Entity, &mut Cell, &Transform, &Velocity, Option<&Adhesions>), Without<PendingDespawn>>,
-    adhesion_query: Query<(&Adhesions, &Transform), Without<PendingDespawn>>,
+    mut cells: Query<(Entity, &Cell, &Transform, &Velocity, Option<&mut Adhesion>), Without<PendingDespawn>>,
 ) {
-    for (parent_entity, parent, transform, velocity, parent_adhesion) in cells {
+    enum LinkOp {
+        Replace {
+            other: Entity,
+            old: Entity,
+            new: Entity,
+        },
+        Split {
+            other: Entity,
+            old: Entity,
+            new_1: Entity,
+            new_dir_1: Vec2,
+            new_2: Entity,
+            new_dir_2: Vec2,
+        },
+    }
+
+    let mut link_ops: Vec<LinkOp> = vec![];
+
+    for (parent_entity, parent, transform, velocity, adhesion) in &cells {
         if let Some((d1_bundle, d2_bundle)) = parent.split_into_daughter_bundles(
             &genome_bank,
             transform,
@@ -141,124 +163,172 @@ pub fn cells_do_meiosis(
             &mut meshes,
             &mut materials,
         ) {
+            let parent_genome = parent.get_genome_mode(&genome_bank);
+
             // Spawn the daughters
             let d1_entity = commands.spawn(d1_bundle.clone()).id();
             let d2_entity = commands.spawn(d2_bundle.clone()).id();
 
             // Add adhesion if parent says it's neccessary
-            if parent.get_genome_mode(&genome_bank).daughters_adhere {
-                const MAX_CONNECTIONS: usize = 3; // TODO
+            if parent_genome.daughters_adhere {
+                let (mut links_1, mut links_2) = (vec![], vec![]);
 
-                // New links for daughters
-                let mut d1_links = vec![d2_entity];
-                let mut d2_links = vec![d1_entity];
+                // Get the split angle as a vector
+                let parent_split_dir =
+                    Vec2::from_angle(parent_genome.split_angle + transform.rotation.to_euler(EulerRot::XYZ).2).normalize();
 
-                // If the parent was already adhered to some cells
-                if let Some(parent_adhesion) = parent_adhesion {
-                    // Link daughters to parent’s neighbours
-                    for &neighbour in &parent_adhesion.links {
-                        // Skip the parent itself
-                        if neighbour == parent_entity {
-                            continue;
-                        }
+                // If the parent had adhesion already applied to it
+                if let Some(adhesion) = adhesion {
+                    const ADHESION_ANGLE_DELTA: f32 = 10f32.to_radians(); // The +/- angle that dictates which angles to classify as perpendicular or not when adhesing
 
-                        // Check if neighbour is still valid
-                        if let Ok((neighbour_adhesion, neighbour_transform)) = adhesion_query.get(neighbour) {
-                            // Ensure neighbour still has parent link
-                            if neighbour_adhesion.links.contains(&parent_entity) {
-                                fn connect_to_parent_connections(
-                                    commands: &mut Commands,
-                                    neighbour: Entity,
-                                    neighbour_adhesion: &Adhesions,
-                                    parent_entity: Entity,
-                                    daughter_entity: Entity,
-                                ) {
-                                    // Update neighbour to link to daughters instead of parent
-                                    commands.entity(neighbour).insert(Adhesions {
-                                        links: neighbour_adhesion
-                                            .links
-                                            .iter()
-                                            .map(|&neighbour_link| {
-                                                if neighbour_link == parent_entity {
-                                                    daughter_entity
-                                                } else {
-                                                    neighbour_link
-                                                }
-                                            })
-                                            .collect(),
-                                        params: neighbour_adhesion.params.clone(),
+                    for link in &adhesion.links {
+                        // Convert local direction to world direction to other in link
+                        let world_dir = link
+                            .dir_to_anchor
+                            .rotate(Vec2::from_angle(transform.rotation.to_euler(EulerRot::XYZ).2))
+                            .normalize();
+
+                        if let Ok((_, other, other_transform, _other_velocity, _other_adhesion)) = cells.get(link.other) {
+                            let other_pos = other_transform.translation.xy();
+                            let other_size = other.get_size(&param, &game_mode).x * 0.5;
+
+                            // Both daugthers can be connected if the link direction is almost perpendicular to the split direction
+                            if (world_dir.dot(parent_split_dir)).abs() <= 1.0 - ADHESION_ANGLE_DELTA.cos().abs() {
+                                // TODO Create connections for both daughters
+                                println!("Both daughters need to connect");
+
+                                // // Add the new daughter links to the other cell, removing the old link to the parent
+                                // link_ops.push(LinkOp::Split{
+                                //     other: link.other,
+                                //     old: parent_entity,
+                                //     new_1: d1_entity,
+                                //     new_dir_1: todo!(),
+                                //     new_2: d2_entity,
+                                //     new_dir_2: todo!(),
+                                // });
+                            }
+                            // Only one daugther can be connected if the link direction is not almost perpendicular to the split direction
+                            else {
+                                // Calculate where the anchor is for the linked cell
+                                let anchor_on_other = other_pos + world_dir * other_size;
+
+                                let d1_dist_to_surface = d1_bundle
+                                    .cell
+                                    .get_size(&param, &game_mode)
+                                    .x
+                                    .mul_add(-0.5, (d1_bundle.transform.translation.xy() - anchor_on_other).length());
+                                let d2_dist_to_surface = d2_bundle
+                                    .cell
+                                    .get_size(&param, &game_mode)
+                                    .x
+                                    .mul_add(-0.5, (d2_bundle.transform.translation.xy() - anchor_on_other).length());
+
+                                // TODO Don't do it from distance, do it based on (Daughter1 is left Daughter2 is right)
+                                // Test which daughter is closest to this contact point
+                                if d1_dist_to_surface < d2_dist_to_surface {
+                                    // Calculate the direction to the other entity in local coords for daughter 1
+                                    let local_dir = d1_bundle
+                                        .transform
+                                        .rotation
+                                        .inverse()
+                                        .mul_vec3(-world_dir.extend(0.))
+                                        .normalize()
+                                        .xy();
+
+                                    // Then add this link to the vec
+                                    links_1.push(AdhesionLink::new_from_entity(link.other, local_dir));
+
+                                    // Replace this link with the daughter instead of the parent
+                                    link_ops.push(LinkOp::Replace {
+                                        other: link.other,
+                                        old: parent_entity,
+                                        new: d1_entity,
                                     });
-                                }
+                                } else {
+                                    // Calculate the direction to the other entity in local coords for daughter 2
+                                    let local_dir = d2_bundle
+                                        .transform
+                                        .rotation
+                                        .inverse()
+                                        .mul_vec3(-world_dir.extend(0.))
+                                        .normalize()
+                                        .xy();
 
-                                let neighbour_pos = neighbour_transform.translation.xy();
+                                    // Then add this link to the vec
+                                    links_2.push(AdhesionLink::new_from_entity(link.other, local_dir));
 
-                                let d1_touching = (d1_bundle.transform.translation.xy() - neighbour_pos).length()
-                                    < d1_bundle.cell.get_size(&param, &game_mode).x * 1.5; // TODO use neighbour size
-                                let d2_touching = (d2_bundle.transform.translation.xy() - neighbour_pos).length()
-                                    < d2_bundle.cell.get_size(&param, &game_mode).x * 1.5;
-
-                                // Link neighbour to daughters if the daughter is touching that neighbour
-                                if d1_touching || d2_touching {
-                                    if d1_touching && d1_links.len() < MAX_CONNECTIONS {
-                                        d1_links.push(neighbour);
-
-                                        // Update neighbour to link to daughters instead of parent
-                                        connect_to_parent_connections(
-                                            &mut commands,
-                                            neighbour,
-                                            neighbour_adhesion,
-                                            parent_entity,
-                                            d1_entity,
-                                        );
-                                    }
-                                    if d2_touching && d2_links.len() < MAX_CONNECTIONS {
-                                        d2_links.push(neighbour);
-
-                                        // Update neighbour to link to daughters instead of parent
-                                        connect_to_parent_connections(
-                                            &mut commands,
-                                            neighbour,
-                                            neighbour_adhesion,
-                                            parent_entity,
-                                            d2_entity,
-                                        );
-                                    }
+                                    // Replace this link with the daughter instead of the parent
+                                    link_ops.push(LinkOp::Replace {
+                                        other: link.other,
+                                        old: parent_entity,
+                                        new: d2_entity,
+                                    });
                                 }
                             }
                         }
                     }
-
-                    // Insert adhesion components for daughters
-                    commands.entity(d1_entity).insert(Adhesions {
-                        links: d1_links,
-                        params: parent_adhesion.params.clone(),
-                    });
-
-                    commands.entity(d2_entity).insert(Adhesions {
-                        links: d2_links,
-                        params: parent_adhesion.params.clone(),
-                    });
-                } else {
-                    // TODO Remove this
-                    let adhesion_params = AdhesionParameters::default();
-
-                    // Spawn the daughters with default links
-                    commands.entity(d1_entity).insert(Adhesions {
-                        links: d1_links,
-                        params: adhesion_params.clone(),
-                    });
-
-                    commands.entity(d2_entity).insert(Adhesions {
-                        links: d2_links,
-                        params: adhesion_params,
-                    });
                 }
+
+                // Create an adhesion link between the two daughters
+
+                // Calculate the direction between the daughters in world coords
+                let world_dir = (d2_bundle.transform.translation.xy() - d1_bundle.transform.translation.xy()).normalize();
+
+                // Calculate the local directions to each daughter in their local coords
+                let local_dir_1 = d1_bundle
+                    .transform
+                    .rotation
+                    .inverse()
+                    .mul_vec3(world_dir.extend(0.))
+                    .normalize()
+                    .xy();
+                let local_dir_2 = d2_bundle
+                    .transform
+                    .rotation
+                    .inverse()
+                    .mul_vec3(-world_dir.extend(0.))
+                    .normalize()
+                    .xy();
+
+                // Add the links
+                links_1.push(AdhesionLink::new_from_entity(d2_entity, local_dir_1));
+                links_2.push(AdhesionLink::new_from_entity(d1_entity, local_dir_2));
+
+                // Insert the adhesion components for each daughter, with the specified links
+                commands.entity(d1_entity).insert(Adhesion { links: links_1 });
+                commands.entity(d2_entity).insert(Adhesion { links: links_2 });
             }
 
             // Despawn the parent cell
             commands.entity(parent_entity).insert(PendingDespawn);
         } else {
             // Didn't split
+        }
+    }
+
+    // Apply the link operations
+    for link_op in link_ops {
+        match link_op {
+            LinkOp::Replace { other, old, new } => {
+                // Get the other cell, and its adhesion component
+                if let Ok((_, _, _, _, adhesion)) = cells.get_mut(other)
+                    && let Some(mut adhesion) = adhesion
+                {
+                    // Find the link which points to the old entity (To be replaced)
+                    if let Some(link) = adhesion.links.iter_mut().find(|l| l.other == old) {
+                        // Replace the entity which is referenced to the new entity
+                        link.other = new;
+                    }
+                }
+            }
+            LinkOp::Split {
+                other,
+                old,
+                new_1,
+                new_dir_1,
+                new_2,
+                new_dir_2,
+            } => todo!(),
         }
     }
 }

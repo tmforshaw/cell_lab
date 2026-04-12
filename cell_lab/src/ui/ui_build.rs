@@ -113,7 +113,7 @@ pub fn spawn_cell_editor_panel(
     // Spawn a panel for the cell editor
     spawn_panel(
         UiWindowId::CellEditorPanel,
-        UiPanelType::Left,
+        UiPanelType::Right,
         percent(20),
         ui_theme,
         commands,

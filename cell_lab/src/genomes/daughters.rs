@@ -83,17 +83,18 @@ impl DaughterData {
         let d2_scale = d2_cell.get_size(param, game_mode);
 
         let parent_rotation_z = transform.rotation.to_euler(EulerRot::XYZ).2;
+        let split_angle = parent_genome_mode.split_angle; // Also rotate by the split angle
 
         // Compute the daughter's transforms based on the calculated information
         let (d1_transform, d2_transform) = (
             Transform::from_translation(d1_position.extend(transform.translation.z))
                 .with_rotation(Quat::from_rotation_z(
-                    parent_genome_mode.daughter_angles.0 + parent_rotation_z,
+                    parent_genome_mode.daughter_angles.0 + parent_rotation_z + split_angle,
                 ))
                 .with_scale(d1_scale.extend(1.0)),
             Transform::from_translation(d2_position.extend(transform.translation.z))
                 .with_rotation(Quat::from_rotation_z(
-                    parent_genome_mode.daughter_angles.1 + parent_rotation_z,
+                    parent_genome_mode.daughter_angles.1 + parent_rotation_z + split_angle,
                 ))
                 .with_scale(d2_scale.extend(1.0)),
         );

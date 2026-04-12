@@ -12,7 +12,6 @@
 #![allow(clippy::assigning_clones)]
 
 use bevy::{input_focus::InputFocus, prelude::*, sprite_render::Material2dPlugin};
-use bevy_egui::EguiPlugin;
 
 use crate::{
     cell_editor::{
@@ -30,7 +29,7 @@ use crate::{
     },
     cells::{
         Cell, CellMaterial, SelectionCellMaterial,
-        adhesion::{adhesion_cleanup, apply_adhesion_system},
+        adhesion::{apply_adhesion_system, visualise_adhesions},
     },
     collision::systems::collision_system,
     despawning::apply_pending_despawns,
@@ -95,7 +94,6 @@ fn main() {
 
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_plugins(EguiPlugin::default())
         .add_plugins(Material2dPlugin::<CellMaterial>::default())
         .add_plugins(Material2dPlugin::<SelectionCellMaterial>::default())
         .add_plugins(Material2dPlugin::<ChemicalMaterial>::default())
@@ -203,8 +201,8 @@ fn main() {
                 cell_decay,
                 bound_cells,
                 collision_system,
-                adhesion_cleanup,
-                apply_adhesion_system.after(collision_system),
+                apply_adhesion_system.after(cells_do_meiosis).after(collision_system),
+                visualise_adhesions.after(cells_do_meiosis),
                 visualise_quadtree::<Entity, CellQuadTree, ShowCellQuadTree, CellQuadTreeDebug>,
                 visualise_quadtree::<Entity, ChemicalQuadTree, ShowChemicalQuadTree, ChemicalQuadTreeDebug>,
             )
