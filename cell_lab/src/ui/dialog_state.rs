@@ -321,7 +321,9 @@ pub fn spawn_overwrite_genome_dialog(commands: &mut Commands, dialog_state: &mut
         spawn_horizontal(parent, ui_theme, |parent| {
             spawn_button(parent, None, "Confirm", ButtonId::ConfirmOverwriteGenome, ui_theme);
 
-            spawn_button(parent, None, "Cancel", ButtonId::CloseOverwriteGenomeDialog, ui_theme)
+            spawn_button(parent, None, "Cancel", ButtonId::CloseOverwriteGenomeDialog, ui_theme);
+
+            None
         });
     });
 }
@@ -394,7 +396,9 @@ pub fn spawn_load_dialog(commands: &mut Commands, _dialog_state: &mut UiDialogSt
 
         spawn_horizontal(parent, ui_theme, |parent| {
             spawn_button(parent, None, "Load Genome", ButtonId::ConfirmLoadGenome, ui_theme);
-            spawn_button(parent, None, "Cancel", ButtonId::CloseAllDialogs, ui_theme)
+            spawn_button(parent, None, "Cancel", ButtonId::CloseAllDialogs, ui_theme);
+
+            None
         });
     });
 }
@@ -436,7 +440,9 @@ pub fn spawn_replace_mode_with_default_dialog(commands: &mut Commands, _dialog_s
         spawn_horizontal(parent, ui_theme, |parent| {
             spawn_button(parent, None, "Confirm", ButtonId::ConfirmReplaceModeWithDefault, ui_theme);
 
-            spawn_button(parent, None, "Cancel", ButtonId::CloseAllDialogs, ui_theme)
+            spawn_button(parent, None, "Cancel", ButtonId::CloseAllDialogs, ui_theme);
+
+            None
         });
     });
 }

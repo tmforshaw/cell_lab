@@ -5,6 +5,9 @@ use crate::ui::{CheckboxEvent, UiTheme, spawn_horizontal, spawn_label};
 #[derive(Component, Debug, Copy, Clone)]
 pub enum CheckboxId {
     InitialMode,
+    DaughtersAdhere,
+    Daughter1KeepAdhesion,
+    Daughter2KeepAdhesion,
 }
 
 #[derive(Component)]

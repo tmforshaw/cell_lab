@@ -81,9 +81,10 @@ pub struct GenomeMode {
     pub split_fraction: f32,
     pub split_angle: f32,
     pub split_force: f32,
-    pub daughters_adhere: bool,
     pub daughter_genome_modes: (GenomeModeId, GenomeModeId),
     pub daughter_angles: (f32, f32),
+    pub daughters_adhere: bool,
+    pub daughters_keep_adhesion: (bool, bool),
 }
 
 impl GenomeMode {
@@ -109,9 +110,10 @@ impl Default for GenomeMode {
             split_fraction: 0.5,
             split_angle: 0.,
             split_force: 15.,
-            daughters_adhere: true,
             daughter_genome_modes: Default::default(),
             daughter_angles: (0., 0.),
+            daughters_adhere: true, // TODO
+            daughters_keep_adhesion: (true, true),
         }
     }
 }

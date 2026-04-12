@@ -159,21 +159,19 @@ pub fn cells_do_meiosis(
             let d1_entity = commands.spawn(d1_bundle.clone()).id();
             let d2_entity = commands.spawn(d2_bundle.clone()).id();
 
-            // Add adhesion if parent says it's neccessary
-            if parent_genome_mode.daughters_adhere {
-                add_adhesion_to_daughters(
-                    &mut commands,
-                    *parent_entity,
-                    parent_transform,
-                    parent_adhesion,
-                    parent_genome_mode,
-                    d1_entity,
-                    &d1_bundle,
-                    d2_entity,
-                    &d2_bundle,
-                    &mut cells,
-                );
-            }
+            // Add adhesion if parent's genome mode says it's neccessary
+            add_adhesion_to_daughters(
+                &mut commands,
+                *parent_entity,
+                parent_transform,
+                parent_adhesion,
+                parent_genome_mode,
+                d1_entity,
+                &d1_bundle,
+                d2_entity,
+                &d2_bundle,
+                &mut cells,
+            );
 
             // Despawn the parent cell
             commands.entity(*parent_entity).insert(PendingDespawn);

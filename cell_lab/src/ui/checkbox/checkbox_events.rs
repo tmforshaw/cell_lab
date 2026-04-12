@@ -42,6 +42,33 @@ pub fn checkbox_event_reader(
                     simulation_cache_message_writer.write(CellEditorSimulationClearMessage);
                 }
             }
+            CheckboxId::DaughtersAdhere => {
+                // Set if daughters adhere to the new value
+                editor_state.get_selected_genome_mode_mut(&mut genome_bank).daughters_adhere = ev.new_value;
+
+                // Clear the simulation cache
+                simulation_cache_message_writer.write(CellEditorSimulationClearMessage);
+            }
+            CheckboxId::Daughter1KeepAdhesion => {
+                // Set the daughter adhesion for this daughter
+                editor_state
+                    .get_selected_genome_mode_mut(&mut genome_bank)
+                    .daughters_keep_adhesion
+                    .0 = ev.new_value;
+
+                // Clear the simulation cache
+                simulation_cache_message_writer.write(CellEditorSimulationClearMessage);
+            }
+            CheckboxId::Daughter2KeepAdhesion => {
+                // Set the daughter adhesion for this daughter
+                editor_state
+                    .get_selected_genome_mode_mut(&mut genome_bank)
+                    .daughters_keep_adhesion
+                    .1 = ev.new_value;
+
+                // Clear the simulation cache
+                simulation_cache_message_writer.write(CellEditorSimulationClearMessage);
+            }
         }
     }
 }

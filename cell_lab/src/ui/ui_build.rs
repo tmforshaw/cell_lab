@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{ecs::relationship::RelatedSpawnerCommands, prelude::*};
 use strum::IntoEnumIterator;
 
 use crate::{
@@ -118,6 +118,7 @@ pub fn spawn_cell_editor_panel(
         ui_theme,
         commands,
         |parent| {
+            // Title section
             parent
                 .spawn((
                     Node {
@@ -149,6 +150,7 @@ pub fn spawn_cell_editor_panel(
 
             spawn_semi_separator(parent, ui_theme);
 
+            // Saving and Loading of Genomes
             spawn_horizontal(parent, ui_theme, |parent| {
                 spawn_button(parent, None, "Save", ButtonId::Save, ui_theme);
                 spawn_button(parent, None, "Load", ButtonId::Load, ui_theme);
@@ -158,7 +160,9 @@ pub fn spawn_cell_editor_panel(
                     "Replace Mode With Default",
                     ButtonId::ReplaceModeWithDefault,
                     ui_theme,
-                )
+                );
+
+                None
             });
 
             spawn_separator(parent, ui_theme);
@@ -198,65 +202,21 @@ pub fn spawn_cell_editor_panel(
 
             spawn_semi_separator(parent, ui_theme);
 
-            spawn_subheading(parent, "Daughter 1", ui_theme);
-
-            spawn_combobox(
+            spawn_checkbox(
                 parent,
-                ComboboxId::Daughter1Mode,
-                "Mode:",
-                editor_state
-                    .get_selected_genome_mode(genome_bank)
-                    .daughter_genome_modes
-                    .0
-                    .into(),
-                &genome_mode_strings,
-                ui_theme,
-            );
-
-            spawn_slider(
-                parent,
-                None,
-                SliderId::Daughter1Angle,
-                "Angle",
-                -editor_state
-                    .get_selected_genome_mode(genome_bank)
-                    .daughter_angles
-                    .0
-                    .to_degrees(),
-                0.0..=360.,
+                CheckboxId::DaughtersAdhere,
+                "Daughters Adhere",
+                editor_state.get_selected_genome_mode(genome_bank).daughters_adhere,
                 ui_theme,
             );
 
             spawn_semi_separator(parent, ui_theme);
 
-            spawn_subheading(parent, "Daughter 2", ui_theme);
+            create_daughter_section(parent, true, &genome_mode_strings, editor_state, genome_bank, ui_theme);
 
-            spawn_combobox(
-                parent,
-                ComboboxId::Daughter2Mode,
-                "Mode:",
-                editor_state
-                    .get_selected_genome_mode(genome_bank)
-                    .daughter_genome_modes
-                    .1
-                    .into(),
-                &genome_mode_strings,
-                ui_theme,
-            );
+            spawn_semi_separator(parent, ui_theme);
 
-            spawn_slider(
-                parent,
-                None,
-                SliderId::Daughter2Angle,
-                "Angle",
-                -editor_state
-                    .get_selected_genome_mode(genome_bank)
-                    .daughter_angles
-                    .1
-                    .to_degrees(),
-                0.0..=360.,
-                ui_theme,
-            );
+            create_daughter_section(parent, false, &genome_mode_strings, editor_state, genome_bank, ui_theme);
 
             // Have to get window properties
             if let Ok(window) = windows.single() {
@@ -351,5 +311,66 @@ pub fn spawn_cell_editor_panel(
 
             // spawn_button(parent, "Confirm", ButtonId::ConfirmOverwriteGenome, ui_theme);
         },
+    );
+}
+
+fn create_daughter_section(
+    parent: &mut RelatedSpawnerCommands<ChildOf>,
+    is_first_daughter: bool,
+    genome_mode_strings: &[String],
+    editor_state: &CellEditorState,
+    genome_bank: &GenomeBank,
+    ui_theme: &UiTheme,
+) {
+    spawn_subheading(
+        parent,
+        format!("Daughter {}", if is_first_daughter { '1' } else { '2' }),
+        ui_theme,
+    );
+
+    let (daughter_genome_mode, daughter_keep_adhesion, daughter_angle, combobox_id, checkbox_id, slider_id) = if is_first_daughter
+    {
+        (
+            editor_state.get_selected_genome_mode(genome_bank).daughter_genome_modes.0,
+            editor_state.get_selected_genome_mode(genome_bank).daughters_keep_adhesion.0,
+            editor_state.get_selected_genome_mode(genome_bank).daughter_angles.0,
+            ComboboxId::Daughter1Mode,
+            CheckboxId::Daughter1KeepAdhesion,
+            SliderId::Daughter1Angle,
+        )
+    } else {
+        (
+            editor_state.get_selected_genome_mode(genome_bank).daughter_genome_modes.1,
+            editor_state.get_selected_genome_mode(genome_bank).daughters_keep_adhesion.1,
+            editor_state.get_selected_genome_mode(genome_bank).daughter_angles.1,
+            ComboboxId::Daughter2Mode,
+            CheckboxId::Daughter2KeepAdhesion,
+            SliderId::Daughter2Angle,
+        )
+    };
+
+    spawn_horizontal(parent, ui_theme, |parent| {
+        spawn_combobox(
+            parent,
+            combobox_id,
+            "Mode:",
+            daughter_genome_mode.into(),
+            genome_mode_strings,
+            ui_theme,
+        );
+
+        spawn_checkbox(parent, checkbox_id, "Keep Adhesion", daughter_keep_adhesion, ui_theme);
+
+        None
+    });
+
+    spawn_slider(
+        parent,
+        None,
+        slider_id,
+        "Angle",
+        -daughter_angle.to_degrees(),
+        0.0..=360.,
+        ui_theme,
     );
 }
