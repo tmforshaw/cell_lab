@@ -180,7 +180,7 @@ pub fn read_genome_file(filename: &SemiSanitisedString) -> Option<Genome> {
     // Get the data folder
     let genome = if let Some(data_dir) = get_data_dir() {
         // Get the path to the genome file
-        let path = Path::new(&data_dir).join(filename).with_extension(GENOME_FILE_EXT);
+        let path = Path::new(&data_dir).join(filename.clone()).with_extension(GENOME_FILE_EXT);
 
         // Read the file at data_dir
         match fs::read(&path) {
@@ -188,7 +188,7 @@ pub fn read_genome_file(filename: &SemiSanitisedString) -> Option<Genome> {
             Ok(content) => match postcard::from_bytes(&content) {
                 Ok(genome) => genome,
                 Err(e) => {
-                    eprintln!("Could not deserialise genome '{data_dir}'\n\t{e}");
+                    eprintln!("Could not deserialise genome '{filename}' in folder '{data_dir}'\n\t{e}");
                     return None;
                 }
             },

@@ -29,7 +29,7 @@ use crate::{
     },
     cells::{
         Cell, CellMaterial, SelectionCellMaterial,
-        adhesion::{apply_adhesion_system, visualise_adhesions},
+        adhesion::{adhesion_cleanup, apply_adhesion_system, break_long_adhesions, visualise_adhesions},
     },
     collision::systems::collision_system,
     despawning::apply_pending_despawns,
@@ -85,7 +85,8 @@ pub mod ui;
 // TODO Add a cap on cell editor cell-density so that crashes don't happen from a ridiculous number of collisions
 // TODO Allow shrinking of colour picker so it isn't always large
 // TODO Fix bug where M6 colour seems to have a hue of -28.88014
-// TODO Adhesion can be added multiple times to allow children of children to stay connected
+// TODO Fix bug where border radius of combo box is not updated when item is selected
+// TODO Adhesion can be added multiple times to allow children of children to stay connected (Sort of done)
 
 #[allow(clippy::too_many_lines)]
 fn main() {
@@ -159,6 +160,7 @@ fn main() {
         .add_systems(
             PostUpdate,
             (
+                adhesion_cleanup.before(apply_pending_despawns),
                 apply_pending_despawns,
                 // UI Interaction Systems
                 button_interaction_system,
@@ -198,10 +200,11 @@ fn main() {
                 build_quadtree::<ChemicalQuadTree, Chemical>,
                 cells_absorb_chemical,
                 cells_do_meiosis,
+                apply_adhesion_system.after(cells_do_meiosis).before(collision_system),
+                break_long_adhesions.after(apply_adhesion_system),
                 cell_decay,
                 bound_cells,
                 collision_system,
-                apply_adhesion_system.after(cells_do_meiosis).after(collision_system),
                 visualise_adhesions.after(cells_do_meiosis),
                 visualise_quadtree::<Entity, CellQuadTree, ShowCellQuadTree, CellQuadTreeDebug>,
                 visualise_quadtree::<Entity, ChemicalQuadTree, ShowChemicalQuadTree, ChemicalQuadTreeDebug>,
